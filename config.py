@@ -39,8 +39,8 @@ llm_config_ux = {
     "timeout": _TIMEOUT,
 }
 
-# 3D 디자이너 — kimi-k2: 창의적 발상
-llm_config_3d = {
+# 비주얼 디자이너 — kimi-k2: 창의적 발상
+llm_config_visual = {
     "config_list": [{
         "model": "moonshotai/kimi-k2",
         "api_key": OPENROUTER_API_KEY,
@@ -56,8 +56,8 @@ llm_config_3d = {
     "timeout": _TIMEOUT,
 }
 
-# 언리얼 개발자 — gpt-oss-120b: 분석/추론
-llm_config_unreal = {
+# 인터랙션 엔지니어 — gpt-oss-120b: 분석/추론
+llm_config_engineer = {
     "config_list": [{
         "model": "openai/gpt-oss-120b",
         "api_key": OPENROUTER_API_KEY,

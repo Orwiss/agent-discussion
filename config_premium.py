@@ -34,8 +34,8 @@ llm_config_ux = {
     "timeout": _TIMEOUT,
 }
 
-# 3D 디자이너 — gpt-4o: 창의성+한국어+fp 전부
-llm_config_3d = {
+# 비주얼 디자이너 — gpt-4o: 창의성+한국어+fp 전부
+llm_config_visual = {
     "config_list": [{
         "model": "openai/gpt-4o",
         "api_key": OPENROUTER_API_KEY,
@@ -51,8 +51,8 @@ llm_config_3d = {
     "timeout": _TIMEOUT,
 }
 
-# 언리얼 개발자 — deepseek-r1: 추론 특화
-llm_config_unreal = {
+# 인터랙션 엔지니어 — deepseek-r1: 추론 특화
+llm_config_engineer = {
     "config_list": [{
         "model": "deepseek/deepseek-r1-0528",
         "api_key": OPENROUTER_API_KEY,

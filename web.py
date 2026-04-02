@@ -448,31 +448,43 @@ class FrontendHandler(http.server.SimpleHTTPRequestHandler):
 if __name__ == "__main__":
     import signal
 
-    print("실험 서버 시작 중...")
-    with IOWebsockets.run_server_in_thread(
-        host="127.0.0.1",
-        port=8765,
-        on_connect=on_connect,
-    ) as ws_uri:
-        print(f"웹소켓: {ws_uri}")
+    try:
+        import colorama
+        colorama.init()
+    except ImportError:
+        pass
 
-        httpd = http.server.HTTPServer(("127.0.0.1", 8000), FrontendHandler)
-        print("http://127.0.0.1:8000 을 열어주세요.")
-        print("종료: Ctrl+C")
+    try:
+        print("실험 서버 시작 중...")
+        print("이 창을 닫지 마세요. 서버가 실행 중입니다.")
+        print()
+        with IOWebsockets.run_server_in_thread(
+            host="127.0.0.1",
+            port=8765,
+            on_connect=on_connect,
+        ) as ws_uri:
+            print(f"웹소켓: {ws_uri}")
 
-        def force_exit(*args):
-            _close_log()
-            print("\n종료")
-            os._exit(0)
+            httpd = http.server.HTTPServer(("127.0.0.1", 8000), FrontendHandler)
+            print("http://127.0.0.1:8000 을 열어주세요.")
+            print("종료: Ctrl+C")
 
-        signal.signal(signal.SIGINT, force_exit)
-        signal.signal(signal.SIGTERM, force_exit)
+            def force_exit(*args):
+                _close_log()
+                print("\n종료")
+                os._exit(0)
 
-        try:
-            httpd.serve_forever()
-        except (KeyboardInterrupt, SystemExit):
-            pass
-        finally:
-            _close_log()
-            httpd.shutdown()
-            os._exit(0)
+            signal.signal(signal.SIGINT, force_exit)
+            signal.signal(signal.SIGTERM, force_exit)
+
+            try:
+                httpd.serve_forever()
+            except (KeyboardInterrupt, SystemExit):
+                pass
+            finally:
+                _close_log()
+                httpd.shutdown()
+                os._exit(0)
+    except Exception as e:
+        print(f"\n오류 발생: {e}")
+        input("\nEnter를 누르면 종료됩니다...")

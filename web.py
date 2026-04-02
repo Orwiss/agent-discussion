@@ -205,10 +205,11 @@ HTML_PAGE = r"""<!DOCTYPE html>
   }
   #start-page button:hover { background: #4f46e5; }
 
-  #experiment-page { flex: 1; display: none; flex-direction: column; }
+  #experiment-page { flex: 1; display: none; flex-direction: column; overflow: hidden; }
   header {
     padding: 16px 24px; background: #1e293b; border-bottom: 1px solid #334155;
     display: flex; justify-content: space-between; align-items: center;
+    flex-shrink: 0;
   }
   header .title h1 { font-size: 20px; font-weight: 600; }
   header .title p { font-size: 13px; color: #94a3b8; margin-top: 4px; }
@@ -237,7 +238,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
   }
   #input-area {
     padding: 12px 24px; background: #1e293b; border-top: 1px solid #334155;
-    display: flex; gap: 8px;
+    display: flex; gap: 8px; flex-shrink: 0;
   }
   #input-area input {
     flex: 1; padding: 10px 14px; background: #0f172a;
@@ -253,6 +254,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
   #input-area button:disabled { opacity: 0.5; cursor: not-allowed; }
   #status {
     padding: 8px 24px; background: #1e293b; font-size: 12px; color: #64748b; text-align: center;
+    flex-shrink: 0;
   }
 </style>
 </head>

@@ -56,7 +56,7 @@ llm_config_visual = {
     "timeout": _TIMEOUT,
 }
 
-# 인터랙션 엔지니어 — gpt-oss-120b: 분석/추론
+# 소프트웨어 엔지니어 — gpt-oss-120b: 분석/추론
 llm_config_engineer = {
     "config_list": [{
         "model": "openai/gpt-oss-120b",

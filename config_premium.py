@@ -51,7 +51,7 @@ llm_config_visual = {
     "timeout": _TIMEOUT,
 }
 
-# 인터랙션 엔지니어 — deepseek-r1: 추론 특화
+# 소프트웨어 엔지니어 — deepseek-r1: 추론 특화
 llm_config_engineer = {
     "config_list": [{
         "model": "deepseek/deepseek-r1-0528",

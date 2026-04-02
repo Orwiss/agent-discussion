@@ -262,7 +262,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
 
 <div id="start-page">
   <h1>디자인 아이디에이션 실험</h1>
-  <p>UX 리서처 · 비주얼 디자이너 · 인터랙션 엔지니어와 함께 모바일 앱 아이디어를 발전시킵니다.</p>
+  <p>UX 리서처 · 비주얼 디자이너 · 소프트웨어 엔지니어와 함께 모바일 앱 아이디어를 발전시킵니다.</p>
   <div class="form-group">
     <label>참가자 번호</label>
     <input id="participant-id" type="text" placeholder="예: 01">
@@ -288,7 +288,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
   <header>
     <div class="title">
       <h1>디자인 아이디에이션</h1>
-      <p>UX 리서처 · 비주얼 디자이너 · 인터랙션 엔지니어</p>
+      <p>UX 리서처 · 비주얼 디자이너 · 소프트웨어 엔지니어</p>
     </div>
     <div class="info" id="session-info"></div>
   </header>
@@ -312,13 +312,13 @@ let lastMsgHash = '';
 const DISPLAY_NAMES = {
   'UXResearcher': 'UX 리서처',
   'VisualDesigner': '비주얼 디자이너',
-  'InteractionEngineer': '인터랙션 엔지니어',
+  'SoftwareEngineer': '소프트웨어 엔지니어',
 };
 
 function nameClass(name) {
   if (name === 'UXResearcher') return 'ux';
   if (name === 'VisualDesigner') return 'visual';
-  if (name === 'InteractionEngineer') return 'engineer';
+  if (name === 'SoftwareEngineer') return 'engineer';
   return '';
 }
 

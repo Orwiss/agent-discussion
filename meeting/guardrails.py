@@ -5,6 +5,13 @@
 import re
 from collections import deque
 
+def _log(event, data):
+    try:
+        from web import log_event
+        log_event(event, data)
+    except ImportError:
+        print(f"  [{event}] {data}")
+
 # ── 최근 메시지 fingerprint 버퍼 (cross-agent 복사 감지용) ──
 _recent_fingerprints: deque = deque(maxlen=20)
 
@@ -15,7 +22,15 @@ def _fingerprint(text: str) -> str:
 
 
 def strip_think_tags(text):
-    return re.sub(r'<think>[\s\S]*?</think>', '', text).strip()
+    """<think> 태그 제거. 제거 후 빈 문자열이면 think 안의 내용을 사용."""
+    stripped = re.sub(r'<think>[\s\S]*?</think>', '', text).strip()
+    if stripped:
+        return stripped
+    # think 태그 안에만 내용이 있는 경우 → 태그만 제거하고 내용 유지
+    inner = re.findall(r'<think>([\s\S]*?)</think>', text)
+    if inner:
+        return inner[-1].strip()
+    return text.strip()
 
 
 def _strip_cjk_leaks(text):
@@ -78,9 +93,12 @@ def clean_message_hook(*, sender, message, recipient, silent):
 
     # 1) <think> 태그 제거
     cleaned = strip_think_tags(content)
+    if cleaned != content.strip():
+        _log("guardrail", f"{sender.name}: think 태그 처리됨 (원본 {len(content)}자 → {len(cleaned)}자)")
 
     # 2) opening brief 에코 차단
     if '=== 디자인 아이디에이션 시작 ===' in cleaned and sender.name != "Participant":
+        _log("guardrail", f"{sender.name}: 브리프 에코 차단")
         return _set_message_content(message, "")
 
     # 3) CJK 혼입 치환
@@ -92,15 +110,18 @@ def clean_message_hook(*, sender, message, recipient, silent):
     cleaned = re.sub(r'^#{1,3}\s+', '', cleaned, flags=re.MULTILINE)  # ### 헤더 → 헤더
 
     if not cleaned.strip():
+        _log("guardrail", f"{sender.name}: 클리닝 후 빈 메시지 → 차단")
         return _set_message_content(message, "")
 
     # 4) cross-agent 복사 감지
     fp = _fingerprint(cleaned)
     if fp and fp in _recent_fingerprints:
+        _log("guardrail", f"{sender.name}: cross-agent 복사 감지 → 차단")
         return _set_message_content(message, "")
 
     # 5) 자기 직전 발언과 동일
     if hasattr(sender, '_last_sent_content') and sender._last_sent_content == cleaned:
+        _log("guardrail", f"{sender.name}: 직전 발언 동일 → 차단")
         return _set_message_content(message, "")
 
     # 6) recipient GroupChat 히스토리와 비교

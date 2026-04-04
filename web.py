@@ -42,7 +42,7 @@ BRIEFS = {
     ),
 }
 
-# 실시간 로그 파일 핸들
+# 실시간 로그 파일 핸들 — 다른 모듈에서도 import 가능
 _log_file = None
 
 
@@ -55,13 +55,16 @@ def _init_log(participant_id, condition, task):
     return filename
 
 
-def _log_event(event_type, data):
-    """이벤트를 실시간으로 파일에 기록"""
+def log_event(event_type, data):
+    """이벤트를 실시간으로 파일 + 콘솔에 기록. 다른 모듈에서도 사용."""
     entry = {
         "time": datetime.datetime.now().isoformat(),
         "event": event_type,
         "data": data,
     }
+    # 콘솔 출력
+    print(f"  [{event_type}] {data}")
+    # 파일 기록
     if _log_file:
         _log_file.write(json.dumps(entry, ensure_ascii=False) + "\n")
         _log_file.flush()
@@ -82,9 +85,9 @@ def on_connect(iostream: IOWebsockets) -> None:
     def logging_send(data):
         try:
             parsed = json.loads(data) if isinstance(data, str) else data
-            _log_event("ws_send", parsed if isinstance(parsed, dict) else data)
+            log_event("ws_send", parsed if isinstance(parsed, dict) else data)
         except (json.JSONDecodeError, TypeError):
-            _log_event("ws_send", data)
+            log_event("ws_send", data)
         return original_send(data)
     iostream._websocket.send = logging_send
 
@@ -105,7 +108,7 @@ def on_connect(iostream: IOWebsockets) -> None:
 
     # 로그 초기화
     log_filename = _init_log(participant_id, condition, task)
-    _log_event("session_start", {
+    log_event("session_start", {
         "participant_id": participant_id,
         "condition": condition,
         "task": task,
@@ -131,11 +134,11 @@ def on_connect(iostream: IOWebsockets) -> None:
         _run_session(iostream, condition, brief)
     except Exception as e:
         iostream.print(f"[오류] {str(e)}")
-        _log_event("error", {"message": str(e)})
+        log_event("error", {"message": str(e)})
     finally:
         logging.stop()
         iostream.print("\n[시스템] 세션이 종료되었습니다.")
-        _log_event("session_end", {})
+        log_event("session_end", {})
         _close_log()
 
 
@@ -167,7 +170,7 @@ def _run_session(iostream, condition, brief):
         summary = result.get("summary", "요약 없음") if isinstance(result, dict) else "요약 없음"
 
     iostream.print(f"\n[시스템] === 최종 요약 ===\n{summary}")
-    _log_event("session_summary", {"summary": summary})
+    log_event("session_summary", {"summary": summary})
 
 
 # === HTML 프론트엔드 ===

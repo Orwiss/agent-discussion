@@ -31,6 +31,7 @@ llm_config_ux = {
         "extra_body": {
             "frequency_penalty": 0.4,
             "presence_penalty": 0.2,
+            "chat_template_kwargs": {"enable_thinking": False},
             **_PROVIDER_FILTER,
         },
     }],

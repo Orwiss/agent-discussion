@@ -7,6 +7,14 @@ import autogen
 from autogen.agentchat.contrib.capabilities.transform_messages import TransformMessages
 from autogen.agentchat.contrib.capabilities.transforms import MessageHistoryLimiter
 
+def _log(event, data):
+    """로그 이벤트 기록 (web.py의 log_event 사용, import 실패 시 콘솔만)"""
+    try:
+        from web import log_event
+        log_event(event, data)
+    except ImportError:
+        print(f"  [{event}] {data}")
+
 
 # 페이즈별 시스템 메시지
 PHASE_MESSAGES = {
@@ -36,7 +44,9 @@ class DedupGroupChat(autogen.GroupChat):
         if content and self.messages:
             for prev in self.messages[-3:]:
                 prev_content = prev.get("content", "")
-                if prev_content and content[:100] == prev_content[:100]:
+                # 같은 에이전트의 완전 동일 메시지만 차단 (앞 100자 → 200자로 완화)
+                if (prev_content and prev.get("name") == message.get("name")
+                        and content[:200] == prev_content[:200]):
                     return
         super().append(message, speaker)
 
@@ -45,19 +55,27 @@ def _create_6turn_speaker_selection(agents, user):
     """6발화마다 유저 개입하는 speaker selection.
     A→B→C→A→B→C→User→A→B→C→A→B→C→User→...
     양 조건 동일하게 적용되는 결정론적 순서."""
-    state = {"agent_count": 0}
+    state = {"agent_count": 0, "total": 0}
 
     def select_speaker(last_speaker, groupchat):
+        state["total"] += 1
+        last_name = last_speaker.name if last_speaker else "None"
+
         if last_speaker == user:
             state["agent_count"] = 0
-            return agents[0]
+            next_agent = agents[0]
+            _log("speaker", f"턴{state['total']}: {last_name} → {next_agent.name} (유저 후 리셋)")
+            return next_agent
 
         state["agent_count"] += 1
         if state["agent_count"] >= 6:
+            _log("speaker", f"턴{state['total']}: {last_name} → Participant (6발화 도달)")
             return user
 
         idx = state["agent_count"] % len(agents)
-        return agents[idx]
+        next_agent = agents[idx]
+        _log("speaker", f"턴{state['total']}: {last_name} → {next_agent.name} ({state['agent_count']}/6)")
+        return next_agent
 
     return select_speaker
 

@@ -182,3 +182,4 @@ cython_debug/
 /.omc
 /data
 *.jsonl
+/.claude

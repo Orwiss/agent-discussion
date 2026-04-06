@@ -4,6 +4,7 @@
 """
 import re
 from collections import deque
+from tts_pipeline import trigger
 
 def _log(event, data):
     try:
@@ -136,5 +137,7 @@ def clean_message_hook(*, sender, message, recipient, silent):
     if fp:
         _recent_fingerprints.append(fp)
     sender._last_sent_content = cleaned
+
+    trigger(sender.name, cleaned)           # TTS → OSC → MetaHuman
 
     return _set_message_content(message, cleaned)

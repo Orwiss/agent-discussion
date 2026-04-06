@@ -1,2 +1,4 @@
 ag2[openai,websockets]
 python-dotenv
+python-osc>=1.8.3
+elevenlabs>=2.0.0

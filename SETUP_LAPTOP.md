@@ -15,9 +15,11 @@
 
 ## 1. 기본 도구 설치
 
-### CUDA Toolkit 12.8
-1. https://developer.nvidia.com/cuda-12-8-0-download-archive
+### CUDA Toolkit (12.8 이상)
+1. https://developer.nvidia.com/cuda-downloads (최신 버전)
+   또는 https://developer.nvidia.com/cuda-12-8-0-download-archive (12.8)
 2. Windows → x86_64 → exe (local) → 다운로드 → 설치 (기본 옵션)
+3. 12.8 이상이면 아무 버전이나 OK
 
 ### TensorRT 10.13
 1. https://developer.nvidia.com/tensorrt → Download

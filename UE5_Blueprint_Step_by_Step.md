@@ -29,36 +29,54 @@
 
 ---
 
-## STEP 1. MetaHuman 자식 Blueprint 만들기
-
-### 1-1. 생성하기
+## 만들 것 요약
 
 ```
-Content Browser에서:
-  Content/MetaHumans/ 폴더로 이동
-  → 배치할 MetaHuman의 BP 찾기 (예: BP_metahuman_ux)
-  → 우클릭 → "Create Child Blueprint Class"
-  → 이름: BP_MH_UXResearcher
+[BP_MH_BlendshapePlayer] ← ActorComponent (★ 1번만 만듦 ★)
+  - 변수, 함수, Event Tick 로직 전부 여기
+
+BP_MH_UXResearcher      → + Add Component → BP_MH_BlendshapePlayer
+BP_MH_VisualDesigner    → + Add Component → BP_MH_BlendshapePlayer
+BP_MH_SoftwareEngineer  → + Add Component → BP_MH_BlendshapePlayer
+
+[BP_OSCManager] ← Actor
+  - OSC 수신 → 캐릭터별 분기 → 컴포넌트의 EnqueueBlendshapes 호출
 ```
 
-3개 생성: `BP_MH_UXResearcher`, `BP_MH_VisualDesigner`, `BP_MH_SoftwareEngineer`
+---
 
-### 1-2. 변수 추가하기
+## STEP 1. BP_MH_BlendshapePlayer (ActorComponent)
 
-BP_MH_UXResearcher 더블클릭 → Blueprint 에디터.
+> 변수/함수/로직을 **1번만** 만들면 3개 MetaHuman에서 공유됩니다.
 
-**변수 하나 추가하는 방법:**
-1. 왼쪽 **My Blueprint** 패널 → Variables 옆 **+** 클릭
-2. 새 변수 이름 입력
-3. 오른쪽 **Details** 패널 → **Variable Type** 클릭 → 타입 검색
-4. 배열로 만들려면: 타입 옆 아이콘(단일 격자) 클릭 → **Array** 선택
-5. 상단 **Compile** (초록 체크) 클릭
-6. Details에서 **Default Value** 설정
+### 1-1. 생성
 
-아래 변수들을 전부 추가:
+```
+Content Browser 빈 공간 우클릭
+  → Blueprint Class
+  → "Actor Component" 검색 → 선택
+  → 이름: BP_MH_BlendshapePlayer
+```
+
+### 1-2. Tick 활성화 (중요!)
+
+ActorComponent는 기본적으로 Tick이 꺼져있습니다.
+
+```
+BP_MH_BlendshapePlayer 더블클릭 → 에디터 열림
+  → 상단 툴바에서 "Class Defaults" 클릭
+  → Details 패널 → Component Tick 섹션:
+     ✅ Can Ever Tick (체크)
+     ✅ Start With Tick Enabled (체크)
+```
+
+> 이거 안 하면 Event Tick이 절대 실행 안 됩니다! 에러도 안 나서 찾기 어렵습니다.
+
+### 1-3. 변수 추가
 
 | 변수명 | 타입 | 기본값 | 설명 |
 |--------|------|--------|------|
+| FaceMesh | Skeletal Mesh Component (Object Ref) | - | BeginPlay에서 자동 설정 |
 | BSRawData | Float (Array) | - | 블렌드셰이프 데이터 |
 | BSFrameIndex | Integer | 0 | 현재 프레임 |
 | BSWeightCount | Integer | 68 | weight 개수 |
@@ -69,12 +87,18 @@ BP_MH_UXResearcher 더블클릭 → Blueprint 에디터.
 | QueuedWeightCount | Integer | 0 | 큐: weight 수 |
 | QueuedFPS | Integer | 0 | 큐: FPS |
 | HasQueuedData | Boolean | false | 큐에 데이터? |
-| BSNames | String (Array) | 아래 참고 | morph 이름 |
+| BSNames | String (Array) | 아래 참고 | morph 이름 68개 |
 
-### 1-3. BSNames 배열 채우기
+**변수 추가 방법:**
+1. 왼쪽 My Blueprint → Variables 옆 **+** 클릭
+2. 이름 입력
+3. Details → Variable Type 클릭 → 타입 검색
+4. 배열: 타입 옆 아이콘 클릭 → **Array** 선택
+5. Compile → Default Value 설정
 
-BSNames를 선택 → Compile → Default Value 섹션에서 **+** 를 68번 클릭해서 항목 추가.
+### 1-4. BSNames 배열 채우기
 
+BSNames 선택 → Compile → Default Value에서 **+** 를 68번 클릭.
 아래 순서대로 정확히 입력:
 
 ```
@@ -103,79 +127,99 @@ BSNames를 선택 → Compile → Default Value 섹션에서 **+** 를 68번 클
 [66] tongueStretch       [67] tongueWide
 ```
 
-### 1-4. Face 컴포넌트 찾기
+### 1-5. BeginPlay — Face 메시 자동 찾기
 
-왼쪽 **Components** 패널에서:
-1. **(Inherited)** 를 펼침 (▶ 클릭)
-2. **Face** (SkeletalMeshComponent) 찾기
-3. 나중에 이걸 그래프에 드래그해서 쓸 거임
-
-> 이름이 Face가 아닐 수 있음. "Face", "FaceMesh", "Head" 등으로 찾아보세요.
-
-### 1-5. EnqueueBlendshapes 함수
-
-**만들기:**
-1. My Blueprint → Functions 옆 **+** 클릭
-2. 이름: `EnqueueBlendshapes`
-3. 함수 노드 선택 → Details → **Inputs** 에서 **+** 를 3번 클릭:
-   - `InRawData` → Float Array
-   - `InWeightCount` → Integer
-   - `InFPS` → Integer
-
-**노드 연결:**
+컴포넌트가 붙은 MetaHuman에서 Face 메시를 자동으로 찾습니다.
 
 ```
-① [EnqueueBlendshapes] 노드의 실행 핀(▶)에서 드래그
-   → 빈 공간에 놓기 → "Branch" 검색 → 선택
+① 우클릭 → "Event BeginPlay" 검색 → 선택
 
-② Branch의 Condition 핀에 BSPlaying 연결:
-   → 빈 공간 우클릭 → "Get BSPlaying" 검색 → 선택
-   → BSPlaying의 출력 핀 → Branch의 Condition 핀에 연결
+② 실행 핀에서 드래그 → "Get Owner" 검색 → 선택
+   (이 컴포넌트가 붙어있는 Actor를 가져옴)
 
-③ Branch의 True 핀 (재생 중 → 큐에 저장):
-   → True 핀에서 드래그 → "Set QueuedRawData" 검색
-   → InRawData 핀에서 드래그 → Set QueuedRawData의 입력 핀에 연결
-   
-   → Set QueuedRawData 실행 핀에서 드래그 → "Set QueuedWeightCount" 검색
-   → InWeightCount 핀에서 드래그 → Set QueuedWeightCount 입력에 연결
-   
-   → 이어서 "Set QueuedFPS" → InFPS 연결
-   → 이어서 "Set HasQueuedData" → 체크박스 ✅ (true)
+③ Get Owner 출력 핀에서 드래그
+   → "Get Components by Class" 검색 → 선택
+   → Component Class: Skeletal Mesh Component
 
-④ Branch의 False 핀 (재생 안 함 → 바로 시작):
-   → False 핀에서 드래그 → "Set BSRawData" 검색
-   → InRawData 핀 → Set BSRawData 입력에 연결
-   
-   → 이어서 "Set BSWeightCount" → InWeightCount 연결
-   → 이어서 "Set BSFPS" → InFPS 연결
-   → 이어서 "StartBlendshapes" 검색 → 연결
+④ 리턴 배열에서 Face 찾기:
+   Get Components by Class 출력(Array)에서 드래그
+   → "For Each Loop" 검색
+
+⑤ Loop Body에서:
+   Array Element 핀에서 드래그
+   → "Get FName" 또는 "Get Name" 검색 → 선택
+
+⑥ 이름에 "Face" 포함되는지 확인:
+   Get Name 출력에서 드래그
+   → "Contains" 검색
+   → Substring: "face" (소문자)
+   → ✅ Search Case: Ignore Case (Use Search Case를 false)
+
+⑦ Contains 결과 → Branch
+   → True 핀에서 드래그 → "Set FaceMesh" 검색
+   → Array Element (SkeletalMeshComponent) → FaceMesh에 연결
 ```
 
-완성된 모습:
+완성:
+```
+[BeginPlay] ──▶ Get Owner ──▶ Get Components by Class(SkeletalMesh)
+                                │
+                                ▶──For Each Loop
+                                     │
+                                     Loop Body: Get Name → Contains("face")
+                                                              │
+                                                         [Branch] ── True ──▶ Set FaceMesh
+```
+
+> 이렇게 하면 어떤 MetaHuman에 붙여도 Face 메시를 자동으로 찾습니다.
+> MetaHuman마다 Face 컴포넌트 이름이 다를 수 있어서 "Contains" 로 찾는 겁니다.
+
+### 1-6. EnqueueBlendshapes 함수
+
+```
+My Blueprint → Functions 옆 + → 이름: EnqueueBlendshapes
+함수 노드 선택 → Details → Inputs에서 + 3번:
+  - InRawData : Float Array
+  - InWeightCount : Integer
+  - InFPS : Integer
+```
+
+```
+① [EnqueueBlendshapes] 실행 핀 → "Branch" 검색
+   Condition: "Get BSPlaying" 연결
+
+② True 핀 (재생 중 → 큐에 저장):
+   → "Set QueuedRawData" → InRawData 연결
+   → "Set QueuedWeightCount" → InWeightCount 연결
+   → "Set QueuedFPS" → InFPS 연결
+   → "Set HasQueuedData" → ✅ true
+
+③ False 핀 (재생 안 함 → 바로 시작):
+   → "Set BSRawData" → InRawData 연결
+   → "Set BSWeightCount" → InWeightCount 연결
+   → "Set BSFPS" → InFPS 연결
+   → "StartBlendshapes" 연결
+```
+
+완성:
 ```
 [EnqueueBlendshapes]
-  |
+  │
   ▶──[Branch]──┬─ True ──▶ Set QueuedRawData ──▶ Set QueuedWeightCount ──▶ Set QueuedFPS ──▶ Set HasQueuedData(✅)
-               |
+               │
                └─ False ──▶ Set BSRawData ──▶ Set BSWeightCount ──▶ Set BSFPS ──▶ StartBlendshapes
 ```
 
-### 1-6. StartBlendshapes 함수
-
-**만들기:**
-1. My Blueprint → Functions 옆 **+** → 이름: `StartBlendshapes`
-
-**노드 연결:**
+### 1-7. StartBlendshapes 함수
 
 ```
-① [StartBlendshapes] 실행 핀에서 드래그
-   → "Set BSFrameIndex" 검색 → 값에 0 입력
+My Blueprint → Functions 옆 + → 이름: StartBlendshapes
+```
 
-② Set BSFrameIndex 실행 핀에서 드래그
-   → "Set BSTimer" 검색 → 값에 0.0 입력
-
-③ Set BSTimer 실행 핀에서 드래그
-   → "Set BSPlaying" 검색 → 체크박스 ✅ (true)
+```
+① [StartBlendshapes] ──▶ "Set BSFrameIndex" (값: 0)
+                      ──▶ "Set BSTimer" (값: 0.0)
+                      ──▶ "Set BSPlaying" (✅ true)
 ```
 
 완성:
@@ -183,268 +227,202 @@ BSNames를 선택 → Compile → Default Value 섹션에서 **+** 를 68번 클
 [StartBlendshapes] ──▶ Set BSFrameIndex(0) ──▶ Set BSTimer(0.0) ──▶ Set BSPlaying(✅)
 ```
 
-### 1-7. Event Tick — 메인 로직
-
-**Event Graph** 탭 클릭 (상단).
-
-이게 제일 큰 로직입니다. Part A~D로 나눠서 만듭니다.
-
----
-
-#### Part A: BSPlaying 체크
+### 1-8. Event Tick — Part A: BSPlaying 체크
 
 ```
-① Event Tick 노드가 이미 있을 수 있음. 없으면:
-   우클릭 → "Event Tick" 검색 → 선택
+① 우클릭 → "Event Tick" 검색 → 선택
 
-② Event Tick 실행 핀에서 드래그
-   → "Branch" 검색 → 선택
+② 실행 핀 → "Branch" 검색
+   Condition: "Get BSPlaying" 연결
 
-③ Condition에 BSPlaying 연결:
-   우클릭 → "Get BSPlaying" 검색 → 선택
-   BSPlaying 출력 → Branch의 Condition에 연결
+   False 핀은 비워둡니다.
 ```
-
-> False 핀은 비워둡니다 (아무것도 안 함).
-> True 핀에서 Part B를 이어갑니다.
 
 완성:
 ```
 [Event Tick] ──▶ [Branch] ──┬─ True ──▶ (Part B로)
-                   |         |
+                   │         │
               Get BSPlaying  └─ False ──▶ (없음)
 ```
 
----
-
-#### Part B: 타이머 + 프레임 타이밍
+### 1-9. Event Tick — Part B: 타이머
 
 ```
-④ True 핀에서 드래그 → "Set BSTimer" 검색 → 선택
+③ True 핀 → "Set BSTimer" 검색
+   값: "Get BSTimer" + Event Tick의 "Delta Seconds"
+   → "Float + Float" 노드로 연결
 
-⑤ Set BSTimer에 넣을 값 = 현재 BSTimer + DeltaTime:
-   우클릭 → "Get BSTimer" 검색 → 선택
-   우클릭 → "Float + Float" 검색 → 선택 (또는 Add 검색)
-   
-   연결:
-   - Get BSTimer 출력 → Float+Float의 A 핀
-   - Event Tick의 "Delta Seconds" 핀 → Float+Float의 B 핀
-   - Float+Float 출력 → Set BSTimer의 값 핀
+④ 이어서 → "Branch" 검색
+   Condition: "Get BSTimer" >= (1.0 / "Get BSFPS")
+   → 1.0은 "Make Literal Float"
+   → BSFPS는 "To Float" (Integer→Float 변환)
+   → "Float / Float"로 나누기
+   → "Float >= Float"로 비교
 
-⑥ Set BSTimer 실행 핀에서 드래그 → "Branch" 검색 (두 번째 Branch)
+   False 핀은 비워둡니다 (다음 Tick 대기).
 
-⑦ 두 번째 Branch의 Condition = BSTimer >= (1.0 / BSFPS):
-   우클릭 → "Get BSTimer" 검색
-   우클릭 → "Float >= Float" 검색
-   우클릭 → "Get BSFPS" 검색
-   우클릭 → "Float / Float" 검색 (또는 Divide)
-   
-   연결:
-   - 1.0 (Float 리터럴, 우클릭 → "Make Literal Float" → 1.0) → Divide의 A 핀
-   - Get BSFPS → "To Float" (Integer to Float 변환) → Divide의 B 핀
-   - Get BSTimer → Float>=Float의 A 핀
-   - Divide 출력 → Float>=Float의 B 핀
-   - Float>=Float 출력 → Branch의 Condition
-```
-
-> **False 핀은 비워둡니다** (다음 Tick까지 대기).
-
-```
-⑧ True 핀에서 → BSTimer에서 프레임 시간 빼기:
-   (BSTimer가 프레임 시간보다 크면 → 한 프레임 처리할 시간!)
-   드래그 → "Set BSTimer" 검색
-   
-   값 = Get BSTimer - (1.0 / BSFPS):
-   - "Get BSTimer" + "Float - Float" + 위에서 만든 Divide 결과 사용
-   - Float-Float 출력 → Set BSTimer 값 핀
+⑤ True 핀 → "Set BSTimer"
+   값: "Get BSTimer" - (1.0 / "Get BSFPS")
 ```
 
 완성:
 ```
-(Part A에서)
+(Part A True에서)
   │
   ▶──Set BSTimer(+DeltaTime) ──▶ [Branch] ──┬─ True ──▶ Set BSTimer(-1/FPS) ──▶ (Part C로)
-                                    |         |
-                           BSTimer >= 1/FPS   └─ False ──▶ (없음, 다음 Tick 대기)
+                                    │         │
+                           BSTimer >= 1/FPS   └─ False ──▶ (없음)
 ```
 
----
-
-#### Part C: 프레임 처리 (For Loop)
+### 1-10. Event Tick — Part C: 프레임 처리
 
 ```
-⑨ Set BSTimer 실행 핀에서 드래그 → "Branch" 검색 (세 번째 Branch)
+⑥ 이어서 → "Branch" 검색
+   Condition: "Get BSFrameIndex" < TotalFrames
+   TotalFrames = "Get BSRawData" → "Length" ÷ "Get BSWeightCount"
 
-⑩ Condition = BSFrameIndex < TotalFrames:
-   TotalFrames를 먼저 계산:
-   우클릭 → "Get BSRawData" → 드래그 → "Length" 검색
-   우클릭 → "Get BSWeightCount"
-   우클릭 → "Integer / Integer" 검색 (Divide)
-   
-   연결:
-   - Length 출력 → Divide A 핀
-   - Get BSWeightCount → Divide B 핀
-   = 이게 TotalFrames
-   
-   우클릭 → "Get BSFrameIndex"
-   우클릭 → "Integer < Integer" 검색 (Less)
-   
-   연결:
-   - Get BSFrameIndex → Less A 핀
-   - Divide 출력 → Less B 핀
-   - Less 출력 → Branch Condition
+⑦ True 핀 → "For Loop" 검색
+   - First Index: 0
+   - Last Index: "Get BSWeightCount" - 1
 
-⑪ True 핀 → For Loop:
-   드래그 → "For Loop" 검색
-   - First Index: 0 (기본값)
-   - Last Index: Get BSWeightCount - 1
-     → "Get BSWeightCount" → "Integer - Integer" → B에 1 → 결과를 Last Index에
+⑧ Loop Body에서:
+   DataIndex = "Get BSFrameIndex" × "Get BSWeightCount" + Loop Index
+   → "Integer × Integer" → "Integer + Integer"
 
-⑫ Loop Body 핀 (매 반복마다 실행) → 데이터 인덱스 계산:
-   
-   DataIndex = BSFrameIndex × BSWeightCount + LoopIndex:
-   우클릭 → "Get BSFrameIndex"
-   우클릭 → "Get BSWeightCount"  
-   우클릭 → "Integer × Integer" (Multiply)
-   우클릭 → "Integer + Integer" (Add)
-   
-   연결:
-   - Get BSFrameIndex → Multiply A
-   - Get BSWeightCount → Multiply B
-   - Multiply 결과 → Add A
-   - For Loop의 "Index" 핀 → Add B
-   = 이게 DataIndex
+   Weight = "Get BSRawData" → "Get (a copy)" at DataIndex
 
-⑬ Weight 값 가져오기:
-   우클릭 → "Get BSRawData"
-   BSRawData 핀에서 드래그 → "Get (a copy)" 검색
-   DataIndex (Add 결과) → Get의 Index 핀
-   = 이게 Weight 값
+   MorphName = "Get BSNames" → "Get (a copy)" at Loop Index
 
-⑭ Morph Target 이름 가져오기:
-   우클릭 → "Get BSNames"
-   BSNames 핀에서 드래그 → "Get (a copy)" 검색
-   For Loop의 "Index" 핀 → Get의 Index 핀
-   = 이게 MorphName
+   → "Set Morph Target" 검색
+     - Target: "Get FaceMesh" (변수에서 가져옴)
+     - Morph Target Name: MorphName
+     - Value: Weight
 
-⑮ Set Morph Target:
-   Loop Body 실행 핀에서 드래그 → "Set Morph Target" 검색
-   
-   연결:
-   - Target: Components 패널에서 Face를 그래프로 드래그 → Target에 연결
-   - Morph Target Name: ⑭의 MorphName 연결
-   - Value: ⑬의 Weight 연결
-
-⑯ ★중요★ For Loop의 "Completed" 핀에서 (Loop Body가 아님!):
-   드래그 → "Set BSFrameIndex" 검색
-   
-   값 = BSFrameIndex + 1:
-   "Get BSFrameIndex" → "Integer + Integer" → B에 1 → 결과를 Set에 연결
+⑨ ★ Completed 핀에서 (Loop Body가 아님!) ★:
+   → "Set BSFrameIndex" = "Get BSFrameIndex" + 1
 ```
 
 > **Completed vs Loop Body:**
-> - **Loop Body:** 68번 반복할 때마다 실행 (morph target 설정)
-> - **Completed:** 68번 다 끝난 후 1번만 실행 (프레임 인덱스 +1)
-> - BSFrameIndex++를 Loop Body에 넣으면 68번 증가해서 깨집니다!
+> - **Loop Body:** 68번 반복 (morph target 설정)
+> - **Completed:** 68번 끝난 후 1번 (프레임 인덱스 +1)
+> - Loop Body에 넣으면 68번 증가해서 깨집니다!
 
 완성:
 ```
 (Part B에서)
   │
-  ▶──[Branch] ──┬─ True ──▶ [For Loop 0~67] ──┬─ Loop Body ──▶ Get BSRawData[FrameIdx*68+i]
-        |        |                              |                     │
-  FrameIdx <     └─ False ──▶ (Part D로)        |                     ▶──Set Morph Target(Face, BSNames[i], Weight)
-  TotalFrames                                   |
+  ▶──[Branch] ──┬─ True ──▶ [For Loop 0~67] ──┬─ Loop Body ──▶ Get BSRawData[FrameIdx×68+i]
+        │        │                              │                     │
+  FrameIdx <     └─ False ──▶ (Part D로)        │                     ▶──Set Morph Target(FaceMesh, BSNames[i], Weight)
+  TotalFrames                                   │
                                                 └─ Completed ──▶ Set BSFrameIndex(+1)
 ```
 
----
+### 1-11. Event Tick — Part D: 재생 끝 + 큐
 
-#### Part D: 재생 끝 + 큐 처리
-
-step ⑨의 세 번째 Branch의 **False** 핀에 연결 (BSFrameIndex >= TotalFrames):
+step ⑥의 Branch **False** 핀에서:
 
 ```
-⑰ False 핀에서 드래그 → "Set BSPlaying" → 체크 해제 (false)
-   이어서 → "Set BSFrameIndex" → 값 0
+⑩ → "Set BSPlaying" (false)
+   → "Set BSFrameIndex" (0)
 
-⑱ 큐 확인:
-   이어서 → "Branch" 검색
-   Condition: 우클릭 → "Get HasQueuedData" → Branch Condition에 연결
+⑪ → "Branch" 검색
+   Condition: "Get HasQueuedData"
 
-⑲ True 핀 (큐에 다음 문장 있음 → 바로 재생!):
-   드래그 → "Set BSRawData"
-   우클릭 → "Get QueuedRawData" → Set BSRawData 값에 연결
-   
-   이어서 → "Set BSWeightCount"
-   우클릭 → "Get QueuedWeightCount" → 값에 연결
-   
-   이어서 → "Set BSFPS"
-   우클릭 → "Get QueuedFPS" → 값에 연결
-   
-   이어서 → "Set HasQueuedData" → 체크 해제 (false)
-   이어서 → "Set QueuedWeightCount" → 값 0
-   이어서 → "Set QueuedFPS" → 값 0
-   
-   이어서 → "Get QueuedRawData" → 드래그 → "Clear" 검색 → 선택
-   
-   이어서 → "StartBlendshapes" 검색 → 연결
-   (끊김 없이 다음 문장 재생!)
+⑫ True 핀 (큐에 다음 문장 있음 → 바로 재생!):
+   → "Set BSRawData" ← "Get QueuedRawData"
+   → "Set BSWeightCount" ← "Get QueuedWeightCount"
+   → "Set BSFPS" ← "Get QueuedFPS"
+   → "Set HasQueuedData" (false)
+   → "Set QueuedWeightCount" (0)
+   → "Set QueuedFPS" (0)
+   → "Get QueuedRawData" → "Clear"
+   → "StartBlendshapes" (다음 문장!)
 
-⑳ False 핀 (큐 비어있음 → 표정 리셋):
-   드래그 → "For Loop" 검색
-   - First Index: 0
-   - Last Index: "Get BSNames" → "Length" → "Integer - Integer" → B에 1
-
-   Loop Body에서:
-   → "Set Morph Target" 검색
-   - Target: Face 컴포넌트 (위에서와 동일)
-   - Morph Target Name: "Get BSNames" → "Get (a copy)" at Loop Index
-   - Value: 0.0 (Make Literal Float → 0.0)
+⑬ False 핀 (큐 비어있음 → 표정 리셋):
+   → "For Loop"
+     First Index: 0
+     Last Index: "Get BSNames" → "Length" - 1
+   → Loop Body:
+     "Set Morph Target"
+       Target: "Get FaceMesh"
+       Morph Target Name: "Get BSNames" → "Get (a copy)" at Loop Index
+       Value: 0.0
 ```
 
 완성:
 ```
 (Part C의 Branch False에서)
   │
-  ▶──Set BSPlaying(false) ──▶ Set BSFrameIndex(0) ──▶ [Branch] ──┬─ True (큐 있음)
-                                                          |        |
-                                                   HasQueuedData   ├──▶ Set BSRawData(=Queued)
-                                                                   ├──▶ Set BSWeightCount(=Queued)
-                                                                   ├──▶ Set BSFPS(=Queued)
-                                                                   ├──▶ Set HasQueuedData(false)
-                                                                   ├──▶ Clear QueuedRawData
-                                                                   └──▶ StartBlendshapes (다음 문장!)
-                                                                   
-                                                          └─ False (큐 없음)
-                                                                   │
-                                                                   ▶──[For Loop 0~67] ──▶ Set Morph Target(Face, BSNames[i], 0.0)
-                                                                   (표정 리셋)
+  ▶──Set BSPlaying(false) ──▶ Set FrameIdx(0) ──▶ [Branch] ──┬─ True (큐 있음)
+                                                      │        │
+                                               HasQueuedData   ├──▶ Set BSRawData(=Queued)
+                                                               ├──▶ Set BSWeightCount(=Queued)
+                                                               ├──▶ Set BSFPS(=Queued)
+                                                               ├──▶ Set HasQueuedData(false)
+                                                               ├──▶ Clear QueuedRawData
+                                                               └──▶ StartBlendshapes (다음 문장!)
+
+                                                      └─ False (큐 없음)
+                                                               │
+                                                               ▶──[For Loop 0~67] ──▶ Set Morph Target(FaceMesh, BSNames[i], 0.0)
+                                                               (표정 리셋)
 ```
 
-### 1-8. 나머지 2개도 동일하게
+### 1-12. 컴포넌트 완성! Compile + Save
 
-BP_MH_VisualDesigner, BP_MH_SoftwareEngineer도 동일하게 만듭니다.
-
-> 팁: BP_MH_UXResearcher의 Event Graph에서
-> Ctrl+A (전체 선택) → Ctrl+C (복사)
-> → 다른 BP 열어서 Ctrl+V (붙여넣기)
+상단 **Compile** (초록 체크) → **Save** 클릭.
+BP_MH_BlendshapePlayer 완성!
 
 ---
 
-## STEP 2. BP_OSCManager 만들기
+## STEP 2. MetaHuman 자식 BP에 컴포넌트 붙이기
 
-### 2-1. 생성
+### 2-1. 자식 BP 생성 (3개)
+
+```
+Content/MetaHumans/ 에서:
+  → 첫 번째 MetaHuman BP 우클릭 → "Create Child Blueprint Class"
+  → 이름: BP_MH_UXResearcher
+
+  → 두 번째 MetaHuman BP 우클릭 → "Create Child Blueprint Class"
+  → 이름: BP_MH_VisualDesigner
+
+  → 세 번째 MetaHuman BP 우클릭 → "Create Child Blueprint Class"
+  → 이름: BP_MH_SoftwareEngineer
+```
+
+### 2-2. 컴포넌트 추가 (각각에)
+
+각 자식 BP를 더블클릭해서 열고:
+
+```
+Components 패널 → + Add 클릭
+  → "BP_MH_BlendshapePlayer" 검색
+  → 선택 → 추가됨!
+```
+
+**이게 끝입니다.** 변수/함수/로직은 컴포넌트에 다 있으므로 여기서 할 건 없습니다.
+
+3개 전부 동일하게: + Add → BP_MH_BlendshapePlayer
+
+> 각 MetaHuman은 외모가 다르지만, 블렌드셰이프 재생 로직은 동일합니다.
+
+---
+
+## STEP 3. BP_OSCManager 만들기
+
+### 3-1. 생성
 
 ```
 Content Browser 빈 공간 우클릭 → Blueprint Class → Actor → 이름: BP_OSCManager
 ```
 
-### 2-2. OSC Server 컴포넌트 추가
+### 3-2. OSC Server 컴포넌트 추가
 
 ```
 Components 패널 → + Add → "OSC Server" 검색 → 선택
-이름을 "OscServer"로 변경 (클릭해서 F2)
+이름을 "OscServer"로 변경 (F2)
 ```
 
 OscServer 선택 → Details:
@@ -452,7 +430,7 @@ OscServer 선택 → Details:
 - Server Port: `7400`
 - Start Listening On Begin Play: ✅
 
-### 2-3. 변수 추가
+### 3-3. 변수 추가
 
 | 변수명 | 타입 | Instance Editable |
 |--------|------|-------------------|
@@ -465,113 +443,89 @@ OscServer 선택 → Details:
 | MH_VisualDesigner | BP_MH_VisualDesigner (Object Ref) | ✅ 눈 아이콘 |
 | MH_SoftwareEngineer | BP_MH_SoftwareEngineer (Object Ref) | ✅ 눈 아이콘 |
 
-> **MH_* 변수 타입 설정법:**
-> Variable Type 클릭 → "BP_MH_UXResearcher" 검색 → **Object Reference** 선택
-> (Class Reference 아님!)
+> **MH_* 변수 타입:** "BP_MH_UXResearcher" 검색 → **Object Reference** 선택
+> **Instance Editable:** 변수 옆 **눈 아이콘** 클릭
 
-> **Instance Editable:** 변수 이름 옆의 **눈 아이콘** 클릭 → 레벨에서 값 지정 가능
-
-### 2-4. BeginPlay — OSC 이벤트 바인딩
+### 3-4. BeginPlay — OSC 이벤트 바인딩
 
 ```
-① Event BeginPlay (이미 있을 수 있음, 없으면 우클릭 → 검색)
+① Event BeginPlay
 
 ② Components 패널에서 OscServer를 그래프로 드래그
 
 ③ OscServer 핀에서 드래그
-   → "Bind Event to On Osc Message Received" 검색 → 선택
+   → "Bind Event to On Osc Message Received" 검색
 
-④ Bind 노드의 빨간 Event 핀에서 드래그
-   → "Add Custom Event" 선택 → 이름: OnOscMessage
+④ 빨간 Event 핀에서 드래그
+   → "Add Custom Event" → 이름: OnOscMessage
 
 ⑤ 실행 핀 연결:
    Event BeginPlay ──▶ Bind Event to On Osc Message Received
 ```
 
-### 2-5. OnOscMessage — 주소 분기
+### 3-5. OnOscMessage — 주소 분기
 
 ```
 ① OnOscMessage의 Message 핀에서 드래그
-   → "Get OSC Message Address" 검색 → 선택
+   → "Get OSC Message Address" 검색
 
-② Get OSC Message Address 출력 핀에서 드래그
-   → "Get Full Path" 검색 → 선택
+② 출력 핀에서 드래그
+   → "Get Full Path" 검색
 ```
 
-> **Get Full Path가 필요한 이유:**
-> Get OSC Message Address는 FOSCAddress 구조체입니다.
-> Get Full Path로 "/mh/bs_start" 같은 문자열로 변환합니다.
+> **Get Full Path:** FOSCAddress 구조체 → "/mh/bs_start" 문자열로 변환
 
 ```
-③ Get Full Path의 Return Value (String) 핀에서 드래그
-   → "Switch on String" 검색 → 선택
-
-④ Switch 노드 선택 → Details 패널에서 핀 추가:
+③ Return Value (String) 핀에서 드래그
+   → "Switch on String" 검색
    + 클릭 → /mh/bs_start
    + 클릭 → /mh/bs
    + 클릭 → /mh/bs_end
 
-⑤ OnOscMessage 실행 핀에서 드래그 → Switch on String에 연결
+④ OnOscMessage 실행 핀 → Switch on String 연결
 ```
 
-### 2-6. /mh/bs_start 처리
+### 3-6. /mh/bs_start 처리
 
-Switch의 `/mh/bs_start` 핀에서 시작:
-
-> **중요: OSC Get 노드에는 출력 핀이 2개 있습니다!**
-> - **Return Value (bool):** 값을 찾았는지 여부 (true/false). 이걸 쓰면 안 됨!
+> **중요: OSC Get 노드에는 출력 핀이 2개!**
+> - **Return Value (bool):** 성공 여부. 이걸 쓰면 안 됨!
 > - **Value:** 실제 데이터. **이걸 써야 합니다!**
 
 ```
 ① /mh/bs_start 핀에서 드래그
-   → "Get OSC Message String at Index" 검색
+   → "Get OSC Message String at Index" (Index: 0)
+   → ★ Value ★ → "Set CurrentCharID"
 
-② Get 노드에서:
-   - Message 핀: OnOscMessage의 Message 연결
-   - Index: 0
-   - ★ Value 핀 (String) ★ 에서 드래그 → "Set CurrentCharID" 검색 → 연결
-   (Return Value가 아님!)
+② → "Get OSC Message Integer at Index" (Index: 1)
+   → ★ Value ★ → "Set ExpectedFrames"
 
-③ Set CurrentCharID 실행 핀에서 드래그
-   → "Get OSC Message Integer at Index" 검색
-   - Message: OnOscMessage의 Message
-   - Index: 1
-   - ★ Value 핀 (Integer) ★ → "Set ExpectedFrames" 연결
+③ → "Get OSC Message Integer at Index" (Index: 2)
+   → ★ Value ★ → "Set CurrentWeightCount"
 
-④ 이어서 → "Get OSC Message Integer at Index"
-   - Index: 2
-   - ★ Value ★ → "Set CurrentWeightCount"
+④ → "Get OSC Message Integer at Index" (Index: 3)
+   → ★ Value ★ → "Set CurrentFPS"
 
-⑤ 이어서 → "Get OSC Message Integer at Index"
-   - Index: 3
-   - ★ Value ★ → "Set CurrentFPS"
-
-⑥ 이어서 → "Get CurrentBSFrames" → 드래그 → "Clear" 검색 → 선택
+⑤ → "Get CurrentBSFrames" → "Clear"
 ```
 
 완성:
 ```
-/mh/bs_start ──▶ Get String[0]→Set CharID ──▶ Get Int[1]→Set Frames ──▶ Get Int[2]→Set WeightCount ──▶ Get Int[3]→Set FPS ──▶ Clear BSFrames
+/mh/bs_start ──▶ Get String[0]→CharID ──▶ Get Int[1]→Frames ──▶ Get Int[2]→WeightCount ──▶ Get Int[3]→FPS ──▶ Clear BSFrames
 ```
 
-### 2-7. /mh/bs 처리
-
-Switch의 `/mh/bs` 핀에서 시작:
+### 3-7. /mh/bs 처리
 
 ```
-① /mh/bs 핀에서 드래그 → "For Loop" 검색
+① /mh/bs 핀 → "For Loop"
    - First Index: 0
-   - Last Index: "Get CurrentWeightCount" → "Integer - Integer" → B에 1
+   - Last Index: "Get CurrentWeightCount" - 1
 
-② Loop Body에서:
-   → "Get OSC Message Float at Index" 검색
-   - Message: OnOscMessage의 Message
-   - Index: For Loop의 "Index" 핀 + 2
-     ("Integer + Integer" → A에 Loop Index, B에 2)
-   - ★ Value 핀 (Float) ★ 에서 드래그
+② Loop Body:
+   → "Get OSC Message Float at Index"
+   - Index: Loop Index + 2 ("Integer + Integer")
+   - ★ Value ★ 에서 드래그
 
-③ "Get CurrentBSFrames" → 드래그 → "Add" 검색
-   → ② 의 Float Value → Add의 Element 핀에 연결
+③ → "Get CurrentBSFrames" → "Add" → Float Value 연결
 ```
 
 완성:
@@ -581,69 +535,69 @@ Switch의 `/mh/bs` 핀에서 시작:
              Loop Body: Get Float[LoopIndex+2] → CurrentBSFrames.Add
 ```
 
-### 2-8. /mh/bs_end 처리
+### 3-8. /mh/bs_end 처리
 
-Switch의 `/mh/bs_end` 핀에서 시작:
+여기서 MetaHuman의 **컴포넌트**에 있는 EnqueueBlendshapes를 호출합니다.
 
 ```
-① /mh/bs_end 핀에서 드래그
-   → "Get OSC Message String at Index" 검색
-   - Index: 0
-   - ★ Value ★ 가져옴 = CharID
+① /mh/bs_end 핀 → "Get OSC Message String at Index" (Index: 0)
+   → ★ Value ★ = CharID
 
-② Value (String) 핀에서 드래그
-   → "Switch on String" 검색
-   + 클릭 → MH_UXResearcher
-   + 클릭 → MH_VisualDesigner
-   + 클릭 → MH_SoftwareEngineer
+② CharID 핀에서 드래그 → "Switch on String"
+   + MH_UXResearcher
+   + MH_VisualDesigner
+   + MH_SoftwareEngineer
 
 ③ MH_UXResearcher 핀에서:
-   우클릭 → "Get MH_UXResearcher" 검색
-   핀에서 드래그 → "EnqueueBlendshapes" 검색
-   
-   연결:
-   - InRawData: 우클릭 → "Get CurrentBSFrames" → InRawData에 연결
-   - InWeightCount: 우클릭 → "Get CurrentWeightCount" → 연결
-   - InFPS: 우클릭 → "Get CurrentFPS" → 연결
+   우클릭 → "Get MH_UXResearcher" → 핀에서 드래그
+   → "Get Component by Class" 검색
+   → Component Class: BP_MH_BlendshapePlayer
 
-④ MH_VisualDesigner, MH_SoftwareEngineer도 동일하게
-   (각각 Get MH_VisualDesigner, Get MH_SoftwareEngineer 사용)
+④ Get Component by Class 출력에서 드래그
+   → "EnqueueBlendshapes" 검색
+   - InRawData: "Get CurrentBSFrames"
+   - InWeightCount: "Get CurrentWeightCount"
+   - InFPS: "Get CurrentFPS"
+
+⑤ MH_VisualDesigner, MH_SoftwareEngineer도 동일하게
 ```
 
 완성:
 ```
 /mh/bs_end ──▶ Get String[0] ──▶ Switch on String
-                                   ├─ MH_UXResearcher ──▶ Get MH_UXR → EnqueueBlendshapes(BSFrames, WeightCount, FPS)
-                                   ├─ MH_VisualDesigner ──▶ Get MH_VD → EnqueueBlendshapes(...)
-                                   └─ MH_SoftwareEngineer ──▶ Get MH_SE → EnqueueBlendshapes(...)
+                ├─ MH_UXResearcher ──▶ Get MH_UXR → Get Component(BlendshapePlayer) → EnqueueBlendshapes(BSFrames, WeightCount, FPS)
+                ├─ MH_VisualDesigner ──▶ Get MH_VD → Get Component(BlendshapePlayer) → EnqueueBlendshapes(...)
+                └─ MH_SoftwareEngineer ──▶ Get MH_SE → Get Component(BlendshapePlayer) → EnqueueBlendshapes(...)
 ```
 
 ---
 
-## STEP 3. 레벨 배치 + 연결
+## STEP 4. 레벨 배치 + 연결
 
-### 3-1. 배치
+### 4-1. 배치
 
 Content Browser에서 레벨로 드래그:
-1. `BP_MH_UXResearcher` (원본 MetaHuman이 아닌 **자식 BP!**)
+1. `BP_MH_UXResearcher` (원본이 아닌 **자식 BP!**)
 2. `BP_MH_VisualDesigner`
 3. `BP_MH_SoftwareEngineer`
 4. `BP_OSCManager`
 
-### 3-2. OSCManager에 MetaHuman 연결
+### 4-2. OSCManager에 MetaHuman 연결
 
-1. 레벨에서 `BP_OSCManager` 클릭
-2. Details 패널 스크롤 → **Default** 섹션
-3. `MH_UXResearcher` 드롭다운 → 레벨의 `BP_MH_UXResearcher` 선택
-4. `MH_VisualDesigner` → 레벨의 `BP_MH_VisualDesigner` 선택
-5. `MH_SoftwareEngineer` → 레벨의 `BP_MH_SoftwareEngineer` 선택
+```
+1. 레벨에서 BP_OSCManager 클릭
+2. Details 패널 스크롤
+3. MH_UXResearcher → 드롭다운 → 레벨의 BP_MH_UXResearcher 선택
+4. MH_VisualDesigner → BP_MH_VisualDesigner 선택
+5. MH_SoftwareEngineer → BP_MH_SoftwareEngineer 선택
+```
 
 ---
 
-## STEP 4. 테스트
+## STEP 5. 테스트
 
-1. UE5 에디터 상단 **▶ Play** (또는 Alt+P)
-2. 노트북 터미널에서:
+1. UE5 에디터 **▶ Play** (Alt+P)
+2. 노트북 터미널:
 ```bash
 python test_osc.py
 ```
@@ -655,10 +609,12 @@ python test_osc.py
 
 | 증상 | 원인 | 해결 |
 |------|------|------|
-| OSC 수신 안 됨 | 방화벽 | Windows 방화벽 → 인바운드 규칙 → UDP 7400 허용 |
+| OSC 수신 안 됨 | 방화벽 | Windows 방화벽 → 인바운드 → UDP 7400 허용 |
+| 입이 안 움직임 | Tick 꺼져있음 | BP_MH_BlendshapePlayer의 Class Defaults → Can Ever Tick ✅ |
 | 입이 안 움직임 | Value 핀 잘못 연결 | OSC Get 노드에서 **Value** 핀 사용 (Return Value 아님) |
-| 입이 안 움직임 | Face 컴포넌트 미연결 | Set Morph Target의 Target에 Face 연결 확인 |
-| 입이 안 움직임 | BSNames 비어있음 | 68개 이름이 전부 입력됐는지 확인 |
+| 입이 안 움직임 | FaceMesh 못 찾음 | BeginPlay에서 "face" Contains 체크 확인. Print String으로 Get Name 출력 |
+| 입이 안 움직임 | BSNames 비어있음 | 68개 이름 전부 입력됐는지 확인 |
 | Cast 실패 | 원본 BP 배치 | 자식 BP (BP_MH_*) 를 배치해야 함 |
-| 마지막 표정 얼어있음 | 리셋 누락 | Part D step ⑳ 확인 |
-| OSC 노드 안 보임 | 플러그인 꺼져있음 | Edit → Plugins → OSC 활성화 → 재시작 |
+| 마지막 표정 얼어있음 | 리셋 누락 | Part D step ⑬ 확인 |
+| OSC 노드 안 보임 | 플러그인 꺼짐 | Edit → Plugins → OSC 활성화 → 재시작 |
+| 컴포넌트 검색 안 됨 | Compile 안 함 | BP_MH_BlendshapePlayer Compile 먼저 |

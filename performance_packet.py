@@ -1,5 +1,6 @@
 # performance_packet.py
 from dataclasses import dataclass, field
+from typing import List
 
 AGENT_CHARACTER_MAP: dict[str, str] = {
     "UXResearcher":     "MH_UXResearcher",
@@ -14,6 +15,9 @@ class PerformancePacket:
     character_id:    str
     text:            str
     audio_bytes:     bytes = field(default=b"")
+    blendshape_fps:  int = 60
+    weight_count:    int = 0
+    blendshape_frames: List[List[float]] = field(default_factory=list)
 
 
 def build_packet(agent_name: str, text: str) -> PerformancePacket | None:

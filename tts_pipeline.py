@@ -1,5 +1,6 @@
 # tts_pipeline.py
 import os
+import base64
 import threading
 import logging
 from dotenv import load_dotenv
@@ -61,12 +62,14 @@ def _synthesize(packet: PerformancePacket) -> bytes:
     return b"".join(gen)
 
 
-_CHUNK_SIZE = 8192
+_CHUNK_B64_SIZE = 60000  # Base64 String 청크 크기 (OSC String 안전 범위)
 
 def _send_via_osc(packet: PerformancePacket) -> None:
     osc = _osc()
     audio = packet.audio_bytes
-    chunks = [audio[i:i + _CHUNK_SIZE] for i in range(0, len(audio), _CHUNK_SIZE)]
+    # PCM → Base64 인코딩 → String 청크로 분할
+    b64 = base64.b64encode(audio).decode("ascii")
+    chunks = [b64[i:i + _CHUNK_B64_SIZE] for i in range(0, len(b64), _CHUNK_B64_SIZE)]
     with _osc_lock:
         osc.send_message("/mh/start", [
             packet.character_id,
@@ -76,7 +79,7 @@ def _send_via_osc(packet: PerformancePacket) -> None:
             osc.send_message("/mh/chunk", [packet.character_id, idx, chunk])
         osc.send_message("/mh/end", [packet.character_id])
     logger.info(
-        f"[OSC] {packet.agent_name} | {len(audio)}bytes → {len(chunks)}chunks"
+        f"[OSC] {packet.agent_name} | {len(audio)}bytes → Base64 {len(b64)}chars → {len(chunks)}chunks"
     )
 
 

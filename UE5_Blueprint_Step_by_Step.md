@@ -533,16 +533,16 @@ Switch의 `/mh/bs_start` 핀에서 시작:
    (Return Value가 아님!)
 
 ③ Set CurrentCharID 실행 핀에서 드래그
-   → "Get OSC Message Int32 at Index" 검색
+   → "Get OSC Message Integer at Index" 검색
    - Message: OnOscMessage의 Message
    - Index: 1
    - ★ Value 핀 (Integer) ★ → "Set ExpectedFrames" 연결
 
-④ 이어서 → "Get OSC Message Int32 at Index"
+④ 이어서 → "Get OSC Message Integer at Index"
    - Index: 2
    - ★ Value ★ → "Set CurrentWeightCount"
 
-⑤ 이어서 → "Get OSC Message Int32 at Index"
+⑤ 이어서 → "Get OSC Message Integer at Index"
    - Index: 3
    - ★ Value ★ → "Set CurrentFPS"
 

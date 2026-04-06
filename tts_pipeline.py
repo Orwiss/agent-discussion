@@ -3,6 +3,7 @@
 import os
 import json
 import base64
+import re
 import struct
 import subprocess
 import tempfile
@@ -182,42 +183,64 @@ def _send_audio_via_osc(packet: PerformancePacket) -> None:
     )
 
 
+# ── 문장 분리 ──
+_SENTENCE_RE = re.compile(r'(?<=[.?!。!?])\s+')
+
+def _split_sentences(text: str) -> list[str]:
+    """마침표/물음표/느낌표 기준 문장 분리."""
+    parts = _SENTENCE_RE.split(text.strip())
+    return [s.strip() for s in parts if s.strip()]
+
+
 # ── Entry point ──
 def trigger(agent_name: str, text: str) -> None:
-    """guardrails.py에서 호출. daemon thread에서 전체 파이프라인 실행."""
+    """guardrails.py에서 호출. daemon thread에서 문장 단위 스트리밍 실행."""
     def _run():
-        wav_path = None
         try:
-            # 1. 패킷 생성
-            packet = build_packet(agent_name, text)
-            if packet is None:
+            sentences = _split_sentences(text)
+            if not sentences:
                 return
 
-            # 2. ElevenLabs TTS → PCM
-            packet.audio_bytes = _synthesize(packet)
+            for i, sentence in enumerate(sentences):
+                wav_path = None
+                try:
+                    # 1. 문장별 패킷 생성
+                    packet = build_packet(agent_name, sentence)
+                    if packet is None:
+                        continue
 
-            # 3. PCM → WAV 임시 파일
-            wav_path = _pcm_to_wav(packet.audio_bytes)
+                    # 2. ElevenLabs TTS → PCM
+                    packet.audio_bytes = _synthesize(packet)
 
-            # 4. Audio2Face → 블렌드셰이프
-            bs_data = _generate_blendshapes(wav_path)
-            if bs_data:
-                packet.blendshape_fps = bs_data["fps"]
-                packet.weight_count = bs_data["weight_count"]
-                packet.blendshape_frames = bs_data["frames"]
+                    # 3. PCM → WAV 임시 파일
+                    wav_path = _pcm_to_wav(packet.audio_bytes)
 
-            # 5. OSC 전송 (블렌드셰이프 → 오디오 순서)
-            _send_blendshapes_via_osc(packet)
-            _send_audio_via_osc(packet)
+                    # 4. Audio2Face → 블렌드셰이프
+                    bs_data = _generate_blendshapes(wav_path)
+                    if bs_data:
+                        packet.blendshape_fps = bs_data["fps"]
+                        packet.weight_count = bs_data["weight_count"]
+                        packet.blendshape_frames = bs_data["frames"]
+
+                    # 5. OSC 전송 — 준비되는 즉시 전송
+                    _send_blendshapes_via_osc(packet)
+                    _send_audio_via_osc(packet)
+
+                    logger.info(
+                        f"[Stream] {agent_name} 문장 {i+1}/{len(sentences)}: "
+                        f"{len(sentence)}자 → {len(packet.blendshape_frames)}frames"
+                    )
+
+                except Exception as e:
+                    logger.error(f"[TTS] {agent_name} 문장 {i+1} 실패: {e}", exc_info=True)
+                finally:
+                    if wav_path and os.path.exists(wav_path):
+                        try:
+                            os.unlink(wav_path)
+                        except OSError:
+                            pass
 
         except Exception as e:
             logger.error(f"[TTS] {agent_name} 실패: {e}", exc_info=True)
-        finally:
-            # 임시 WAV 파일 삭제
-            if wav_path and os.path.exists(wav_path):
-                try:
-                    os.unlink(wav_path)
-                except OSError:
-                    pass
 
     threading.Thread(target=_run, daemon=True, name=f"tts-{agent_name}").start()

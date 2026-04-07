@@ -29,6 +29,22 @@
 
 ---
 
+## 전체 흐름
+
+```
+노트북 (Python)
+  → OSC /mh/bs_start [캐릭터ID, 프레임수, weight수, fps]
+  → OSC /mh/bs [캐릭터ID, 프레임인덱스, w0, w1, ..., w67]  ×N
+  → OSC /mh/bs_end [캐릭터ID]
+
+데스크탑 (UE5.6)
+  → BP_OSCManager가 OSC 수신
+  → 블렌드셰이프: 프레임 버퍼에 저장 → Tick에서 Set Morph Target
+  → 오디오: 노트북에서 직접 스피커로 재생 (UE5에서 처리 안 함)
+```
+
+---
+
 ## 만들 것 요약
 
 ```
@@ -42,6 +58,17 @@ BP_MH_SoftwareEngineer  → + Add Component → BP_MH_BlendshapePlayer
 [BP_OSCManager] ← Actor
   - OSC 수신 → 캐릭터별 분기 → 컴포넌트의 EnqueueBlendshapes 호출
 ```
+
+---
+
+## STEP 0. 프로젝트 세팅
+
+1. Epic Games Launcher → UE **5.6** 설치
+2. New Project → Games → Blank → Blueprint → 이름: `AgentMH`
+3. Edit → Plugins → `OSC` 검색 → 체크 ✅ → 재시작
+4. MetaHuman Creator에서 캐릭터 3개 Export (이 프로젝트로)
+
+> 필요한 플러그인은 **OSC 하나**뿐입니다.
 
 ---
 
@@ -223,8 +250,10 @@ BSNames 선택 → Compile → Default Value에서 **+** 를 68번 클릭.
    → "For Each Loop" 검색
 
 ⑤ Loop Body에서:
-   Array Element 핀에서 드래그
-   → "Get Display Name" 검색 → 선택 (String 바로 반환)
+   Array Element 핀에서 **드래그해서 빈 공간에 놓기**
+   → 검색창에 "Display Name" 입력 → "Get Display Name" 선택
+   (핀에서 드래그하면 SkeletalMeshComponent 함수만 필터링돼서 나옴!)
+   (빈 공간 우클릭으로 검색하면 동명 노드가 많아서 헷갈림)
 
 ⑥ 이름에 "Face" 포함되는지 확인:
    Get Display Name 출력에서 드래그
@@ -322,128 +351,295 @@ My Blueprint → Functions 옆 + → 이름: StartBlendshapes
               Get BSPlaying  └─ False ──▶ (없음)
 ```
 
-### 1-9. Event Tick — Part B: 타이머
+### 1-9. Event Tick — Part B: 타이머 누적
+
+> **목표:** 매 Tick마다 BSTimer에 경과 시간(Delta Seconds)을 더한다.
+> 그래서 BSTimer가 일정 값 이상이 되면 다음 블렌드셰이프 프레임으로 넘긴다.
+
+**③ BSTimer에 경과 시간 더하기 (BSTimer = BSTimer + DeltaSeconds)**
 
 ```
-③ True 핀 → "Set BSTimer" 검색
-   값: "Get BSTimer" + Event Tick의 "Delta Seconds"
-   → "Float + Float" 노드로 연결
+③-1. 우클릭 → "Float + Float" 검색 → 선택 (Add 노드)
 
-④ 이어서 → "Branch" 검색
-   Condition: "Get BSTimer" >= (1.0 / "Get BSFPS")
-   → 1.0은 "Make Literal Float"
-   → BSFPS는 "To Float" (Integer→Float 변환)
-   → "Float / Float"로 나누기
-   → "Float >= Float"로 비교
+③-2. Add 노드의 왼쪽 위 입력 핀:
+     My Blueprint에서 "BSTimer" 변수를 그래프로 드래그 (Get BSTimer)
+     → Get BSTimer 출력 핀을 Add 노드 왼쪽 위 입력에 연결
 
-   False 핀은 비워둡니다 (다음 Tick 대기).
+③-3. Add 노드의 왼쪽 아래 입력 핀:
+     Event Tick 노드를 보면 "Delta Seconds" 핀이 있음 (연두색, Float)
+     → Delta Seconds 핀을 Add 노드 왼쪽 아래 입력에 연결
 
-⑤ True 핀 → "Set BSTimer"
-   값: "Get BSTimer" - (1.0 / "Get BSFPS")
+③-4. Part A의 Branch True 핀에서 드래그 → "Set BSTimer" 검색
+     → Set BSTimer의 값 핀에 Add 노드의 출력(오른쪽) 연결
+```
+
+연결 모습:
+```
+[Get BSTimer] ──────┐
+                    ├──▶ [Float + Float] ──▶ [Set BSTimer] 의 값 핀
+[Delta Seconds] ────┘
+                         (BSTimer + DeltaSeconds 결과가 BSTimer에 저장됨)
+```
+
+**④ BSTimer가 "1프레임 분량 시간" 이상인지 비교**
+
+> 1프레임 분량 시간 = 1.0 ÷ FPS. 예: 60fps면 1/60 = 0.0167초.
+> BSTimer가 이 값 이상이면 → 다음 프레임으로 넘긴다.
+
+```
+④-1. 우클릭 → "Make Literal Float" 검색 → 선택
+     → Value에 1.0 입력
+
+④-2. BSFPS는 Integer라서 Float로 변환해야 함:
+     My Blueprint에서 "BSFPS" 변수를 그래프로 드래그 (Get BSFPS)
+     → Get BSFPS 출력 핀에서 드래그 → "To Float (Integer)" 검색 → 선택
+
+④-3. 우클릭 → "Float / Float" 검색 → 선택 (나누기 노드)
+     → 왼쪽 위 입력: Make Literal Float(1.0)의 출력 연결
+     → 왼쪽 아래 입력: To Float의 출력 연결
+     (이제 이 노드의 출력 = 1.0 / FPS)
+
+④-4. 우클릭 → "Float >= Float" 검색 → 선택 (비교 노드)
+     → 왼쪽 위 입력: Get BSTimer 출력 연결 (③에서 만든 것 재사용 또는 새로 드래그)
+     → 왼쪽 아래 입력: Float / Float(1.0/FPS) 출력 연결
+
+④-5. Set BSTimer 실행 핀에서 드래그 → "Branch" 검색
+     → Condition 핀: Float >= Float의 출력 (초록색) 연결
+
+     False 핀은 비워둡니다 (다음 Tick 대기).
+```
+
+**⑤ True면 BSTimer에서 1프레임 분량 시간을 빼기**
+
+> 왜 0으로 리셋이 아니라 빼기? 남은 시간을 보존해서 정확한 타이밍을 유지하기 위함.
+
+```
+⑤-1. 우클릭 → "Float - Float" 검색 → 선택 (빼기 노드)
+     → 왼쪽 위 입력: Get BSTimer 출력 연결
+     → 왼쪽 아래 입력: ④-3에서 만든 Float / Float(1.0/FPS) 출력 연결
+
+⑤-2. Branch의 True 핀에서 드래그 → "Set BSTimer" 검색
+     → 값 핀에 Float - Float 출력 연결
 ```
 
 완성:
 ```
 (Part A True에서)
   │
-  ▶──Set BSTimer(+DeltaTime) ──▶ [Branch] ──┬─ True ──▶ Set BSTimer(-1/FPS) ──▶ (Part C로)
-                                    │         │
-                           BSTimer >= 1/FPS   └─ False ──▶ (없음)
+  ▶──[Set BSTimer = BSTimer + DeltaSeconds]
+       │
+       ▶──[Branch: BSTimer >= 1.0/FPS ?]
+            │
+            ├─ True ──▶ [Set BSTimer = BSTimer - 1.0/FPS] ──▶ (Part C로)
+            │
+            └─ False ──▶ (이번 Tick 끝. 다음 Tick 대기)
 ```
 
 ### 1-10. Event Tick — Part C: 프레임 처리
 
-```
-⑥ 이어서 → "Branch" 검색
-   Condition: "Get BSFrameIndex" < TotalFrames
-   TotalFrames = "Get BSRawData" → "Length" ÷ "Get BSWeightCount"
+> **목표:** 현재 프레임의 68개 블렌드셰이프 값을 MetaHuman Face에 적용하고, 다음 프레임으로 넘기기.
 
-⑦ True 핀 → "For Loop" 검색
+**⑥ 아직 재생할 프레임이 남았는지 확인**
+
+> BSRawData는 모든 프레임의 값이 1차원 배열로 쭉 들어있음.
+> 예: 10프레임 × 68개 weight = 680개 float.
+> 총 프레임 수 = BSRawData 길이 ÷ BSWeightCount. (이건 변수가 아니라 그 자리에서 계산하는 값!)
+
+```
+⑥-1. My Blueprint에서 "BSRawData"를 그래프로 드래그 (Get BSRawData)
+     → 출력 핀에서 드래그 → "Length" 검색 → 선택
+     (BSRawData 배열의 전체 길이를 반환함)
+
+⑥-2. 우클릭 → "Integer / Integer" 검색 → 선택 (나누기 노드)
+     → 왼쪽 위 입력: Length 출력 연결
+     → 왼쪽 아래 입력: Get BSWeightCount (My Blueprint에서 드래그) 연결
+     (이 노드의 출력 = 총 프레임 수)
+
+⑥-3. 우클릭 → "Integer < Integer" 검색 → 선택 (비교 노드)
+     → 왼쪽 위 입력: Get BSFrameIndex (My Blueprint에서 드래그) 연결
+     → 왼쪽 아래 입력: ⑥-2의 Integer / Integer 출력 연결
+     (BSFrameIndex < 총 프레임 수 인가?)
+
+⑥-4. ⑤-2의 Set BSTimer 실행 핀에서 드래그 → "Branch" 검색
+     → Condition 핀: Integer < Integer 출력 연결
+```
+
+**⑦ True 핀 → 68개 weight를 순회 (For Loop)**
+
+```
+⑦. Branch True 핀에서 드래그 → "For Loop" 검색 → 선택
    - First Index: 0
-   - Last Index: "Get BSWeightCount" - 1
-
-⑧ Loop Body에서:
-   DataIndex = "Get BSFrameIndex" × "Get BSWeightCount" + Loop Index
-   → "Integer × Integer" → "Integer + Integer"
-
-   Weight = "Get BSRawData" → "Get (a copy)" at DataIndex
-
-   MorphName = "Get BSNames" → "Get (a copy)" at Loop Index
-
-   → "Set Morph Target" 검색
-     - Target: "Get FaceMesh" (변수에서 가져옴)
-     - Morph Target Name: MorphName
-     - Value: Weight
-
-⑨ ★ Completed 핀에서 (Loop Body가 아님!) ★:
-   → "Set BSFrameIndex" = "Get BSFrameIndex" + 1
+   - Last Index 핀에:
+     Get BSWeightCount 드래그 → 출력 핀에서 드래그
+     → "Integer - Integer" 검색 → 선택
+     → 왼쪽 위: Get BSWeightCount, 왼쪽 아래: 직접 1 입력
+     → Integer - Integer 출력을 Last Index에 연결
+     (0부터 67까지 = 68번 반복)
 ```
 
-> **Completed vs Loop Body:**
-> - **Loop Body:** 68번 반복 (morph target 설정)
-> - **Completed:** 68번 끝난 후 1번 (프레임 인덱스 +1)
-> - Loop Body에 넣으면 68번 증가해서 깨집니다!
+**⑧ Loop Body에서: 데이터 꺼내서 Morph Target 적용**
+
+> BSRawData에서 현재 프레임의 weight를 꺼내려면 인덱스 계산이 필요:
+> 데이터 인덱스 = BSFrameIndex × BSWeightCount + Loop의 현재 Index
+> 예: 3번째 프레임(인덱스 2)의 5번째 weight = 2 × 68 + 4 = 140번째
+
+```
+⑧-1. 데이터 인덱스 계산:
+     우클릭 → "Integer × Integer" 검색 → 선택 (곱하기 노드)
+     → 왼쪽 위 입력: Get BSFrameIndex (My Blueprint에서 드래그)
+     → 왼쪽 아래 입력: Get BSWeightCount (My Blueprint에서 드래그)
+
+     우클릭 → "Integer + Integer" 검색 → 선택 (더하기 노드)
+     → 왼쪽 위 입력: Integer × Integer 출력 연결
+     → 왼쪽 아래 입력: For Loop의 "Index" 핀 (파란색) 연결
+     (이 더하기 노드의 출력 = 데이터 인덱스)
+
+⑧-2. BSRawData에서 weight 값 꺼내기:
+     Get BSRawData 핀에서 드래그 → "Get (a copy)" 검색 → 선택
+     → Index 핀: ⑧-1의 Integer + Integer 출력 연결
+     (이 노드의 출력 = 현재 weight 값, Float)
+
+⑧-3. BSNames에서 morph target 이름 꺼내기:
+     My Blueprint에서 "BSNames" 드래그 (Get BSNames)
+     → 출력 핀에서 드래그 → "Get (a copy)" 검색 → 선택
+     → Index 핀: For Loop의 "Index" 핀 연결
+     (이 노드의 출력 = morph target 이름, String)
+
+⑧-4. Morph Target 적용:
+     우클릭 → "Set Morph Target" 검색 → 선택
+     → Target 핀: Get FaceMesh (My Blueprint에서 드래그) 연결
+     → Morph Target Name 핀: ⑧-3의 Get (a copy) 출력 연결
+     → Value 핀: ⑧-2의 Get (a copy) 출력 연결
+
+     For Loop의 Loop Body 실행 핀 → Set Morph Target 실행 핀 연결
+```
+
+**⑨ Completed 핀에서: 프레임 인덱스 +1**
+
+> **★ 중요: Completed 핀은 Loop Body가 아닙니다! ★**
+> - **Loop Body:** 68번 반복됨 (매번 morph target 하나 설정)
+> - **Completed:** 68번 전부 끝난 후 **1번만** 실행됨
+> - Completed가 아닌 Loop Body에 연결하면 프레임 인덱스가 68번 증가해서 깨집니다!
+
+```
+⑨-1. 우클릭 → "Integer + Integer" 검색 → 선택
+     → 왼쪽 위 입력: Get BSFrameIndex 연결
+     → 왼쪽 아래 입력: 직접 1 입력
+
+⑨-2. For Loop의 "Completed" 핀 (Loop Body 아래에 있음!)에서 드래그
+     → "Set BSFrameIndex" 검색 → 선택
+     → 값 핀에 Integer + Integer 출력 연결
+```
 
 완성:
 ```
 (Part B에서)
   │
-  ▶──[Branch] ──┬─ True ──▶ [For Loop 0~67] ──┬─ Loop Body ──▶ Get BSRawData[FrameIdx×68+i]
-        │        │                              │                     │
-  FrameIdx <     └─ False ──▶ (Part D로)        │                     ▶──Set Morph Target(FaceMesh, BSNames[i], Weight)
-  TotalFrames                                   │
-                                                └─ Completed ──▶ Set BSFrameIndex(+1)
+  ▶──[Branch: FrameIndex < RawData길이÷WeightCount ?]
+        │
+        ├─ True ──▶ [For Loop: 0 ~ WeightCount-1]
+        │              │
+        │              ├─ Loop Body (68번 반복):
+        │              │     데이터인덱스 = FrameIndex × WeightCount + i
+        │              │     weight = BSRawData[데이터인덱스]
+        │              │     이름 = BSNames[i]
+        │              │     → Set Morph Target(FaceMesh, 이름, weight)
+        │              │
+        │              └─ Completed (1번):
+        │                    → Set BSFrameIndex = FrameIndex + 1
+        │
+        └─ False ──▶ (Part D로: 재생 끝 처리)
 ```
 
-### 1-11. Event Tick — Part D: 재생 끝 + 큐
+### 1-11. Event Tick — Part D: 재생 끝 + 큐 확인
 
-step ⑥의 Branch **False** 핀에서:
+> ⑥의 Branch **False** = 모든 프레임 재생 완료.
+> 큐에 다음 문장이 있으면 바로 이어서 재생, 없으면 표정 리셋.
+
+**⑩ 재생 중지 + 인덱스 초기화**
 
 ```
-⑩ → "Set BSPlaying" (false)
-   → "Set BSFrameIndex" (0)
+⑩-1. ⑥의 Branch False 핀에서 드래그 → "Set BSPlaying" 검색
+     → 값: false (체크 해제)
 
-⑪ → "Branch" 검색
-   Condition: "Get HasQueuedData"
+⑩-2. Set BSPlaying 실행 핀에서 드래그 → "Set BSFrameIndex" 검색
+     → 값: 0
+```
 
-⑫ True 핀 (큐에 다음 문장 있음 → 바로 재생!):
-   → "Set BSRawData" ← "Get QueuedRawData"
-   → "Set BSWeightCount" ← "Get QueuedWeightCount"
-   → "Set BSFPS" ← "Get QueuedFPS"
-   → "Set HasQueuedData" (false)
-   → "Set QueuedWeightCount" (0)
-   → "Set QueuedFPS" (0)
-   → "Get QueuedRawData" → "Clear"
-   → "StartBlendshapes" (다음 문장!)
+**⑪ 큐에 다음 문장이 있는지 확인**
 
-⑬ False 핀 (큐 비어있음 → 표정 리셋):
-   → "For Loop"
-     First Index: 0
-     Last Index: "Get BSNames" → "Length" - 1
-   → Loop Body:
-     "Set Morph Target"
-       Target: "Get FaceMesh"
-       Morph Target Name: "Get BSNames" → "Get (a copy)" at Loop Index
-       Value: 0.0
+```
+⑪. Set BSFrameIndex 실행 핀에서 드래그 → "Branch" 검색
+   → Condition 핀: Get HasQueuedData (My Blueprint에서 드래그) 연결
+```
+
+**⑫ True 핀: 큐에 다음 문장 있음 → 바로 이어서 재생!**
+
+```
+⑫-1. Branch True 핀에서 드래그 → "Set BSRawData" 검색
+     → 값 핀: Get QueuedRawData 연결
+
+⑫-2. → "Set BSWeightCount"
+     → 값 핀: Get QueuedWeightCount 연결
+
+⑫-3. → "Set BSFPS"
+     → 값 핀: Get QueuedFPS 연결
+
+⑫-4. → "Set HasQueuedData" → false (체크 해제)
+
+⑫-5. → "Set QueuedWeightCount" → 값: 0
+
+⑫-6. → "Set QueuedFPS" → 값: 0
+
+⑫-7. → Get QueuedRawData → 출력 핀에서 드래그 → "Clear" 검색 → 선택
+     (큐 배열 비우기)
+
+⑫-8. → "StartBlendshapes" 연결 (다음 문장 재생 시작!)
+```
+
+**⑬ False 핀: 큐 비어있음 → 표정을 기본값(0)으로 리셋**
+
+```
+⑬-1. Branch False 핀에서 드래그 → "For Loop" 검색
+     - First Index: 0
+     - Last Index 핀에:
+       Get BSNames → 출력 핀에서 드래그 → "Length" 검색 → 선택
+       → Length 출력에서 드래그 → "Integer - Integer" → 왼쪽 아래에 1 입력
+       → Integer - Integer 출력을 Last Index에 연결
+       (0부터 67까지 순회)
+
+⑬-2. Loop Body:
+     Get BSNames → 출력 핀에서 드래그 → "Get (a copy)" 검색
+     → Index 핀: For Loop의 Index 핀 연결
+
+     우클릭 → "Set Morph Target" 검색
+     → Target: Get FaceMesh 연결
+     → Morph Target Name: Get (a copy) 출력 연결
+     → Value: 0.0 (직접 입력)
+
+     For Loop의 Loop Body 실행 핀 → Set Morph Target 실행 핀 연결
 ```
 
 완성:
 ```
 (Part C의 Branch False에서)
   │
-  ▶──Set BSPlaying(false) ──▶ Set FrameIdx(0) ──▶ [Branch] ──┬─ True (큐 있음)
-                                                      │        │
-                                               HasQueuedData   ├──▶ Set BSRawData(=Queued)
-                                                               ├──▶ Set BSWeightCount(=Queued)
-                                                               ├──▶ Set BSFPS(=Queued)
-                                                               ├──▶ Set HasQueuedData(false)
-                                                               ├──▶ Clear QueuedRawData
-                                                               └──▶ StartBlendshapes (다음 문장!)
-
-                                                      └─ False (큐 없음)
-                                                               │
-                                                               ▶──[For Loop 0~67] ──▶ Set Morph Target(FaceMesh, BSNames[i], 0.0)
-                                                               (표정 리셋)
+  ▶──Set BSPlaying(false) ──▶ Set BSFrameIndex(0)
+       │
+       ▶──[Branch: HasQueuedData?]
+            │
+            ├─ True (큐 있음):
+            │    Set BSRawData = QueuedRawData
+            │    Set BSWeightCount = QueuedWeightCount
+            │    Set BSFPS = QueuedFPS
+            │    Set HasQueuedData = false
+            │    Clear QueuedRawData
+            │    → StartBlendshapes (다음 문장!)
+            │
+            └─ False (큐 없음):
+                 [For Loop 0 ~ BSNames길이-1]
+                   → Set Morph Target(FaceMesh, BSNames[i], 0.0)
+                 (모든 표정을 기본값으로 리셋)
 ```
 
 ### 1-12. 컴포넌트 완성! Compile + Save
@@ -546,14 +742,11 @@ OscServer 선택 → Details:
 ① OnOscMessage의 Message 핀에서 드래그
    → "Get OSC Message Address" 검색
 
-② 출력 핀에서 드래그
+② Get OSC Message Address 출력 핀에서 드래그
    → "Get Full Path" 검색
-```
+   (FOSCAddress 구조체를 "/mh/bs_start" 같은 문자열로 변환)
 
-> **Get Full Path:** FOSCAddress 구조체 → "/mh/bs_start" 문자열로 변환
-
-```
-③ Return Value (String) 핀에서 드래그
+③ Get Full Path의 Return Value (String) 핀에서 드래그
    → "Switch on String" 검색
    + 클릭 → /mh/bs_start
    + 클릭 → /mh/bs
@@ -679,6 +872,22 @@ Content Browser에서 레벨로 드래그:
 python test_osc.py
 ```
 3. MetaHuman 입이 움직이면 **성공!**
+
+---
+
+## 오디오 재생
+
+UE5 안에서 런타임 PCM 재생은 복잡하므로, **노트북에서 직접 스피커로 재생**합니다.
+
+`.env`에 추가:
+```
+PLAY_AUDIO_LOCAL=true
+```
+
+tts_pipeline.py에서 sounddevice로 재생하면 UE5에서 오디오 처리할 필요 없음.
+MetaHuman은 립싱크(블렌드셰이프)만 담당.
+
+> VR에서 공간 오디오가 필요해지면 그때 UE5 오디오 재생을 추가합니다.
 
 ---
 

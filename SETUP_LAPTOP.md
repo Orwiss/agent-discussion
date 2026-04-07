@@ -24,7 +24,7 @@
 ### TensorRT 10.13
 1. https://developer.nvidia.com/tensorrt → Download
 2. TensorRT 10.13 for Windows ZIP 다운로드
-3. 압축 풀어서 `C:\TensorRT-10.13`에 배치
+3. 압축 풀어서 `C:\TensorRT-10.16.0.72`에 배치
 
 ### CMake
 1. https://cmake.org/download/ → Windows x64 Installer
@@ -60,20 +60,20 @@ python -c "from huggingface_hub import snapshot_download; snapshot_download('nvi
 ```
 fetch_deps.bat
 
-set TENSORRT_ROOT_DIR=C:\TensorRT-10.13
+set TENSORRT_ROOT_DIR=C:\TensorRT-10.16.0.72
 gen_testdata.bat
 build.bat
 ```
 
 ### ONNX → TRT 엔진 변환:
 ```
-set PATH=%PATH%;C:\TensorRT-10.13\bin
+set PATH=%PATH%;C:\TensorRT-10.16.0.72\bin
 trtexec --onnx=_data\audio2face-models\audio2face-3d-v2.3-mark\network.onnx --saveEngine=_data\audio2face-models\audio2face-3d-v2.3-mark\network.trt
 ```
 
 ### a2f-bridge 테스트:
 ```
-set PATH=%PATH%;C:\TensorRT-10.13\bin;_build\release\audio2x-sdk\bin
+set PATH=%PATH%;C:\TensorRT-10.16.0.72\bin;_build\release\audio2x-sdk\bin
 _build\release\a2f-bridge\bin\a2f-bridge.exe --model _data\audio2face-models\audio2face-3d-v2.3-mark --audio sample-data\audio_4sec_16k_s16le.wav
 ```
 JSON 출력 (fps, weight_count, frames) 나오면 성공.
@@ -101,7 +101,7 @@ UE5_OSC_PORT=7400
 # Audio2Face 경로 (노트북 기준)
 A2F_BRIDGE_PATH=C:\Users\<노트북유저>\Desktop\...\Audio2Face-3D-SDK\_build\release\a2f-bridge\bin\a2f-bridge.exe
 A2F_MODEL_PATH=C:\Users\<노트북유저>\Desktop\...\Audio2Face-3D-SDK\_data\audio2face-models\audio2face-3d-v2.3-mark
-TENSORRT_BIN=C:\TensorRT-10.13\bin
+TENSORRT_BIN=C:\TensorRT-10.16.0.72\bin
 A2F_SDK_BIN=C:\Users\<노트북유저>\Desktop\...\Audio2Face-3D-SDK\_build\release\audio2x-sdk\bin
 ```
 

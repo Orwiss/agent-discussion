@@ -96,7 +96,64 @@ BP_MH_BlendshapePlayer 더블클릭 → 에디터 열림
 4. 배열: 타입 옆 아이콘 클릭 → **Array** 선택
 5. Compile → Default Value 설정
 
-### 1-4. BSNames 배열 채우기
+### 1-4. BSNames 배열 채우기 (Data Table로 간편하게)
+
+68개를 하나하나 타이핑하면 힘드니까 **CSV 파일**을 Import해서 씁니다.
+
+#### 방법 1: Data Table Import (추천)
+
+**1단계: 구조체 만들기**
+
+```
+Content Browser 우클릭
+  → Blueprint → Structure → 이름: S_BSName
+  → 더블클릭으로 열기
+  → + Add Variable:
+     - Name: MorphName, 타입: Name (FName)
+     - Name: Index, 타입: Integer
+  → Save
+```
+
+**2단계: CSV Import**
+
+레포에 `bs_names.csv` 파일이 있습니다 (68개 이름 전부 들어있음).
+
+```
+Content Browser 빈 공간 우클릭 → Import
+  → data/bs_names.csv 선택
+  → "DataTable" 옵션 선택
+  → Row Type: S_BSName
+  → Import → 이름: DT_BSNames
+```
+
+**3단계: BeginPlay에서 Data Table → BSNames 배열로 변환**
+
+1-5의 BeginPlay 로직 **앞에** 추가:
+
+```
+① 우클릭 → "Get Data Table Row Names" 검색
+   - Data Table: DT_BSNames (Content Browser에서 드래그)
+   - 출력: Row Names 배열 (FName Array)
+
+② Row Names를 BSNames(String Array)로 변환:
+   → "For Each Loop" 검색
+   → Loop Body에서:
+     Array Element (FName)에서 드래그 → "To String" (Name to String)
+     → "Get BSNames" → "Add" → String 값 연결
+```
+
+완성:
+```
+[BeginPlay] ──▶ Get Data Table Row Names(DT_BSNames)
+                  │
+                  ▶──For Each Loop
+                       │
+                       Loop Body: RowName → To String → BSNames.Add
+                  │
+                  ▶──Completed ──▶ (1-5의 Face 찾기 로직으로 이어짐)
+```
+
+#### 방법 2: 수동 입력 (Data Table 안 쓸 경우)
 
 BSNames 선택 → Compile → Default Value에서 **+** 를 68번 클릭.
 아래 순서대로 정확히 입력:

@@ -224,10 +224,10 @@ BSNames 선택 → Compile → Default Value에서 **+** 를 68번 클릭.
 
 ⑤ Loop Body에서:
    Array Element 핀에서 드래그
-   → "Get FName" 또는 "Get Name" 검색 → 선택
+   → "Get Display Name" 검색 → 선택 (String 바로 반환)
 
 ⑥ 이름에 "Face" 포함되는지 확인:
-   Get Name 출력에서 드래그
+   Get Display Name 출력에서 드래그
    → "Contains" 검색
    → Substring: "face" (소문자)
    → ✅ Search Case: Ignore Case (Use Search Case를 false)
@@ -243,7 +243,7 @@ BSNames 선택 → Compile → Default Value에서 **+** 를 68번 클릭.
                                 │
                                 ▶──For Each Loop
                                      │
-                                     Loop Body: Get Name → Contains("face")
+                                     Loop Body: Get Display Name → Contains("face")
                                                               │
                                                          [Branch] ── True ──▶ Set FaceMesh
 ```
@@ -689,7 +689,7 @@ python test_osc.py
 | OSC 수신 안 됨 | 방화벽 | Windows 방화벽 → 인바운드 → UDP 7400 허용 |
 | 입이 안 움직임 | Tick 꺼져있음 | BP_MH_BlendshapePlayer의 Class Defaults → Can Ever Tick ✅ |
 | 입이 안 움직임 | Value 핀 잘못 연결 | OSC Get 노드에서 **Value** 핀 사용 (Return Value 아님) |
-| 입이 안 움직임 | FaceMesh 못 찾음 | BeginPlay에서 "face" Contains 체크 확인. Print String으로 Get Name 출력 |
+| 입이 안 움직임 | FaceMesh 못 찾음 | BeginPlay에서 "face" Contains 체크 확인. Print String으로 Get Display Name 출력 |
 | 입이 안 움직임 | BSNames 비어있음 | 68개 이름 전부 입력됐는지 확인 |
 | Cast 실패 | 원본 BP 배치 | 자식 BP (BP_MH_*) 를 배치해야 함 |
 | 마지막 표정 얼어있음 | 리셋 누락 | Part D step ⑬ 확인 |

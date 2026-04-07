@@ -109,22 +109,35 @@ Content Browser 우클릭
   → Blueprint → Structure → 이름: S_BSName
   → 더블클릭으로 열기
   → + Add Variable:
-     - Name: MorphName, 타입: Name (FName)
-     - Name: Index, 타입: Integer
+     - Name: MorphName, 타입: String
   → Save
 ```
+
+> 필드가 **MorphName** 하나뿐입니다. CSV 컬럼명과 정확히 일치해야 합니다.
 
 **2단계: CSV Import**
 
 레포에 `bs_names.csv` 파일이 있습니다 (68개 이름 전부 들어있음).
 
+CSV 형식:
+```
+---,MorphName        ← 첫 컬럼 "---"은 Row Name (인덱스), 두 번째가 구조체 필드
+0,neutral
+1,eyeBlinkLeft
+...
+67,tongueWide
+```
+
 ```
 Content Browser 빈 공간 우클릭 → Import
-  → data/bs_names.csv 선택
+  → bs_names.csv 선택
   → "DataTable" 옵션 선택
   → Row Type: S_BSName
   → Import → 이름: DT_BSNames
 ```
+
+> Import 후 DT_BSNames를 더블클릭하면 68개 Row가 보여야 합니다.
+> Row 0 = neutral, Row 1 = eyeBlinkLeft, ... Row 67 = tongueWide
 
 **3단계: BeginPlay에서 Data Table → BSNames 배열로 변환**
 
@@ -133,13 +146,17 @@ Content Browser 빈 공간 우클릭 → Import
 ```
 ① 우클릭 → "Get Data Table Row Names" 검색
    - Data Table: DT_BSNames (Content Browser에서 드래그)
-   - 출력: Row Names 배열 (FName Array)
+   - 출력: Row Names 배열 (FName Array) → "0", "1", ... "67"
 
-② Row Names를 BSNames(String Array)로 변환:
+② Row Names로 순회하면서 각 Row의 MorphName 가져오기:
    → "For Each Loop" 검색
    → Loop Body에서:
-     Array Element (FName)에서 드래그 → "To String" (Name to String)
-     → "Get BSNames" → "Add" → String 값 연결
+
+     "Get Data Table Row" 검색
+     - Data Table: DT_BSNames
+     - Row Name: Array Element (현재 Row Name)
+     - Out Row 핀에서 드래그 → "Break S_BSName" 검색
+     - MorphName 핀에서 드래그 → "Get BSNames" → "Add" 연결
 ```
 
 완성:
@@ -148,10 +165,13 @@ Content Browser 빈 공간 우클릭 → Import
                   │
                   ▶──For Each Loop
                        │
-                       Loop Body: RowName → To String → BSNames.Add
+                       Loop Body: Get Data Table Row → Break S_BSName → MorphName → BSNames.Add
                   │
                   ▶──Completed ──▶ (1-5의 Face 찾기 로직으로 이어짐)
 ```
+
+> 이렇게 하면 BSNames 배열이 자동으로 68개 이름으로 채워집니다.
+> 수동 입력 없이 CSV에서 한 방에!
 
 #### 방법 2: 수동 입력 (Data Table 안 쓸 경우)
 

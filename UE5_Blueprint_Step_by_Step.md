@@ -424,15 +424,26 @@ My Blueprint → Functions 옆 + → 이름: StartBlendshapes
 
 완성:
 ```
-(Part A True에서)
+(Part A의 Branch True에서 이어짐)
   │
-  ▶──[Set BSTimer = BSTimer + DeltaSeconds]
-       │
-       ▶──[Branch: BSTimer >= 1.0/FPS ?]
-            │
-            ├─ True ──▶ [Set BSTimer = BSTimer - 1.0/FPS] ──▶ (Part C로)
-            │
-            └─ False ──▶ (이번 Tick 끝. 다음 Tick 대기)
+  ▶──③ 타이머 누적:
+  │    Get BSTimer + Delta Seconds (Float + Float 노드)
+  │    → Set BSTimer (더한 결과 저장)
+  │
+  ▶──④ 1프레임 시간 넘었는지 확인:
+  │    Make Literal Float(1.0) ÷ To Float(Get BSFPS) (Float / Float 노드)
+  │    Get BSTimer >= 위 나누기 결과 (Float >= Float 노드)
+  │    → Branch의 Condition에 연결
+  │
+  ▶──[Branch]
+        │
+        ├─ True (1프레임 시간 이상 지남):
+        │    ⑤ Get BSTimer - 1.0/FPS (Float - Float 노드)
+        │    → Set BSTimer (뺀 결과 저장)
+        │    → Part C(1-10)로 이어짐
+        │
+        └─ False (아직 안 됨):
+             이번 Tick 끝. 다음 Tick 대기
 ```
 
 ### 1-10. Event Tick — Part C: 프레임 처리
@@ -460,21 +471,22 @@ My Blueprint → Functions 옆 + → 이름: StartBlendshapes
      → 왼쪽 아래 입력: ⑥-2의 Integer / Integer 출력 연결
      (BSFrameIndex < 총 프레임 수 인가?)
 
-⑥-4. ⑤-2의 Set BSTimer 실행 핀에서 드래그 → "Branch" 검색
-     → Condition 핀: Integer < Integer 출력 연결
+⑥-4. 이전 섹션(1-9)에서 마지막으로 만든 Set BSTimer 노드의 실행 핀에서 드래그
+     → "Branch" 검색 → 선택
+     → Condition 핀: ⑥-3의 Integer < Integer 출력 연결
 ```
 
-**⑦ True 핀 → 68개 weight를 순회 (For Loop)**
+**⑦ True 핀 → For Loop으로 68개 weight 순회 (First: 0, Last: BSWeightCount-1)**
 
 ```
 ⑦. Branch True 핀에서 드래그 → "For Loop" 검색 → 선택
-   - First Index: 0
+   - First Index: 0 (직접 입력)
    - Last Index 핀에:
-     Get BSWeightCount 드래그 → 출력 핀에서 드래그
-     → "Integer - Integer" 검색 → 선택
-     → 왼쪽 위: Get BSWeightCount, 왼쪽 아래: 직접 1 입력
-     → Integer - Integer 출력을 Last Index에 연결
-     (0부터 67까지 = 68번 반복)
+     우클릭 → "Integer - Integer" 검색 → 선택 (빼기 노드)
+     → 왼쪽 위 입력: Get BSWeightCount (My Blueprint에서 드래그) 연결
+     → 왼쪽 아래 입력: 직접 1 입력
+     → 빼기 노드 출력을 For Loop의 Last Index 핀에 연결
+     (BSWeightCount가 68이면 68-1=67. 즉 0부터 67까지 = 68번 반복)
 ```
 
 **⑧ Loop Body에서: 데이터 꺼내서 Morph Target 적용**
@@ -533,22 +545,31 @@ My Blueprint → Functions 옆 + → 이름: StartBlendshapes
 
 완성:
 ```
-(Part B에서)
+(Part B의 Set BSTimer 실행 핀에서 이어짐)
   │
-  ▶──[Branch: FrameIndex < RawData길이÷WeightCount ?]
+  ▶──⑥ 프레임 남았는지 확인:
+  │    Get BSRawData → Length (배열 전체 길이)
+  │    Length ÷ Get BSWeightCount = 총 프레임 수 (Integer / Integer 노드)
+  │    Get BSFrameIndex < 총 프레임 수 (Integer < Integer 노드)
+  │    → Branch의 Condition에 연결
+  │
+  ▶──[Branch]
         │
-        ├─ True ──▶ [For Loop: 0 ~ WeightCount-1]
-        │              │
-        │              ├─ Loop Body (68번 반복):
-        │              │     데이터인덱스 = FrameIndex × WeightCount + i
-        │              │     weight = BSRawData[데이터인덱스]
-        │              │     이름 = BSNames[i]
-        │              │     → Set Morph Target(FaceMesh, 이름, weight)
-        │              │
-        │              └─ Completed (1번):
-        │                    → Set BSFrameIndex = FrameIndex + 1
+        ├─ True (아직 재생할 프레임 있음):
+        │    │
+        │    ▶──⑦ For Loop (First: 0, Last: BSWeightCount - 1)
+        │         │
+        │         ├─ Loop Body (68번 반복):
+        │         │     ⑧-1. 곱하기: Get BSFrameIndex × Get BSWeightCount
+        │         │     ⑧-1. 더하기: 곱하기 결과 + For Loop의 Index = 데이터 인덱스
+        │         │     ⑧-2. Get BSRawData → Get (a copy) [데이터 인덱스] = weight 값
+        │         │     ⑧-3. Get BSNames → Get (a copy) [Index] = morph target 이름
+        │         │     ⑧-4. Set Morph Target(FaceMesh, 이름, weight 값)
+        │         │
+        │         └─ Completed (68번 끝난 후 1번만 실행):
+        │               ⑨. Set BSFrameIndex = Get BSFrameIndex + 1
         │
-        └─ False ──▶ (Part D로: 재생 끝 처리)
+        └─ False (모든 프레임 재생 완료) ──▶ Part D(1-11)로
 ```
 
 ### 1-11. Event Tick — Part D: 재생 끝 + 큐 확인
@@ -622,24 +643,33 @@ My Blueprint → Functions 옆 + → 이름: StartBlendshapes
 
 완성:
 ```
-(Part C의 Branch False에서)
+(Part C의 Branch False에서 이어짐 = 모든 프레임 재생 완료)
   │
-  ▶──Set BSPlaying(false) ──▶ Set BSFrameIndex(0)
-       │
-       ▶──[Branch: HasQueuedData?]
-            │
-            ├─ True (큐 있음):
-            │    Set BSRawData = QueuedRawData
-            │    Set BSWeightCount = QueuedWeightCount
-            │    Set BSFPS = QueuedFPS
-            │    Set HasQueuedData = false
-            │    Clear QueuedRawData
-            │    → StartBlendshapes (다음 문장!)
-            │
-            └─ False (큐 없음):
-                 [For Loop 0 ~ BSNames길이-1]
-                   → Set Morph Target(FaceMesh, BSNames[i], 0.0)
-                 (모든 표정을 기본값으로 리셋)
+  ▶──⑩ 재생 중지:
+  │    Set BSPlaying = false
+  │    Set BSFrameIndex = 0
+  │
+  ▶──⑪ 큐 확인:
+  │    Get HasQueuedData → Branch의 Condition에 연결
+  │
+  ▶──[Branch]
+        │
+        ├─ True (큐에 다음 문장 있음):
+        │    ⑫-1. Set BSRawData ← Get QueuedRawData
+        │    ⑫-2. Set BSWeightCount ← Get QueuedWeightCount
+        │    ⑫-3. Set BSFPS ← Get QueuedFPS
+        │    ⑫-4. Set HasQueuedData = false
+        │    ⑫-5. Set QueuedWeightCount = 0
+        │    ⑫-6. Set QueuedFPS = 0
+        │    ⑫-7. Get QueuedRawData → Clear (큐 배열 비우기)
+        │    ⑫-8. StartBlendshapes 호출 (다음 문장 재생 시작!)
+        │
+        └─ False (큐 비어있음 → 표정 리셋):
+             ⑬-1. For Loop (First: 0, Last: Get BSNames → Length → Integer - Integer로 1 빼기)
+             ⑬-2. Loop Body:
+                   Get BSNames → Get (a copy) [Index] = morph target 이름
+                   Set Morph Target(Target: Get FaceMesh, Name: 위 이름, Value: 0.0)
+             (68개 morph target 전부 0으로 리셋)
 ```
 
 ### 1-12. 컴포넌트 완성! Compile + Save
@@ -762,47 +792,82 @@ OscServer 선택 → Details:
 > - **Value:** 실제 데이터. **이걸 써야 합니다!**
 
 ```
-① /mh/bs_start 핀에서 드래그
-   → "Get OSC Message String at Index" (Index: 0)
-   → ★ Value ★ → "Set CurrentCharID"
+모든 OSC Get 노드의 Message 핀에는 OnOscMessage의 "Message" 핀을 연결합니다!
 
-② → "Get OSC Message Integer at Index" (Index: 1)
+① /mh/bs_start 핀에서 드래그
+   → "Get OSC Message String at Index" 검색 → 선택
+   → Message 핀: OnOscMessage의 Message 연결
+   → Index: 0
+   → ★ Value ★ 핀에서 드래그 → "Set CurrentCharID" 검색
+
+② Set CurrentCharID 실행 핀에서 드래그
+   → "Get OSC Message Integer at Index" 검색 → 선택
+   → Message 핀: OnOscMessage의 Message 연결
+   → Index: 1
    → ★ Value ★ → "Set ExpectedFrames"
 
-③ → "Get OSC Message Integer at Index" (Index: 2)
+③ 이어서 → "Get OSC Message Integer at Index"
+   → Message 핀: OnOscMessage의 Message 연결
+   → Index: 2
    → ★ Value ★ → "Set CurrentWeightCount"
 
-④ → "Get OSC Message Integer at Index" (Index: 3)
+④ 이어서 → "Get OSC Message Integer at Index"
+   → Message 핀: OnOscMessage의 Message 연결
+   → Index: 3
    → ★ Value ★ → "Set CurrentFPS"
 
-⑤ → "Get CurrentBSFrames" → "Clear"
+⑤ 이어서 → My Blueprint에서 "CurrentBSFrames" 드래그 (Get CurrentBSFrames)
+   → 출력 핀에서 드래그 → "Clear" 검색 → 선택
 ```
 
 완성:
 ```
-/mh/bs_start ──▶ Get String[0]→CharID ──▶ Get Int[1]→Frames ──▶ Get Int[2]→WeightCount ──▶ Get Int[3]→FPS ──▶ Clear BSFrames
+/mh/bs_start 핀에서 이어짐 (모든 OSC Get 노드에 OnOscMessage의 Message 핀 연결!)
+  │
+  ▶──① Get OSC Message String at Index (Message, Index: 0) → Value → Set CurrentCharID
+  ▶──② Get OSC Message Integer at Index (Message, Index: 1) → Value → Set ExpectedFrames
+  ▶──③ Get OSC Message Integer at Index (Message, Index: 2) → Value → Set CurrentWeightCount
+  ▶──④ Get OSC Message Integer at Index (Message, Index: 3) → Value → Set CurrentFPS
+  ▶──⑤ Get CurrentBSFrames → Clear (배열 비우기)
 ```
 
 ### 3-7. /mh/bs 처리
 
 ```
-① /mh/bs 핀 → "For Loop"
+① /mh/bs 핀에서 드래그 → "For Loop" 검색 → 선택
    - First Index: 0
-   - Last Index: "Get CurrentWeightCount" - 1
+   - Last Index 핀에:
+     Get CurrentWeightCount (My Blueprint에서 드래그)
+     → 출력에서 드래그 → "Integer - Integer" → 왼쪽 아래에 1 입력
+     → 빼기 결과를 Last Index에 연결
 
-② Loop Body:
-   → "Get OSC Message Float at Index"
-   - Index: Loop Index + 2 ("Integer + Integer")
-   - ★ Value ★ 에서 드래그
+② Loop Body 실행 핀에서 드래그:
+   → "Get OSC Message Float at Index" 검색 → 선택
+   → Message 핀: OnOscMessage의 Message 연결
+   → Index 핀에:
+     For Loop의 Index 핀에서 드래그 → "Integer + Integer" → 왼쪽 아래에 2 입력
+     → 더하기 결과를 Index에 연결
+     (Index 0, 1은 CharID/FrameIndex라서 +2 해야 weight 값이 나옴)
+   → ★ Value ★ 핀에서 드래그
 
-③ → "Get CurrentBSFrames" → "Add" → Float Value 연결
+③ → My Blueprint에서 "CurrentBSFrames" 드래그 (Get CurrentBSFrames)
+   → 출력 핀에서 드래그 → "Add" 검색 → 선택
+   → ②의 Value 값을 Add의 입력에 연결
 ```
 
 완성:
 ```
-/mh/bs ──▶ For Loop (0 ~ WeightCount-1)
-             │
-             Loop Body: Get Float[LoopIndex+2] → CurrentBSFrames.Add
+/mh/bs 핀에서 이어짐
+  │
+  ▶──① For Loop (First: 0, Last: Get CurrentWeightCount - 1)
+       │
+       └─ Loop Body (weight 개수만큼 반복):
+            ② Get OSC Message Float at Index:
+               Message 핀 ← OnOscMessage의 Message
+               Index 핀 ← For Loop의 Index + 2 (Integer + Integer 노드)
+               (+2 이유: OSC 메시지의 [0]=CharID, [1]=FrameIndex, [2]부터 weight)
+               → Value 핀에서 float 값 꺼냄
+            ③ Get CurrentBSFrames → Add ← ②의 Value (배열 끝에 추가)
 ```
 
 ### 3-8. /mh/bs_end 처리
@@ -810,8 +875,12 @@ OscServer 선택 → Details:
 여기서 MetaHuman의 **컴포넌트**에 있는 EnqueueBlendshapes를 호출합니다.
 
 ```
-① /mh/bs_end 핀 → "Get OSC Message String at Index" (Index: 0)
-   → ★ Value ★ = CharID
+① /mh/bs_end 핀에서 드래그
+   → "Get OSC Message String at Index" 검색 → 선택
+   → Message 핀: OnOscMessage의 Message 연결
+   → Index: 0
+   → ★ Value ★ 핀 = 캐릭터 ID 문자열 (예: "MH_UXResearcher")
+     이 Value 핀을 다음 단계 ②의 Switch on String에 연결
 
 ② CharID 핀에서 드래그 → "Switch on String"
    + MH_UXResearcher
@@ -834,10 +903,25 @@ OscServer 선택 → Details:
 
 완성:
 ```
-/mh/bs_end ──▶ Get String[0] ──▶ Switch on String
-                ├─ MH_UXResearcher ──▶ Get MH_UXR → Get Component(BlendshapePlayer) → EnqueueBlendshapes(BSFrames, WeightCount, FPS)
-                ├─ MH_VisualDesigner ──▶ Get MH_VD → Get Component(BlendshapePlayer) → EnqueueBlendshapes(...)
-                └─ MH_SoftwareEngineer ──▶ Get MH_SE → Get Component(BlendshapePlayer) → EnqueueBlendshapes(...)
+/mh/bs_end 핀에서 이어짐
+  │
+  ▶──① Get OSC Message String at Index (Message, Index: 0)
+  │    → Value 핀 = 캐릭터 ID 문자열 (예: "MH_UXResearcher")
+  │
+  ▶──② Switch on String (CharID로 분기)
+        │
+        ├─ MH_UXResearcher:
+        │    ③ Get MH_UXResearcher → Get Component by Class (BP_MH_BlendshapePlayer)
+        │    ④ EnqueueBlendshapes 호출:
+        │       InRawData ← Get CurrentBSFrames
+        │       InWeightCount ← Get CurrentWeightCount
+        │       InFPS ← Get CurrentFPS
+        │
+        ├─ MH_VisualDesigner:
+        │    (위와 동일. Get MH_VisualDesigner → Get Component → EnqueueBlendshapes)
+        │
+        └─ MH_SoftwareEngineer:
+             (위와 동일. Get MH_SoftwareEngineer → Get Component → EnqueueBlendshapes)
 ```
 
 ---

@@ -217,6 +217,6 @@ def run_stage2_independent(agents, user, brief, iostream=None):
                         end_idx = current_sys_msg.find("\n==================\n") + len("\n==================\n")
                         if start_idx >= 0 and end_idx > start_idx:
                             current_sys_msg = current_sys_msg[:start_idx] + current_sys_msg[end_idx:]
-                    agent.system_message = prev_context + current_sys_msg
+                    agent.update_system_message(prev_context + current_sys_msg)
 
     return all_results[-1]

@@ -36,6 +36,28 @@ PHASE_MESSAGES = {
 }
 
 
+# 턴마다 에이전트 system_message 끝에 부착되는 리마인더.
+# 센티넬로 기존 리마인더 부분을 식별하여 교체한다 (중복/누적 방지).
+TURN_REMINDER_SENTINEL = "\n\n[턴 리마인더]"
+TURN_REMINDER = (
+    f"{TURN_REMINDER_SENTINEL}\n"
+    "3문장 내외로 말하세요. 어떤 경우에도 5문장을 넘기면 안 됩니다. "
+    "한 가지 주장에만 집중하고, 다른 주제는 다음 차례에 말하세요."
+)
+
+
+def _inject_turn_reminder(agent):
+    """에이전트의 system_message 끝에 턴 리마인더를 (재)부착한다.
+    기존 리마인더가 있으면 제거 후 새로 붙인다 (누적 방지).
+    페이즈 전환 등으로 시스템 메시지 앞쪽에 prefix가 붙은 상태에서도
+    뒤쪽의 리마인더 부분만 정확히 갱신된다."""
+    current = agent.system_message
+    idx = current.find(TURN_REMINDER_SENTINEL)
+    if idx >= 0:
+        current = current[:idx]
+    agent.update_system_message(current + TURN_REMINDER)
+
+
 class DedupGroupChat(autogen.GroupChat):
     """메시지 중복을 자동 필터링하는 GroupChat"""
 
@@ -54,7 +76,8 @@ class DedupGroupChat(autogen.GroupChat):
 def _create_6turn_speaker_selection(agents, user):
     """6발화마다 유저 개입하는 speaker selection.
     A→B→C→A→B→C→User→A→B→C→A→B→C→User→...
-    양 조건 동일하게 적용되는 결정론적 순서."""
+    양 조건 동일하게 적용되는 결정론적 순서.
+    각 에이전트 턴 직전에 턴 리마인더를 system_message에 (재)부착한다."""
     state = {"agent_count": 0, "total": 0}
 
     def select_speaker(last_speaker, groupchat):
@@ -65,6 +88,7 @@ def _create_6turn_speaker_selection(agents, user):
             state["agent_count"] = 0
             next_agent = agents[0]
             _log("speaker", f"턴{state['total']}: {last_name} → {next_agent.name} (유저 후 리셋)")
+            _inject_turn_reminder(next_agent)
             return next_agent
 
         state["agent_count"] += 1
@@ -75,6 +99,7 @@ def _create_6turn_speaker_selection(agents, user):
         idx = state["agent_count"] % len(agents)
         next_agent = agents[idx]
         _log("speaker", f"턴{state['total']}: {last_name} → {next_agent.name} ({state['agent_count']}/6)")
+        _inject_turn_reminder(next_agent)
         return next_agent
 
     return select_speaker

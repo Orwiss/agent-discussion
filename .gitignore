@@ -183,3 +183,7 @@ cython_debug/
 /data
 *.jsonl
 /.claude
+/logs
+/autogen_logs
+/Plugins
+/.vscode

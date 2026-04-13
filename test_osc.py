@@ -38,8 +38,9 @@ AGENTS = {
     ],
 }
 
-def _on_send():
-    agent_name = random.choice(list(AGENTS.keys()))
+def _on_send(agent_name: str = ""):
+    if not agent_name:
+        agent_name = random.choice(list(AGENTS.keys()))
     text = random.choice(AGENTS[agent_name])
     print(f"\n[{agent_name}] {text[:40]}...")
     trigger(agent_name, text)

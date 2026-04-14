@@ -187,3 +187,8 @@ cython_debug/
 /autogen_logs
 /Plugins
 /.vscode
+
+# Scratch / throwaway experiment files (prefix with _)
+_*.py
+_*.ipynb
+_scratch/

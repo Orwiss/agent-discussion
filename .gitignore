@@ -184,3 +184,8 @@ cython_debug/
 *.jsonl
 /.claude
 /logs
+
+# Scratch / throwaway experiment files (prefix with _)
+_*.py
+_*.ipynb
+_scratch/

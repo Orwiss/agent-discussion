@@ -133,6 +133,8 @@ _osc_client: udp_client.SimpleUDPClient | None = None
 _osc_lock = threading.Lock()
 _speech_queue = queue.Queue(maxsize=2)
 _trigger_lock = threading.Lock()
+_prev_done = threading.Event()
+_prev_done.set()  # 처음엔 idle
 
 # gRPC async event loop (dedicated thread)
 _grpc_loop: asyncio.AbstractEventLoop | None = None
@@ -510,10 +512,15 @@ threading.Thread(target=_playback_worker, daemon=True, name="playback-worker").s
 
 # -- Entry point --
 def trigger(agent_name: str, text: str) -> None:
-    """guardrails.py에서 호출. 처리->큐->재생 파이프라인."""
+    """guardrails.py에서 호출. 이전 발화 재생이 끝날 때까지 대기 후,
+    현재 발화의 TTS/재생을 백그라운드로 시작하고 즉시 리턴.
+    → AutoGen은 항상 한 발화만 미리 생성 가능 (텍스트 선행, 오디오는 순차)."""
+    _prev_done.wait()
+    _prev_done.clear()
+
     def _run():
-        with _trigger_lock:
-            try:
+        try:
+            with _trigger_lock:
                 sentences = _split_sentences(text)
                 if not sentences:
                     return
@@ -521,7 +528,10 @@ def trigger(agent_name: str, text: str) -> None:
                     packet = _process_one(agent_name, sentence, i, len(sentences))
                     if packet:
                         _speech_queue.put(packet)
-            except Exception as e:
-                logger.error(f"[TTS] {agent_name} 실패: {e}", exc_info=True)
+                _speech_queue.join()
+        except Exception as e:
+            logger.error(f"[TTS] {agent_name} 실패: {e}", exc_info=True)
+        finally:
+            _prev_done.set()
 
     threading.Thread(target=_run, daemon=True, name=f"tts-{agent_name}").start()

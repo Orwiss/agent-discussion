@@ -22,13 +22,17 @@ from config_premium import (
 )
 
 from agents.simple_agents import create_simple_ux, create_simple_visual, create_simple_engineer
-from meeting.stage2 import run_stage2_discussion
+from meeting.stage2 import run_stage2_discussion, confirm_convergence
 from meeting.independent import run_stage2_independent
 from meeting.guardrails import clean_message_hook, clean_history_hook
 
 # 로그 디렉토리
 LOG_DIR = os.path.join(os.path.dirname(__file__), "logs", "experiment")
 os.makedirs(LOG_DIR, exist_ok=True)
+
+# 최종 요약을 마크다운으로 렌더링하기 위한 마커.
+# 백엔드는 이 prefix와 함께 print하고, 프론트는 marked.js로 렌더한다.
+SUMMARY_MARKER = "[SUMMARY_MD]"
 
 # 고정 브리프 (시나리오 미확정 — 테스트용 플레이스홀더)
 BRIEFS = {
@@ -164,22 +168,30 @@ def _run_session(iostream, condition, brief):
 
     if condition == "discussion":
         result = run_stage2_discussion(agents, user, brief, iostream=iostream)
-        summary = result.summary if result.summary else "요약 없음"
     else:
         result = run_stage2_independent(agents, user, brief, iostream=iostream)
-        summary = result.get("summary", "요약 없음") if isinstance(result, dict) else "요약 없음"
+    # 양 조건 모두 AG2 ChatResult 반환 — .summary 속성으로 통일.
+    summary = getattr(result, "summary", None) or "요약 없음"
 
-    iostream.print(f"\n[시스템] === 최종 요약 ===\n{summary}")
+    # 수렴 페이즈 종료 직전 사용자에게 추가 의견 기회 (#3)
+    extra = confirm_convergence(iostream)
+    if extra:
+        log_event("participant_final_input", {"text": extra})
+        summary = f"{summary}\n\n---\n\n**참가자 최종 의견**: {extra}"
+
+    iostream.print(f"{SUMMARY_MARKER}{summary}")
     log_event("session_summary", {"summary": summary})
 
 
 # === HTML 프론트엔드 ===
+# {SUMMARY_MARKER} 자리에는 백엔드 상수가 주입됨 (str.format)
 HTML_PAGE = r"""<!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>디자인 아이디에이션 실험</title>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
@@ -239,6 +251,38 @@ HTML_PAGE = r"""<!DOCTYPE html>
     align-self: center; background: #312e81; border: 1px solid #4f46e5;
     color: #c7d2fe; font-size: 13px;
   }
+  .msg.summary {
+    align-self: stretch; max-width: 100%;
+    background: #0b1220; border: 1px solid #4f46e5;
+    color: #e2e8f0; padding: 20px 24px; white-space: normal;
+  }
+  .msg.summary h1, .msg.summary h2, .msg.summary h3, .msg.summary h4 {
+    margin: 16px 0 8px; color: #c7d2fe; line-height: 1.3;
+  }
+  .msg.summary h1 { font-size: 22px; } .msg.summary h2 { font-size: 19px; }
+  .msg.summary h3 { font-size: 16px; } .msg.summary h4 { font-size: 14px; }
+  .msg.summary p { margin: 8px 0; line-height: 1.7; }
+  .msg.summary ul, .msg.summary ol { margin: 8px 0 8px 24px; }
+  .msg.summary li { margin: 4px 0; line-height: 1.6; }
+  .msg.summary strong { color: #f0abfc; }
+  .msg.summary blockquote {
+    border-left: 3px solid #6366f1; margin: 12px 0; padding: 4px 12px;
+    color: #94a3b8; background: #111827;
+  }
+  .msg.summary code {
+    background: #1e293b; padding: 2px 6px; border-radius: 4px;
+    font-family: 'Consolas', monospace; font-size: 13px;
+  }
+  .msg.summary table {
+    border-collapse: collapse; margin: 12px 0; width: 100%;
+    font-size: 13px;
+  }
+  .msg.summary th, .msg.summary td {
+    border: 1px solid #334155; padding: 8px 12px; text-align: left;
+    vertical-align: top;
+  }
+  .msg.summary th { background: #1e293b; color: #c7d2fe; }
+  .msg.summary hr { border: 0; border-top: 1px solid #334155; margin: 16px 0; }
   #input-area {
     padding: 12px 24px; background: #1e293b; border-top: 1px solid #334155;
     display: flex; gap: 8px; flex-shrink: 0;
@@ -304,6 +348,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
 </div>
 
 <script>
+const SUMMARY_MARKER = '__SUMMARY_MARKER__';
 const chat = document.getElementById('chat');
 const msgInput = document.getElementById('msg');
 const sendBtn = document.getElementById('send');
@@ -311,6 +356,22 @@ const statusEl = document.getElementById('status');
 let ws = null;
 let waitingForInput = false;
 let lastMsgHash = '';
+
+if (window.marked && marked.setOptions) {
+  marked.setOptions({ gfm: true, breaks: true });
+}
+
+function addSummary(markdownText) {
+  const div = document.createElement('div');
+  div.className = 'msg summary';
+  try {
+    div.innerHTML = window.marked ? marked.parse(markdownText) : markdownText;
+  } catch (e) {
+    div.textContent = markdownText;
+  }
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
 
 const DISPLAY_NAMES = {
   'UXResearcher': 'UX 리서처',
@@ -395,6 +456,11 @@ function handleWsMessage(raw) {
   if (t === 'print') {
     const text = (c.objects || []).join(c.sep || ' ');
     if (!text.trim()) return;
+    if (text.includes(SUMMARY_MARKER)) {
+      const md = text.split(SUMMARY_MARKER).slice(1).join(SUMMARY_MARKER).trim();
+      if (md) addSummary(md);
+      return;
+    }
     addMsg('system', text.replace(/\[시스템\]\s*/g, ''));
   } else if (t === 'text') {
     const sender = c.sender;
@@ -434,13 +500,18 @@ function startExperiment() {
 </html>"""
 
 
+def _render_html_page():
+    """HTML_PAGE의 placeholder를 실제 상수로 치환."""
+    return HTML_PAGE.replace("__SUMMARY_MARKER__", SUMMARY_MARKER)
+
+
 class FrontendHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
         try:
             self.send_response(200)
             self.send_header("Content-type", "text/html; charset=utf-8")
             self.end_headers()
-            self.wfile.write(HTML_PAGE.encode("utf-8"))
+            self.wfile.write(_render_html_page().encode("utf-8"))
         except (ConnectionAbortedError, ConnectionResetError, BrokenPipeError):
             pass  # 브라우저가 연결을 일찍 끊은 경우 무시
 

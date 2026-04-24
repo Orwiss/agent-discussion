@@ -53,6 +53,8 @@ llm_config_visual = {
 }
 
 # 소프트웨어 엔지니어 — deepseek-r1: 추론 특화
+# reasoning.exclude=True: 내부 추론은 하되 응답엔 reasoning 토큰 포함 안 함 (속도 ↑)
+# reasoning.effort="low": 추론 깊이 제한 (속도 추가 개선)
 llm_config_engineer = {
     "config_list": [{
         "model": "deepseek/deepseek-r1-0528",
@@ -61,6 +63,7 @@ llm_config_engineer = {
         "extra_body": {
             "frequency_penalty": 0.5,
             "presence_penalty": 0.3,
+            "reasoning": {"exclude": True, "effort": "low"},
         },
     }],
     "temperature": 0.5,

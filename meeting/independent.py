@@ -10,7 +10,7 @@ AG2 GroupChat을 사용하되, process_all_messages_before_reply 훅으로 격�
 import autogen
 from autogen.agentchat.contrib.capabilities.transform_messages import TransformMessages
 from autogen.agentchat.contrib.capabilities.transforms import MessageHistoryLimiter
-from meeting.stage2 import DedupGroupChat, PHASE_MESSAGES, build_opening_message
+from meeting.stage2 import DedupGroupChat, PHASE_MESSAGES, build_opening_message, PHASE_MAX_ROUND, _inject_phase_prefix
 
 
 def _extract_agent_messages(groupchat, agent_name):
@@ -109,7 +109,7 @@ def _create_isolation_hook(agent_name):
     return isolation_hook
 
 
-def _create_phase_groupchat_independent(agents, user, max_round=24):
+def _create_phase_groupchat_independent(agents, user, max_round=PHASE_MAX_ROUND):
     """독립 조건용 GroupChat — 6발화마다 유저 + 컨텍스트 격리"""
     from meeting.stage2 import _create_6turn_speaker_selection
     speaker_fn = _create_6turn_speaker_selection(agents, user)
@@ -168,8 +168,12 @@ def run_stage2_independent(agents, user, brief, iostream=None):
 
         opening = build_opening_message(brief, phase)
 
+        # 페이즈 prefix를 각 에이전트 system_message에 주입
+        for agent in agents:
+            _inject_phase_prefix(agent, phase)
+
         # 페이즈용 GroupChat 생성 (컨텍스트 격리 포함)
-        groupchat, manager = _create_phase_groupchat_independent(agents, user, max_round=24)
+        groupchat, manager = _create_phase_groupchat_independent(agents, user)
 
         result = user.initiate_chat(
             manager,

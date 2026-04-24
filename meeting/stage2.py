@@ -17,6 +17,24 @@ def _log(event, data):
 
 
 # 페이즈별 시스템 메시지
+# 페이즈당 라운드 예산.
+# 구조: 1 (initial msg) + 3 cycles * (6 agent + 1 user) = 22.
+# 마지막 사용자 개입 후 한 번 더 응답 사이클을 보장하려면 +6 = 28.
+# 24로 두면 마지막 사이클이 중간에 끊겨 SoftwareEngineer가 누락되는 케이스가 생긴다.
+PHASE_MAX_ROUND = 28
+
+
+def confirm_convergence(iostream):
+    """수렴 페이즈 종료 직전 사용자에게 추가 의견을 묻는다.
+    빈 입력이면 None 반환, 비어 있지 않으면 입력 문자열을 그대로 반환."""
+    iostream.print(
+        "[시스템] 마지막으로 추가하실 의견이 있으면 입력해주세요. (빈칸이면 요약을 생성합니다)"
+    )
+    raw = iostream.input("최종 의견: ")
+    text = (raw or "").strip()
+    return text if text else None
+
+
 PHASE_MESSAGES = {
     "generate": (
         "=== 발산 페이즈 ===\n"
@@ -35,14 +53,44 @@ PHASE_MESSAGES = {
     ),
 }
 
+# 페이즈 전환 시 에이전트 system_message에 주입되는 prefix.
+# 희석 방지: initial msg가 아닌 system_message에 직접 박아 매 턴 유효.
+PHASE_PREFIX_SENTINEL = "\n\n[현재 페이즈]"
+PHASE_PREFIXES = {
+    "generate": (
+        f"{PHASE_PREFIX_SENTINEL}\n"
+        "지금까지 나온 것과 다른 각도의 아이디어를 하나 꺼내세요. "
+        "폭을 넓히는 게 목표입니다. 깊이 파지 말고 새로운 방향을 여세요."
+    ),
+    "deepen": (
+        f"{PHASE_PREFIX_SENTINEL}\n"
+        "발산에서 나온 아이디어 중 하나를 골라 구체적으로 풀어보세요. "
+        "사용자가 실제로 어떻게 쓸지, 어떻게 만들지 그림을 그리세요."
+    ),
+    "converge": (
+        f"{PHASE_PREFIX_SENTINEL}\n"
+        "지금까지 나온 것 중 핵심만 추려 한 방향으로 정리하세요. "
+        "새로운 제안보다 지금 있는 것들의 합의에 집중하세요."
+    ),
+}
+
+
+def _inject_phase_prefix(agent, phase):
+    """페이즈 전환 시 에이전트 system_message에 페이즈 prefix를 (재)부착한다.
+    기존 prefix가 있으면 제거 후 교체 (누적 방지)."""
+    current = agent.system_message
+    idx = current.find(PHASE_PREFIX_SENTINEL)
+    if idx >= 0:
+        current = current[:idx]
+    agent.update_system_message(current + PHASE_PREFIXES[phase])
+
 
 # 턴마다 에이전트 system_message 끝에 부착되는 리마인더.
 # 센티넬로 기존 리마인더 부분을 식별하여 교체한다 (중복/누적 방지).
 TURN_REMINDER_SENTINEL = "\n\n[턴 리마인더]"
 TURN_REMINDER = (
     f"{TURN_REMINDER_SENTINEL}\n"
-    "3문장 내외로 말하세요. 어떤 경우에도 5문장을 넘기면 안 됩니다. "
-    "한 가지 주장에만 집중하고, 다른 주제는 다음 차례에 말하세요."
+    "3문장 내외로 말하세요. 어떤 경우에도 5문장을 넘기면 안 됩니다."
 )
 
 
@@ -105,7 +153,7 @@ def _create_6turn_speaker_selection(agents, user):
     return select_speaker
 
 
-def _create_phase_groupchat(agents, user, max_round=24):
+def _create_phase_groupchat(agents, user, max_round=PHASE_MAX_ROUND):
     """한 페이즈용 GroupChat 생성 (18 에이전트 발화 + 유저 개입 2회 포함)"""
     speaker_fn = _create_6turn_speaker_selection(agents, user)
 
@@ -169,11 +217,12 @@ def run_stage2_discussion(agents, user, brief, iostream=None):
 
         opening = build_opening_message(brief + carryover, phase)
 
-        # 페이즈 전환은 에이전트에게만 전달 (참가자 UI에는 안 보임)
-        # iostream으로는 보내지 않음
+        # 페이즈 prefix를 각 에이전트 system_message에 주입 (매 턴 유효하도록)
+        for agent in agents:
+            _inject_phase_prefix(agent, phase)
 
         # 페이즈용 GroupChat 생성
-        groupchat, manager = _create_phase_groupchat(agents, user, max_round=24)
+        groupchat, manager = _create_phase_groupchat(agents, user)
 
         result = user.initiate_chat(
             manager,

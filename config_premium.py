@@ -27,7 +27,10 @@ llm_config_ux = {
             "frequency_penalty": 0.4,
             "presence_penalty": 0.2,
             "chat_template_kwargs": {"enable_thinking": False},
-            **_PROVIDER_FILTER,
+            "provider": {
+                "order": ["WandB"],
+                "quantizations": ["fp16", "bf16", "fp8"],
+            },
         },
     }],
     "temperature": 0.6,
@@ -93,7 +96,10 @@ llm_config_inner = {
         "extra_body": {
             "frequency_penalty": 0.4,
             "presence_penalty": 0.2,
-            **_PROVIDER_FILTER,
+            "provider": {
+                "order": ["WandB"],
+                "quantizations": ["fp16", "bf16", "fp8"],
+            },
         },
     }],
     "temperature": 0.9,

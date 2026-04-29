@@ -9,7 +9,7 @@ web.py의 _run_session을 그대로 재사용하되, WebSocket 대신 FakeIOStre
     python test_session.py --condition independent --task B --seed 42
 
 로그 저장: logs/test/
-세션 종료 후: 발화 통계 자동 출력
+세션 종료 후: 발화 통계 + 페이즈별 타이밍 자동 출력
 """
 import argparse
 import datetime
@@ -18,6 +18,7 @@ import os
 import random
 import re
 import sys
+import time
 from typing import Any
 from uuid import UUID
 
@@ -47,6 +48,67 @@ web.LOG_DIR = _TEST_LOG_DIR
 import autogen  # noqa: E402
 import autogen.runtime_logging as ag2_logging  # noqa: E402
 from autogen.io import IOStream  # noqa: E402
+
+
+# ──────────────────────────────────────────────────────────────────────
+# 타이밍 트래커
+# ──────────────────────────────────────────────────────────────────────
+class PhaseTimer:
+    """세션 전체 + 페이즈별 경과 시간 추적."""
+
+    def __init__(self):
+        self.session_start: float = time.time()
+        self.phases: list[dict] = []
+        self._current_phase: str | None = None
+        self._phase_start: float = 0.0
+
+    def elapsed(self) -> float:
+        """세션 시작 이후 경과 초."""
+        return time.time() - self.session_start
+
+    def elapsed_str(self) -> str:
+        """[MM:SS] 포맷 경과 시간."""
+        e = self.elapsed()
+        m, s = divmod(int(e), 60)
+        return f"[{m:02d}:{s:02d}]"
+
+    def start_phase(self, name: str):
+        """새 페이즈 시작 기록."""
+        if self._current_phase:
+            self.end_phase()
+        self._current_phase = name
+        self._phase_start = time.time()
+        web.log_event("phase_start", {
+            "phase": name,
+            "session_elapsed_s": round(self.elapsed(), 1),
+        })
+
+    def end_phase(self):
+        """현재 페이즈 종료 기록."""
+        if not self._current_phase:
+            return
+        duration = time.time() - self._phase_start
+        record = {
+            "phase": self._current_phase,
+            "duration_s": round(duration, 1),
+            "session_elapsed_s": round(self.elapsed(), 1),
+        }
+        self.phases.append(record)
+        web.log_event("phase_end", record)
+        self._current_phase = None
+
+    def summary(self) -> dict:
+        """타이밍 요약 반환."""
+        total = self.elapsed()
+        return {
+            "total_s": round(total, 1),
+            "total_str": f"{int(total//60)}분 {int(total%60)}초",
+            "phases": self.phases,
+        }
+
+
+# 전역 타이머 인스턴스 (세션마다 리셋)
+_timer: PhaseTimer | None = None
 
 
 # ──────────────────────────────────────────────────────────────────────
@@ -106,7 +168,8 @@ class FakeIOStream:
         }
         web.log_event("ws_send", _json_safe({"type": "print", "content": content}))
         if self.verbose:
-            print(text.rstrip("\n"))
+            prefix = _timer.elapsed_str() if _timer else ""
+            print(f"{prefix} {text.rstrip(chr(10))}")
 
     def send(self, message: Any) -> None:
         """구조화된 이벤트(BaseEvent 등) 수신. 로그에 기록."""
@@ -126,6 +189,9 @@ class FakeIOStream:
             print(f"[FakeIOStream] log_event 실패: {e}", file=sys.stderr)
         if self.verbose and hasattr(message, "print"):
             try:
+                # 에이전트 발화 시 경과 시간 표시
+                prefix = _timer.elapsed_str() if _timer else ""
+                sys.stdout.write(f"{prefix} ")
                 message.print()
             except Exception:
                 pass
@@ -139,17 +205,112 @@ class FakeIOStream:
             "count": self.input_count,
         })
         if self.verbose:
-            print(f"\n>>> [참가자 #{self.input_count}] {feedback if feedback else '(skip)'}")
+            prefix = _timer.elapsed_str() if _timer else ""
+            print(f"\n{prefix} >>> [참가자 #{self.input_count}] {feedback if feedback else '(skip)'}")
         return feedback
 
 
 # ──────────────────────────────────────────────────────────────────────
 # 세션 실행
 # ──────────────────────────────────────────────────────────────────────
+def _patch_phase_timing():
+    """run_stage2_discussion / run_stage2_independent에 페이즈별 타이밍을 주입.
+    원본 함수의 user.initiate_chat 전후로 타이머를 걸어 각 페이즈 소요 시간을 기록."""
+    from meeting import stage2, independent
+
+    _orig_discussion = stage2.run_stage2_discussion
+    _orig_independent = independent.run_stage2_independent
+
+    def timed_discussion(agents, user, brief, iostream=None):
+        global _timer
+        phases = ["generate", "deepen", "converge"]
+        phase_labels = {"generate": "발산", "deepen": "심화", "converge": "수렴"}
+
+        # 원래 initiate_chat을 감싸서 페이즈 타이밍 추적
+        _orig_initiate = user.initiate_chat
+        phase_idx = [0]
+
+        def timed_initiate(*args, **kwargs):
+            phase = phases[min(phase_idx[0], len(phases) - 1)]
+            label = phase_labels[phase]
+            if _timer:
+                _timer.start_phase(f"{label} ({phase})")
+            print(f"\n{'='*60}")
+            print(f"  ▶ 페이즈 {phase_idx[0]+1}/3: {label}")
+            if _timer:
+                print(f"  ⏱ 세션 경과: {_timer.elapsed_str()}")
+            print(f"{'='*60}\n")
+            result = _orig_initiate(*args, **kwargs)
+            if _timer:
+                _timer.end_phase()
+                dur = _timer.phases[-1]["duration_s"]
+                print(f"\n{'='*60}")
+                print(f"  ✓ {label} 완료 — {dur:.0f}초 ({dur/60:.1f}분)")
+                print(f"  ⏱ 세션 경과: {_timer.elapsed_str()}")
+                print(f"{'='*60}\n")
+            phase_idx[0] += 1
+            return result
+
+        user.initiate_chat = timed_initiate
+        try:
+            return _orig_discussion(agents, user, brief, iostream=iostream)
+        finally:
+            user.initiate_chat = _orig_initiate
+
+    def timed_independent(agents, user, brief, iostream=None):
+        global _timer
+        phases = ["generate", "deepen", "converge"]
+        phase_labels = {"generate": "발산", "deepen": "심화", "converge": "수렴"}
+
+        _orig_initiate = user.initiate_chat
+        phase_idx = [0]
+
+        def timed_initiate(*args, **kwargs):
+            phase = phases[min(phase_idx[0], len(phases) - 1)]
+            label = phase_labels[phase]
+            if _timer:
+                _timer.start_phase(f"{label} ({phase})")
+            print(f"\n{'='*60}")
+            print(f"  ▶ 페이즈 {phase_idx[0]+1}/3: {label}")
+            if _timer:
+                print(f"  ⏱ 세션 경과: {_timer.elapsed_str()}")
+            print(f"{'='*60}\n")
+            result = _orig_initiate(*args, **kwargs)
+            if _timer:
+                _timer.end_phase()
+                dur = _timer.phases[-1]["duration_s"]
+                print(f"\n{'='*60}")
+                print(f"  ✓ {label} 완료 — {dur:.0f}초 ({dur/60:.1f}분)")
+                print(f"  ⏱ 세션 경과: {_timer.elapsed_str()}")
+                print(f"{'='*60}\n")
+            phase_idx[0] += 1
+            return result
+
+        user.initiate_chat = timed_initiate
+        try:
+            return _orig_independent(agents, user, brief, iostream=iostream)
+        finally:
+            user.initiate_chat = _orig_initiate
+
+    # monkey-patch
+    stage2.run_stage2_discussion = timed_discussion
+    independent.run_stage2_independent = timed_independent
+    # web.py도 이 패치된 버전을 사용하도록
+    import importlib
+    importlib.reload(web)
+    web.LOG_DIR = _TEST_LOG_DIR
+
+
 def run_test_session(condition: str, task: str, seed: int | None = None) -> str:
     """테스트 세션 1회 실행. 로그 파일 경로 반환."""
+    global _timer
+    _timer = PhaseTimer()
+
     rng = random.Random(seed) if seed is not None else random.Random()
     brief = web.BRIEFS.get(task, web.BRIEFS["A"])
+
+    # 페이즈 타이밍 패치 적용
+    _patch_phase_timing()
 
     # 로그 파일 초기화 (web.py의 _init_log 재사용, LOG_DIR은 이미 test로 바꿈)
     pid = f"TEST_{datetime.datetime.now().strftime('%H%M%S')}"
@@ -186,6 +347,9 @@ def run_test_session(condition: str, task: str, seed: int | None = None) -> str:
         import traceback
         traceback.print_exc()
     finally:
+        # 마지막 페이즈가 end 안 된 경우 대비
+        if _timer and _timer._current_phase:
+            _timer.end_phase()
         ag2_logging.stop()
         web.log_event("session_end", {})
         web._close_log()
@@ -242,21 +406,62 @@ def analyze_utterances(log_path: str) -> dict:
     }
 
 
-def print_stats(stats: dict) -> None:
+def print_stats(stats: dict, timing: dict | None = None) -> None:
     if stats.get("count", 0) == 0:
         print("\n[통계] 발화 없음 (세션이 시작 전/직후에 종료됨)")
         return
     print()
     print("=" * 60)
-    print("발화 통계")
+    print("  발화 통계")
     print("=" * 60)
-    print(f"총 발화 수        : {stats['count']}")
-    print(f"평균 글자 수      : {stats['mean_chars']:.0f}")
-    print(f"중간값 글자 수    : {stats['median_chars']}")
-    print(f"최소 / 최대 글자  : {stats['min_chars']} / {stats['max_chars']}")
-    print(f"평균 문장 수      : {stats['mean_sentences']:.1f}")
-    print(f"최대 문장 수      : {stats['max_sentences']}")
+    print(f"  총 발화 수        : {stats['count']}")
+    print(f"  평균 글자 수      : {stats['mean_chars']:.0f}")
+    print(f"  중간값 글자 수    : {stats['median_chars']}")
+    print(f"  최소 / 최대 글자  : {stats['min_chars']} / {stats['max_chars']}")
+    print(f"  평균 문장 수      : {stats['mean_sentences']:.1f}")
+    print(f"  최대 문장 수      : {stats['max_sentences']}")
+
+    if timing:
+        print()
+        print("-" * 60)
+        print("  타이밍")
+        print("-" * 60)
+        print(f"  총 소요 시간      : {timing['total_str']}")
+        for p in timing.get("phases", []):
+            dur = p["duration_s"]
+            m, s = divmod(int(dur), 60)
+            print(f"  {p['phase']:20s}: {m}분 {s}초 ({dur:.0f}s)")
+
     print("=" * 60)
+
+
+def analyze_timing_from_log(log_path: str) -> dict | None:
+    """기존 JSONL 로그에서 페이즈 타이밍 이벤트를 추출."""
+    phases = []
+    session_start = None
+    session_end = None
+    with open(log_path, encoding="utf-8") as f:
+        for line in f:
+            try:
+                d = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            evt = d.get("event")
+            t = d.get("time", "")
+            if evt == "session_start":
+                session_start = t
+            elif evt == "session_end":
+                session_end = t
+            elif evt == "phase_end":
+                phases.append(d.get("data", {}))
+    if not phases:
+        return None
+    total = sum(p.get("duration_s", 0) for p in phases)
+    return {
+        "total_s": round(total, 1),
+        "total_str": f"{int(total//60)}분 {int(total%60)}초",
+        "phases": phases,
+    }
 
 
 # ──────────────────────────────────────────────────────────────────────
@@ -268,14 +473,32 @@ def main():
     parser.add_argument("--task", choices=["A", "B"], default="A")
     parser.add_argument("--seed", type=int, default=None, help="랜덤 시드 (재현 가능)")
     parser.add_argument("--quiet", action="store_true", help="콘솔 출력 최소화")
+    parser.add_argument("--analyze", type=str, default=None,
+                        help="기존 로그 파일 분석만 수행 (세션 실행 안 함)")
     args = parser.parse_args()
+
+    if args.analyze:
+        # 기존 로그 분석 모드
+        print(f"[분석] {args.analyze}")
+        stats = analyze_utterances(args.analyze)
+        timing = analyze_timing_from_log(args.analyze)
+        print_stats(stats, timing)
+        return
 
     print(f"[세션 시작] condition={args.condition}, task={args.task}, seed={args.seed}")
     log_path = run_test_session(args.condition, args.task, seed=args.seed)
     print(f"\n[세션 종료] 로그: {log_path}")
 
     stats = analyze_utterances(log_path)
-    print_stats(stats)
+    timing = _timer.summary() if _timer else None
+    print_stats(stats, timing)
+
+    # 타이밍 데이터도 별도 JSON으로 저장
+    if timing:
+        timing_path = log_path.replace(".jsonl", "_timing.json")
+        with open(timing_path, "w", encoding="utf-8") as f:
+            json.dump(timing, f, ensure_ascii=False, indent=2)
+        print(f"\n[타이밍 저장] {timing_path}")
 
 
 if __name__ == "__main__":

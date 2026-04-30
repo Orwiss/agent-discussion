@@ -189,3 +189,5 @@ cython_debug/
 _*.py
 _*.ipynb
 _scratch/
+/.omx
+/literature

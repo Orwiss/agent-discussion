@@ -1,0 +1,2065 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>Tier 1 핵심 8편 — 박성훈 석사논문 필독 논문 상세 정리</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+<style>
+  :root{
+    /* 색상 — 절제된 팔레트 */
+    --fg: #18181b;
+    --fg-soft: #3f3f46;
+    --muted: #71717a;
+    --rule: #e4e4e7;
+    --rule-soft: #f1f1f3;
+    --bg: #fafaf9;
+    --card: #ffffff;
+    --accent: #1e4d6b;      /* 차분한 네이비 */
+    --accent-soft: #eef4f8;
+    --accent-bold: #163a51;
+    --warm: #b45309;        /* 박성훈 관계 박스 */
+    --warm-soft: #fef7ed;
+    --highlight: #fef3c7;   /* 한 문장 요약 */
+
+    /* 타이포 */
+    --font-sans: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Consolas, monospace;
+  }
+  *{box-sizing:border-box; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale}
+  html,body{margin:0; padding:0; background:var(--bg); color:var(--fg)}
+  body{
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.72;
+    letter-spacing: -0.005em;
+    font-feature-settings: "ss06", "tnum";
+  }
+
+  /* ── 레이아웃 ───────────────────────── */
+  .layout{
+    display: grid;
+    grid-template-columns: 1fr;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+  @media (min-width: 1024px){
+    .layout{
+      grid-template-columns: 240px 1fr;
+      gap: 56px;
+      padding: 0 32px;
+    }
+  }
+
+  /* ── 사이드바 ───────────────────────── */
+  aside.sidebar{
+    padding: 48px 0 24px;
+  }
+  @media (min-width: 1024px){
+    aside.sidebar{
+      position: sticky;
+      top: 0;
+      align-self: start;
+      max-height: 100vh;
+      overflow-y: auto;
+      padding: 48px 0 48px;
+    }
+  }
+  .sidebar-title{
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 14px;
+  }
+  .sidebar nav ol{
+    list-style: none;
+    counter-reset: nav;
+    padding: 0;
+    margin: 0;
+  }
+  .sidebar nav li{
+    counter-increment: nav;
+    margin: 0;
+    border-left: 2px solid var(--rule);
+    padding: 8px 0 8px 14px;
+    font-size: 13.5px;
+    line-height: 1.45;
+    transition: border-color .15s;
+  }
+  .sidebar nav li:hover{
+    border-left-color: var(--accent);
+  }
+  .sidebar nav li::before{
+    content: counter(nav, decimal-leading-zero);
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--muted);
+    display: block;
+    margin-bottom: 2px;
+    letter-spacing: 0.04em;
+  }
+  .sidebar nav a{
+    color: var(--fg-soft);
+    text-decoration: none;
+    display: block;
+  }
+  .sidebar nav a:hover{ color: var(--accent) }
+  .sidebar nav .nav-id{
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--accent);
+    margin-right: 4px;
+  }
+  .sidebar nav .nav-note{
+    display: block;
+    font-size: 11.5px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  /* ── 메인 ───────────────────────── */
+  main{
+    max-width: 760px;
+    padding: 48px 0 120px;
+  }
+
+  /* ── 타이포 ───────────────────────── */
+  h1{
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    line-height: 1.25;
+    margin: 0 0 14px;
+  }
+  h2{
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.3;
+    margin: 0 0 8px;
+    color: var(--fg);
+    padding: 0;
+    border: none;
+  }
+  h3{
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin: 28px 0 10px;
+    color: var(--accent-bold);
+  }
+  h4{
+    font-size: 14px;
+    font-weight: 600;
+    margin: 18px 0 6px;
+    color: var(--fg);
+    letter-spacing: -0.005em;
+  }
+  p{ margin: 10px 0 }
+  ul,ol{ padding-left: 22px; margin: 8px 0 }
+  li{ margin: 4px 0; line-height: 1.7 }
+  strong{ color: var(--fg); font-weight: 600 }
+  code{
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    background: var(--rule-soft);
+    color: var(--accent-bold);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-weight: 500;
+  }
+
+  /* ── 페이지 헤더 ───────────────────────── */
+  .page-header{
+    margin-bottom: 56px;
+    padding-bottom: 28px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .page-header .meta{
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.6;
+    margin-top: 4px;
+  }
+  .page-header .meta strong{
+    color: var(--fg-soft);
+    font-weight: 600;
+  }
+
+  /* ── Paper 섹션 ───────────────────────── */
+  .paper-section{
+    margin: 0 0 80px;
+    padding-top: 32px;
+    scroll-margin-top: 24px;
+  }
+  .paper-section:not(:last-child){
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: 56px;
+  }
+
+  /* paper 헤더 — 번호 + ID 뱃지 */
+  .paper-header{
+    margin-bottom: 18px;
+  }
+  .paper-num{
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .paper-title{
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.3;
+    margin: 0 0 10px;
+  }
+  .paper-id{
+    font-family: var(--font-mono);
+    color: var(--accent);
+    font-size: 0.92em;
+    background: var(--accent-soft);
+    padding: 1px 7px;
+    border-radius: 4px;
+    font-weight: 600;
+    margin-right: 6px;
+  }
+  .paper-byline{
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  /* ── 한 문장 요약 박스 ───────────────────────── */
+  .summary-line{
+    background: linear-gradient(180deg, var(--highlight) 0%, #fef9d9 100%);
+    border-radius: 6px;
+    padding: 16px 20px;
+    margin: 20px 0 28px;
+    font-size: 14.5px;
+    line-height: 1.65;
+    color: var(--fg-soft);
+    border: 1px solid #f3e187;
+  }
+  .summary-line strong{ color: var(--fg) }
+  .summary-line .label{
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--accent-bold);
+    background: rgba(0,0,0,0.04);
+    padding: 2px 6px;
+    border-radius: 3px;
+    margin-right: 8px;
+    vertical-align: middle;
+    text-transform: uppercase;
+  }
+
+  /* ── 메타 정보 카드 ───────────────────────── */
+  .info-table{
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    padding: 18px 22px;
+    margin: 18px 0 24px;
+    font-size: 13.5px;
+  }
+  .info-table .row{
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 16px;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--rule-soft);
+  }
+  .info-table .row:last-child{ border-bottom: none }
+  .info-table .label{
+    font-weight: 600;
+    color: var(--muted);
+    font-size: 12px;
+    letter-spacing: 0.02em;
+  }
+  .info-table .row > span:last-child{ color: var(--fg-soft) }
+
+  /* ── 데이터 테이블 ───────────────────────── */
+  table.data{
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 13.5px;
+    margin: 16px 0;
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  table.data th, table.data td{
+    text-align: left;
+    padding: 9px 12px;
+    border-bottom: 1px solid var(--rule-soft);
+    vertical-align: top;
+  }
+  table.data tr:last-child td{ border-bottom: none }
+  table.data th{
+    background: var(--rule-soft);
+    font-weight: 600;
+    color: var(--fg);
+    font-size: 12.5px;
+    letter-spacing: 0.01em;
+  }
+  table.data strong{ color: var(--accent-bold) }
+
+  /* ── 박성훈 관계 박스 ───────────────────────── */
+  .relation-box{
+    background: var(--warm-soft);
+    border: 1px solid #fed7aa;
+    border-left: 3px solid var(--warm);
+    padding: 18px 22px;
+    margin: 32px 0 8px;
+    border-radius: 6px;
+  }
+  .relation-box h4{
+    color: var(--warm);
+    margin: 0 0 10px;
+    font-size: 13px;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+  .relation-box p{ margin: 10px 0; font-size: 14px }
+  .relation-box ul{ font-size: 13.5px }
+
+  /* ── 인용/blockquote ───────────────────────── */
+  blockquote{
+    margin: 14px 0;
+    padding: 12px 18px;
+    border-left: 3px solid var(--accent);
+    background: var(--accent-soft);
+    color: var(--fg-soft);
+    font-style: normal;
+    font-size: 13.5px;
+    border-radius: 0 4px 4px 0;
+  }
+  .quote{
+    font-style: italic;
+    color: var(--muted);
+    margin: 12px 0;
+    padding-left: 14px;
+    border-left: 2px solid var(--rule);
+    font-size: 13.5px;
+  }
+
+  /* ── 종합 섹션 (마지막) ───────────────────────── */
+  .summary-section{
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    padding: 32px 32px;
+    margin: 80px 0 24px;
+  }
+  .summary-section h2{ margin-top: 0 }
+  .summary-section h3{ color: var(--fg); margin-top: 32px }
+
+  /* ── 푸터 메타 ───────────────────────── */
+  .page-footer{
+    color: var(--muted);
+    font-size: 12px;
+    margin-top: 64px;
+    padding-top: 20px;
+    border-top: 1px solid var(--rule);
+  }
+
+  hr.divider{ border: none; border-top: 1px dashed var(--rule); margin: 20px 0 }
+
+  /* ── 인쇄 ───────────────────────── */
+  @media print{
+    body{ background: #fff; font-size: 11pt }
+    .layout{ grid-template-columns: 1fr; padding: 0 }
+    aside.sidebar{ display: none }
+    main{ max-width: 100%; padding: 24px 0 }
+    .paper-section{ break-inside: avoid; page-break-inside: avoid }
+  }
+
+  /* ── 모바일 조정 ───────────────────────── */
+  @media (max-width: 640px){
+    body{ font-size: 14.5px }
+    main{ padding: 32px 0 80px }
+    h1{ font-size: 24px }
+    .paper-title{ font-size: 19px }
+    .info-table .row{ grid-template-columns: 1fr; gap: 2px }
+    .info-table .label{ margin-bottom: 4px }
+    .summary-section{ padding: 24px 20px }
+  }
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+<aside class="sidebar">
+  <div class="sidebar-title">필독 8편</div>
+  <nav>
+    <ol>
+      <li><a href="#ma_27"><span class="nav-id">ma_27</span> IdeationWeb<span class="nav-note">CHI 2025 · CSI 측정 유일</span></a></li>
+      <li><a href="#ma_01"><span class="nav-id">ma_01</span> MultiColleagues<span class="nav-note">CHI 2026 · 비교 디자인 가장 가까움</span></a></li>
+      <li><a href="#mad_06"><span class="nav-id">mad_06</span> LLM Discussion<span class="nav-note">COLM 2024 · 3-phase + role-play</span></a></li>
+      <li><a href="#mad_07"><span class="nav-id">mad_07</span> VirSci<span class="nav-note">ACL 2025 · 4-D ablation</span></a></li>
+      <li><a href="#vri_07"><span class="nav-id">vri_07</span> VRCopilot<span class="nav-note">UIST 2024 · VR+AI에 CSI</span></a></li>
+      <li><a href="#mad_02"><span class="nav-id">mad_02</span> Creativity Survey<span class="nav-note">EMNLP 2025 · 갭 진단</span></a></li>
+      <li><a href="#mad_03"><span class="nav-id">mad_03</span> Beyond Self-Talk<span class="nav-note">arXiv 2025 · 너 슬로건</span></a></li>
+      <li><a href="#ma_05"><span class="nav-id">ma_05</span> MA Dialogues<span class="nav-note">SIGDIAL 2025 · 변수 ablation</span></a></li>
+    </ol>
+  </nav>
+</aside>
+
+<main>
+
+<header class="page-header">
+  <h1>Tier 1 핵심 8편 — 필독 논문 상세 정리</h1>
+  <p class="meta">
+    멀티 에이전트 LLM 디자인 아이데이션 + VR 확장 + CSI 측정 연구 맥락에서 가장 직결되는 <strong>8편</strong>을 진짜 풀어 정리한 문서.<br>
+    각 paper마다 <strong>한 문장 요약 → 누가·어디서·왜 → 핵심 개념 풀어주기 → 방법 → 결과 → 한계 → 박성훈 연구와의 관계</strong> 순서.
+  </p>
+</header>
+
+<!-- ============================================ ma_27 ============================================ -->
+<section id="ma_27" class="paper-section">
+<div class="paper-header">
+  <div class="paper-num">Paper 01 · CSI 측정 유일</div>
+  <h2 class="paper-title"><span class="paper-id">ma_27</span> IdeationWeb</h2>
+  <div class="paper-byline">Shen et al., CHI 2025 · Zhejiang University</div>
+</div>
+
+<p class="summary-line"><span class="label">한 문장으로</span> "디자이너가 LLM과 같이 아이디어 발산할 때, 마인드맵처럼 시각적으로 아이디어들을 펼쳐서 보여주면 그냥 ChatGPT 쓰는 것보다 창의성 지원이 더 좋다는 걸 CSI로 직접 측정해서 증명한 paper. <strong>68편 통틀어 CSI를 정량 비교에 명시적으로 쓴 유일한 paper</strong>라서 너 측정 방법론의 직접 모델이 돼."</p>
+
+<div class="info-table">
+<div class="row"><span class="label">정식 제목</span><span>IdeationWeb: Tracking the Evolution of Design Ideas in Human-AI Co-Creation</span></div>
+<div class="row"><span class="label">저자</span><span>Hanshu Shen, Lyukesheng Shen, Wenqi Wu, Kejun Zhang (교신)</span></div>
+<div class="row"><span class="label">소속</span><span>중국 절강대(浙江大学, Zhejiang University) Hangzhou</span></div>
+<div class="row"><span class="label">출판</span><span>CHI 2025 (Yokohama, Japan, April 26-May 1)</span></div>
+<div class="row"><span class="label">DOI</span><span>10.1145/3706598.3713375</span></div>
+<div class="row"><span class="label">분량</span><span>19 페이지</span></div>
+</div>
+
+<h3>1.1 누가, 어디서, 왜 — 배경부터 천천히</h3>
+
+<p>중국 절강대(저장대) 그룹 — Hangzhou에 있는 중국 9대 명문 중 하나. <strong>Kejun Zhang 교수</strong>가 교신저자고 1저자 Hanshu Shen이 박사과정생인 듯. 학과는 명시 안 됐는데 CHI 게재 + design 도메인이라 컴공 + HCI 또는 디자인 학과로 보임.</p>
+
+<p>이 paper의 문제의식을 진짜로 풀어보면 이래.</p>
+
+<p>너가 디자이너인데 새 제품 컨셉을 짜고 있어. ChatGPT 켜고 "노인을 위한 새로운 운동 기구 아이디어 줘"라고 물어. ChatGPT가 5개 아이디어를 텍스트로 죽 적어줘. 너가 그 중 하나 마음에 들어서 "그 첫 번째 더 자세히"라고 다시 물어. 또 텍스트 한 단락. 또 마음에 안 들면 다시 물어... 이게 ChatGPT로 ideation할 때의 흔한 패턴.</p>
+
+<p>이 paper가 지적하는 문제 3가지:</p>
+
+<ul>
+<li><strong>출력이 랜덤</strong> — 같은 질문에 매번 다른 답. 누적되지 않음</li>
+<li><strong>반복이 불명확</strong> — 어디까지 발전됐는지 추적 어려움. 5라운드 지나면 처음 뭐였는지 기억 안 남</li>
+<li><strong>인지 과부하</strong> — 텍스트가 계속 쌓임. 어디 살펴봐야 할지 모름</li>
+</ul>
+
+<p>저자가 더 구체적으로 짚는 게 <strong>"앵커링 편향(anchoring bias)"</strong>이라는 심리학 현상이야. 사람 인지는 느린데 AI 생성은 빠르거든. 그래서 처음 본 "그럭저럭 괜찮은" 아이디어에 일단 anchor 떨어지고, 그 뒤로는 그것 주변에서만 살짝씩 수정함. 진짜 발산이 안 됨. <strong>너무 일찍 좁아진다</strong>는 거.</p>
+
+<p>그래서 이 paper의 핵심 질문:</p>
+
+<blockquote>
+"디자이너가 AI와 함께 ideation할 때, 어떻게 하면 <strong>아이디어 공간(design space)을 일찍 좁히지 않고 체계적으로 넓힐 수 있을까?</strong> 그리고 그 과정을 추적 가능한 시각적 형태로 보여줄 수 있을까?"
+</blockquote>
+
+<h3>1.2 핵심 개념 풀어주기</h3>
+
+<h4>(1) FBS 모델 (Function-Behavior-Structure)</h4>
+
+<p>이게 이 paper의 핵심 토대 중 하나. 1990년대 호주의 디자인 연구자 <strong>John Gero</strong>가 만든 디자인 사고 모델이야. 모든 디자인 결과물을 3가지로 분해할 수 있다는 주장:</p>
+
+<ul>
+<li><strong>F (Function, 기능)</strong> — 이게 뭘 위한 거냐. 목적. 예: "노인이 안전하게 운동" </li>
+<li><strong>B (Behavior, 행동)</strong> — 그게 어떻게 작동하느냐. 예: "사용자 균형을 감지해서 자동으로 강도 조절"</li>
+<li><strong>S (Structure, 구조)</strong> — 그게 어떻게 생겼느냐. 부품 구성. 예: "균형 센서 + 모터 + 디스플레이 + 손잡이"</li>
+</ul>
+
+<p>같은 기능도 다른 행동으로 구현 가능. 같은 행동도 다른 구조로 구현 가능. 이 3 차원을 분리해서 생각하면 디자인 공간이 더 명확해진다는 거.</p>
+
+<p>이 paper가 LLM에게 아이디어를 낼 때 <strong>"FBS 형식으로만 답해라"</strong>고 강제. 즉 모든 LLM 출력이 일관된 구조 — F+B+S 트리플 — 로 나옴. 이게 시각화·비교·추적을 가능하게 만들어.</p>
+
+<h4>(2) Design-by-Analogy (DbA, 유추 기반 디자인)</h4>
+
+<p>또 다른 토대. 디자인 분야의 고전. 새 아이디어는 무에서 생기는 게 아니라 <strong>다른 영역에서 가져온 유사성</strong>에서 생긴다는 주장.</p>
+
+<p>예: 자연의 곤충 날개(source domain)를 보고 비행기 날개(target domain) 디자인. 이게 유추 기반.</p>
+
+<p>핵심 변수가 <strong>"유추 거리(analogical distance)"</strong>:</p>
+
+<ul>
+<li><strong>가까운 거리</strong> — 같은 분야 안에서 유추. 예: "다른 운동 기구를 참고해서 새 운동 기구". 결과: <strong>실현 가능성↑, 새로움↓</strong></li>
+<li><strong>먼 거리</strong> — 다른 분야에서 유추. 예: "악기 디자인을 참고해서 운동 기구". 결과: <strong>새로움↑, 실현 가능성↓</strong></li>
+</ul>
+
+<p>이 paper의 IdeationWeb이 사용자가 직접 유추 거리를 조절 가능하게 함. "이 아이디어에서 가까운 곳으로 발산해" vs "먼 곳으로 발산해".</p>
+
+<h4>(3) Mind map 시각화 + 그래프 인터페이스</h4>
+
+<p>각 아이디어 = 노드. 노드 안에 FBS 텍스트. 노드 간 연결선 = 유추 관계. 연결선 두께 = 유추 거리 (가까울수록 두꺼움).</p>
+
+<p>디자이너가 화면에서 노드를 클릭하면 거기서 새 가지 발산. 마인드맵 키워본 적 있으면 비슷한 느낌. 단, 자동으로 LLM이 가지를 만들어줌.</p>
+
+<h3>1.3 방법 — 진짜 자세히</h3>
+
+<h4>Formative Study (N=6)</h4>
+
+<p>본 실험 전에 디자이너 6명과 인터뷰. ChatGPT로 디자인 ideation 해본 경험이 있는 사람들. 핵심 challenge 3가지 (위에서 풀어준 거 — 랜덤·불추적·과부하)를 찾음. 이게 시스템 디자인 근거.</p>
+
+<h4>본 실험 (Within-subject N=40)</h4>
+
+<div class="info-table">
+<div class="row"><span class="label">참가자</span><span>40명 디자이너 (학생 + 실무자 혼합으로 추정)</span></div>
+<div class="row"><span class="label">디자인</span><span>Within-subject (한 사람이 두 조건 모두 경험)</span></div>
+<div class="row"><span class="label">조건</span><span>(A) IdeationWeb (그들의 시스템) vs (B) ChatGPT (베이스라인)</span></div>
+<div class="row"><span class="label">과제</span><span>두 개의 디자인 task (counterbalance — 순서 효과 통제)</span></div>
+<div class="row"><span class="label">측정 (정량)</span><span><strong>CSI (Creativity Support Index) 5차원</strong> + 자작 인터랙션 평가 + 전문가 평가 (novelty, completeness, quality)</span></div>
+<div class="row"><span class="label">측정 (정성)</span><span>사용자 행동 패턴 분석 + 인터뷰</span></div>
+</div>
+
+<h4>CSI 5차원이 정확히 뭐냐</h4>
+
+<p>이게 너 석사논문의 핵심 측정 도구가 될 거니까 한 번 더 풀자. <strong>Cherry & Latulipe (2014)</strong>가 만든 표준 척도:</p>
+
+<ul>
+<li><strong>Exploration (탐색)</strong> — 다양한 옵션을 탐색하도록 도구가 도와줬나</li>
+<li><strong>Expressiveness (표현력)</strong> — 내가 원하는 걸 표현할 수 있었나</li>
+<li><strong>Immersion (몰입)</strong> — 작업에 몰입할 수 있었나</li>
+<li><strong>Enjoyment (즐거움)</strong> — 사용이 즐거웠나</li>
+<li><strong>Results Worth Effort (결과의 가치)</strong> — 들인 노력만큼 결과가 가치 있었나</li>
+</ul>
+
+<p>여기에 <strong>"Collaboration"</strong> 차원이 선택적으로 추가됨 (그룹 작업일 때). 너 토론 조건은 collaboration도 측정하면 좋아.</p>
+
+<p>각 차원 두 문항씩, 총 10-12 문항. 5점 또는 10점 Likert. 차원별 점수 + 종합 점수 산출.</p>
+
+<h3>1.4 결과 — 숫자 인용</h3>
+
+<p>핵심 발견: <strong>IdeationWeb이 CSI 5차원 모두에서 ChatGPT보다 유의하게 우위</strong>. 정확한 p-value나 평균 차이는 paper 본문에 더 있지만, 모든 차원에서 ChatGPT 압도.</p>
+
+<p>전문가 평가 (novelty/completeness/quality)도 IdeationWeb 우위.</p>
+
+<p>흥미로운 정성 발견: 사용자들이 <strong>4가지 협력 패턴</strong>을 보임 (paper에서 명명):</p>
+<ul>
+<li>AI 주도 발산 → 사용자 선택</li>
+<li>사용자 주도 발산 → AI가 빈 곳 채움</li>
+<li>병렬 발산 (사용자 + AI 동시)</li>
+<li>수렴 후 재발산 cycle</li>
+</ul>
+
+<h3>1.5 한계 (저자 명시)</h3>
+<ul>
+<li>두 도구 비교지만 결국 <strong>둘 다 단일 LLM 백엔드</strong>. multi-agent 구조는 아예 없음</li>
+<li>짧은 단발 세션 (한 task당 30분 정도로 추정)</li>
+<li>디자이너 표본 — 일반인 일반화 어려움</li>
+<li>FBS 모델이 일부 도메인(예: 추상적 서비스 디자인)에 잘 안 맞을 수 있음</li>
+</ul>
+
+<div class="relation-box">
+<h4>박성훈 연구와의 관계</h4>
+<p><strong>1. CSI 사용의 직접적 모델.</strong> 너가 CSI 5차원을 쓰는 이유를 정당화할 때 "Shen et al. (2025)이 동일 within-subject 디자인 + CSI 5차원을 사용했고, 모든 차원에서 유의한 차이를 잡아냈다"고 인용. 즉 CSI가 인접 도메인에서 작동한다는 증거.</p>
+
+<p><strong>2. Within-subject + 두 도구 counterbalance 패턴.</strong> 너 실험도 정확히 이 디자인. 한 사람이 독립 조건과 토론 조건 둘 다 경험, 순서 카운터밸런스. ma_27이 N=40으로 했으니 너도 비슷한 규모(30-40명)가 reviewer 설득에 무난.</p>
+
+<p><strong>3. 전문가 평가 보조 측정 패턴.</strong> CSI만 쓰지 말고 결과물 quality를 외부 전문가가 따로 평가하는 게 ma_27의 패턴. 너도 똑같이 하면 "사용자가 느끼는 창의성 지원" + "실제 결과물 quality" 둘 다 잡힘. reviewer가 좋아함.</p>
+
+<p><strong>4. 너 차별점 명확화.</strong> ma_27이 "둘 다 단일 LLM"인 한계를 가짐. 너 introduction에서 "Shen et al. (2025) demonstrated CSI's sensitivity in distinguishing single-LLM tools; however, both compared tools used single-LLM backends. Our work extends this measurement framework to multi-agent discussion conditions..." 이런 문장 한 줄로 너 차별점이 명확해짐.</p>
+</div>
+</section>
+
+<!-- ============================================ ma_01 ============================================ -->
+<section id="ma_01" class="paper-section">
+<div class="paper-header">
+  <div class="paper-num">Paper 02 · 비교 디자인 가장 가까움</div>
+  <h2 class="paper-title"><span class="paper-id">ma_01</span> MultiColleagues</h2>
+  <div class="paper-byline">Quan et al., CHI 2026 · UIUC + UMD</div>
+</div>
+
+<p class="summary-line"><span class="label">한 문장으로</span> "ChatGPT 같은 단일 AI 대신 <strong>여러 AI 페르소나가 동료처럼 서로 대화하면서</strong> 사용자의 아이디어 발산을 돕는 시스템이 정말 single AI보다 나은가를 within-subject로 비교한 paper. <strong>너 연구와 비교 디자인이 가장 가까운 친척</strong>이라 reviewer가 가장 먼저 인용하라고 할 paper야."</p>
+
+<div class="info-table">
+<div class="row"><span class="label">정식 제목</span><span>Towards AI as Colleagues: Multi-Agent System Improves Structured Ideation Processes</span></div>
+<div class="row"><span class="label">저자</span><span>Kexin Quan, Dina Albassam, Mengke Wu, Zijian Ding, Jessie Chin</span></div>
+<div class="row"><span class="label">소속</span><span>University of Illinois Urbana-Champaign (Quan/Albassam/Wu/Chin) + University of Maryland (Ding)</span></div>
+<div class="row"><span class="label">출판</span><span>CHI 2026 (Barcelona, Spain, April 13-17, 2026)</span></div>
+<div class="row"><span class="label">DOI</span><span>10.1145/3772318.3790375</span></div>
+<div class="row"><span class="label">분량</span><span>26 페이지</span></div>
+</div>
+
+<h3>2.1 누가, 어디서, 왜</h3>
+
+<p>미국 UIUC(일리노이 어바나-샴페인) + 메릴랜드 협업. Jessie Chin 교수가 senior author로 보임. <strong>School of Information Sciences</strong> 소속이라 정보학·HCI 그룹.</p>
+
+<p>이 paper의 출발점은 이런 관찰이야. 요즘 LLM이 진화하면서 단순한 "도구" 또는 "코파일럿"에서 벗어나 <strong>"동료(colleague)"</strong>처럼 행동할 수 있나? 이게 가능한지 본격적으로 묻는 paper.</p>
+
+<p>저자가 인용하는 핵심 메타포 변화:</p>
+
+<table class="data">
+<thead><tr><th>세대</th><th>메타포</th><th>대표 예</th></tr></thead>
+<tbody>
+<tr><td>1세대</td><td>도구 (Tool)</td><td>ChatGPT 단순 사용 — "이거 해줘"</td></tr>
+<tr><td>2세대</td><td>코파일럿 (Copilot)</td><td>GitHub Copilot, Microsoft Copilot — "내 옆에서 보조"</td></tr>
+<tr><td>3세대 (제안)</td><td><strong>동료 (Colleague)</strong></td><td>MultiColleagues — "팀원처럼 같이 일함"</td></tr>
+</tbody>
+</table>
+
+<p>왜 동료 메타포가 필요한가? 진짜 팀 작업은 단순히 누가 누구를 보조하는 게 아니라 <strong>서로 의견을 던지고 받고, 비판하고 합치는</strong> 거잖아. 단일 AI는 그게 안 됨. 한 명이 비평하면서 동시에 옹호할 수 없으니까. 여러 AI가 다른 페르소나로 협업해야 진짜 팀이 됨.</p>
+
+<p>이 paper의 3가지 design goal:</p>
+
+<ol>
+<li><strong>발산-수렴 전환 지원</strong> — divergent thinking과 convergent thinking을 명시적으로 분리해서 단계 전환</li>
+<li><strong>다양한 관점 노출</strong> — 여러 페르소나가 서로 다른 입장</li>
+<li><strong>사용자 통제 유지</strong> — 사용자가 항상 "총괄 진행자(facilitator-in-chief)" 역할. AI가 자율 폭주 못 하게</li>
+</ol>
+
+<h3>2.2 핵심 개념 풀어주기</h3>
+
+<h4>"AI as Colleague" 메타포의 진짜 뜻</h4>
+
+<p>이게 paper의 슬로건인데, 실제로는 4가지 의미를 합친 거:</p>
+
+<ul>
+<li><strong>대화한다</strong> — AI들끼리 서로에게 말 거는 것 (단순 병렬 응답 X)</li>
+<li><strong>새 아이디어를 공유한다</strong> — 한 명이 던진 것에 다른 명이 build-on</li>
+<li><strong>사용자를 능동적으로 참여시킨다</strong> — AI들이 사용자 보고 "당신 의견은?"이라고 묻기도 함</li>
+<li><strong>역할 차별화로 상호보완</strong> — 인간이 가치·판단·상상 담당, AI는 규모·기억·범위 담당</li>
+</ul>
+
+<h4>Explore / Focus 2-phase 워크플로우</h4>
+
+<p>저자가 워크플로우를 2단계로 나눠:</p>
+
+<ul>
+<li><strong>Explore 단계</strong> — divergent thinking. 다양한 아이디어 발산. AI 페르소나들이 각자 다른 방향 제시</li>
+<li><strong>Focus 단계</strong> — convergent thinking. 그 중 유망한 것 수렴·정교화. AI들이 합의 추구</li>
+</ul>
+
+<p>이게 mad_06 LLM Discussion의 3-phase(Initiation/Discussion/Convergence)와 결이 비슷한데, MultiColleagues는 더 사용자 중심. 사용자가 명시적으로 "이제 Explore 끝, Focus 가자"고 결정.</p>
+
+<h4>Figure 1 시나리오 — P10의 카라오케 자동차</h4>
+
+<p>paper Figure 1이 진짜 좋은 예시야. 사용자 P10이 시스템 어떻게 쓰는지 보여줌:</p>
+
+<ol>
+<li>P10이 challenge 입력: <strong>"자율주행차 안에서 카라오케"</strong></li>
+<li>P10이 3명의 AI 동료 선택 (예: 사용자 입장 대변자 + 비평가 + 탐색가)</li>
+<li><strong>Explore 단계</strong>: 3 AI가 자유롭게 발산. P10도 끼어듦</li>
+<li><strong>Focus 단계</strong>: P10이 "Trustworthy mood-aware Karaoke with privacy, simplicity, and local data processing"이라는 컨셉으로 수렴</li>
+</ol>
+
+<p>이게 너 연구에서 사용자가 토론 조건에서 할 일과 거의 똑같아. 사용자가 challenge 던지고 → 페르소나들이 토론 → 사용자가 결정.</p>
+
+<h4>비교 표 — 인접 시스템들과 차별화</h4>
+
+<p>저자가 Table 1에서 자기 시스템 vs 인접 시스템들 비교. 7가지 차원으로:</p>
+
+<ul>
+<li>Turn = 동적 turn 선택</li>
+<li>Div–Conv = 발산-수렴 단계</li>
+<li>Orch = 사람 대상 진행자 기능</li>
+<li>Pers = 명시적 에이전트 정체성/역할</li>
+<li>In-situ = 실제 인터랙티브 사용자 연구</li>
+<li>Pick = 사용자가 에이전트 직접 선택</li>
+<li>Ctrl = 통제된(within-subject) 비교 (* = ChatGPT vs 비교)</li>
+</ul>
+
+<p>비교 대상:</p>
+<ul>
+<li>LLM Discussion (mad_06) — Turn ✓, Div-Conv ✓, 나머지 X</li>
+<li>SWTW (CHI'24) — Turn/Div-Conv/Orch ✓</li>
+<li>Weaver (CHI EA'25) — 위에 Pick + Ctrl 추가</li>
+<li>Supermind (CI'24) — Div-Conv + Ctrl*</li>
+<li>CoExploreDS (CHI'25) — Div-Conv + Pers + In-situ</li>
+<li><strong>MultiColleagues (이 paper)</strong> — 7개 다 ✓</li>
+</ul>
+
+<p>즉 이 분야의 시스템들이 어떤 차원에서 다른지 한 눈에 봄. 너 related work 쓸 때 이 표를 그대로 인용해서 확장하면 좋아.</p>
+
+<h3>2.3 방법 — 자세히</h3>
+
+<div class="info-table">
+<div class="row"><span class="label">참가자</span><span>20명 (within-subject)</span></div>
+<div class="row"><span class="label">디자인</span><span>Within-subject — 한 사람이 두 조건 모두 경험</span></div>
+<div class="row"><span class="label">조건</span><span>(A) MultiColleagues (멀티 에이전트) vs (B) 단일 에이전트 베이스라인 (ChatGPT 스타일)</span></div>
+<div class="row"><span class="label">측정</span><span>12-item 자작 설문 (7-point Likert), 3 차원으로 묶음: Experience / Outcomes / System Design & Control. <strong>CSI 미사용</strong></span></div>
+<div class="row"><span class="label">통계</span><span>Wilcoxon signed-rank test (within-subject 비모수)</span></div>
+<div class="row"><span class="label">RQ</span><span>RQ1: 역할 수행 + 사회적 현존감이 협업 분위기·engagement에 어떻게 영향. RQ2: 다중 AI-Colleague 관점 노출이 아이디어 과정·결과 quality·novelty에 어떻게 영향. RQ3: 시스템 디자인 기능이 어떻게 창의 ideation을 지원/제약</span></div>
+</div>
+
+<h3>2.4 결과</h3>
+
+<p>핵심 발견: <strong>MultiColleagues가 모든 주요 차원에서 single agent보다 우위</strong>:</p>
+<ul>
+<li><strong>사회적 현존감 (social presence)</strong> 더 강함</li>
+<li>결과물의 <strong>quality 지각</strong> 더 높음</li>
+<li>결과물의 <strong>novelty 지각</strong> 더 높음</li>
+<li>아이데이션 중 <strong>elaboration (정교화)</strong> 더 많음</li>
+</ul>
+
+<p>저자 결론: <strong>"AI agent가 process partner를 넘어서 colleague로 작동할 수 있다 — 의도를 공유하고, 그룹 동학을 강화하며, 사람과 협력해 아이디어를 발전시킨다."</strong></p>
+
+<h3>2.5 한계</h3>
+<ul>
+<li>N=20 작음. 통계 검정력 약함</li>
+<li>GPT-4o 한 모델에만 의존</li>
+<li>단발 세션 — 장기 협업 효과 미관찰</li>
+<li><strong>CSI 미사용</strong> → 다른 연구와 직접 비교 어려움</li>
+<li>비교 베이스라인이 ChatGPT 웹 인터페이스라 시스템 베이스 자체가 다름 (혼입 변수)</li>
+</ul>
+
+<div class="relation-box">
+<h4>박성훈 연구와의 관계</h4>
+<p><strong>1. 비교 디자인 가장 가까운 친척.</strong> 너 연구가 정확히 이 paper의 next-step. ma_01은 single vs multi를 비교했고, 너는 <strong>"같은 multi 안에서 인터-에이전트 dialogue 유/무"</strong>를 비교. 즉 한 단계 더 좁힌 비교.</p>
+
+<p><strong>2. ma_01이 못 한 것 = 너 차별점.</strong> ma_01의 한계 4개가 그대로 너 연구의 강점:</p>
+<ul>
+<li>N=20 → 너는 더 큰 N (30-40)</li>
+<li>12-item 자작 설문 → 너는 표준 CSI</li>
+<li>ChatGPT 웹 베이스라인 → 너는 same-system + 변수만 바꿈 (혼입 제거)</li>
+<li>단순 single vs multi → 너는 인터-에이전트 dialogue 유/무로 한 단계 좁힘</li>
+</ul>
+
+<p><strong>3. "AI as Colleague" 메타포 차용.</strong> 너 introduction에서 이 메타포를 framing 도구로 쓸 수 있어. "Building on Quan et al.'s (2026) 'AI as Colleague' framing, we further ask: among the design choices that make AI agents feel like colleagues, which is most decisive — their number, their mutual awareness, or their embodiment?"</p>
+
+<p><strong>4. Table 1 비교표 패턴 복제.</strong> 너 related work에서 자기 표를 만들어 — Turn / Div-Conv / Mutual-Awareness / Pers / In-situ / Pick / Ctrl / CSI 같은 차원. 그러면 너 시스템 위치가 reviewer에게 한 눈에 들어와.</p>
+</div>
+</section>
+
+<!-- ============================================ mad_06 ============================================ -->
+<section id="mad_06" class="paper-section">
+<div class="paper-header">
+  <div class="paper-num">Paper 03 · 시스템 디자인 blueprint</div>
+  <h2 class="paper-title"><span class="paper-id">mad_06</span> LLM Discussion</h2>
+  <div class="paper-byline">Lu et al., COLM 2024 · National Taiwan University</div>
+</div>
+
+<p class="summary-line"><span class="label">한 문장으로</span> "여러 LLM에 다른 페르소나(Visionary Millionaire, Futurist 등)를 주고 3단계(시작→토론→수렴) 구조로 대화시키면 단일 LLM보다 표준 창의성 테스트에서 1 표준편차 이상 우위라는 걸 입증한 paper. <strong>너 토론 조건의 시스템 디자인을 직접 가져올 수 있는 architectural blueprint</strong>이고, 저자가 "future work: human-LLM collaboration"이라고 명시해서 너 연구가 그 자리야."</p>
+
+<div class="info-table">
+<div class="row"><span class="label">정식 제목</span><span>LLM Discussion: Enhancing the Creativity of Large Language Models via Discussion Framework and Role-Play</span></div>
+<div class="row"><span class="label">저자</span><span>Li-Chun Lu, Shou-Jen Chen (공동 1저자), Tsung-Min Pai, Chan-Hung Yu, Hung-yi Lee, Shao-Hua Sun (교신)</span></div>
+<div class="row"><span class="label">소속</span><span>National Taiwan University (NTU) Department of Electrical Engineering. Hung-yi Lee 그룹 + Shao-Hua Sun</span></div>
+<div class="row"><span class="label">출판</span><span>COLM 2024 (Conference on Language Modeling). arXiv 2405.06373 v4 (2024-08-08)</span></div>
+<div class="row"><span class="label">DOI</span><span>10.48550/arXiv.2405.06373</span></div>
+<div class="row"><span class="label">코드</span><span>github.com/lawraa/LLM-Discussion</span></div>
+</div>
+
+<h3>3.1 누가, 어디서, 왜</h3>
+
+<p>대만 NTU 전기공학과. <strong>Hung-yi Lee 교수</strong>는 deep learning 강의로 유명한 분 (유튜브 강의 한국에서도 많이 봄). Shao-Hua Sun 교수가 교신. 1저자 두 명은 학부생 또는 박사초기.</p>
+
+<p>발표 venue <strong>COLM</strong>이 흥미로워. 2024년 신생 컨퍼런스인데 LLM 전문이고 평이 좋아. arxiv가 더 자주 인용되긴 함.</p>
+
+<p>이 paper의 출발 문제의식을 풀어 쓰면:</p>
+
+<p>LLM이 사실 질문, 수학, 코드 잘하는데 <strong>창의성에서 약하다</strong>는 게 여러 paper에서 지적됐어. 특히 <strong>open-ended 질문</strong> — "포크의 창의적 사용법은?" 같은 거 — 에서 LLM이 평범한 답만 내놓는 경향.</p>
+
+<p>왜? 두 가지 이유:</p>
+
+<ul>
+<li><strong>LLM이 multi-turn 대화에 약함</strong> — ChatGPT 같은 상용 LLM은 RLHF로 학습될 때 깊은 multi-turn 대화로 reinforce된 게 아니야. 그래서 LLM 두 개 붙여서 토론시키면 2-3 라운드만에 합의해버리고 발산이 안 됨</li>
+<li><strong>LLM 동질성</strong> — 같은 base 모델에서 나온 두 인스턴스는 사실상 같은 분포에서 샘플. 그러니까 N개 띄워도 비슷한 답</li>
+</ul>
+
+<p>한편 심리학에서는 "다양한 배경의 사람들과 토론하면 창의성이 증폭된다"는 게 고전 결과 (McGrath 1984, Paulus & Nijstad 2003). 그래서 저자들 질문:</p>
+
+<blockquote>
+"LLM도 다양한 동료들과 collaborative discussion하면 창의성이 올라갈까? 그리고 위 두 장애물(multi-turn 약함 + 동질성)을 어떻게 극복할까?"
+</blockquote>
+
+<h3>3.2 핵심 개념 풀어주기</h3>
+
+<h4>Three-Phase Discussion Framework — 진짜 자세히</h4>
+
+<p>이게 paper의 첫 번째 기둥. 토론을 명시적으로 3단계로 분리:</p>
+
+<p><strong>Phase 1. Initiation (시작)</strong></p>
+
+<p>이 단계의 목적은 LLM들에게 "지금 너 혼자가 아니라 그룹 토론 중이다"라고 framing해주는 거. 단순해 보이지만 효과 큼.</p>
+
+<p>Prompt 패턴 (paper 인용):</p>
+<div class="quote">
+"Initiate a discussion with others to collectively complete the following task: {Task}. You are in a group discussion with other teammates; as a result, answer as diversely and creatively as you can."
+</div>
+
+<p>핵심 word들:</p>
+<ul>
+<li>"discussion with others" — 협업 framing</li>
+<li>"collectively complete" — 공동 목표</li>
+<li>"diversely and creatively" — 발산 유도</li>
+</ul>
+
+<p><strong>Phase 2. Discussion (토론)</strong></p>
+
+<p>여기서 multi-round dialogue 일어남. 핵심은 각 라운드마다 모든 LLM이 <strong>다른 LLM들의 직전 라운드 응답을 prompt에 같이 받음</strong>. 즉 active listening의 LLM 버전.</p>
+
+<p>Prompt 패턴:</p>
+<div class="quote">
+"These are the solutions to the problem from other agents: One agent solution: ```{sol. 1}``` + ... + One agent solution: ```{sol. N}``` + {Task}. You are in a group discussion with other teammates; as a result, answer as diversely and creatively as you can."
+</div>
+
+<p>여기서 결정적 차이가 <strong>LLM Debate(Du et al. 2023)와의 비교</strong>야:</p>
+
+<table class="data">
+<thead><tr><th></th><th>LLM Debate</th><th>LLM Discussion (이 paper)</th></tr></thead>
+<tbody>
+<tr><td>자세</td><td>Defensive (자기 답 지키기)</td><td>Collaborative (남 답에 build-on)</td></tr>
+<tr><td>지시</td><td>"다른 답을 검증·반박"</td><td>"다른 답에 build해서 더 다양·창의적으로"</td></tr>
+<tr><td>전형 응답</td><td>"I disagree, my answer is..."</td><td>"Building on those ideas, I believe we can combine..."</td></tr>
+<tr><td>적합 도메인</td><td>사실 검증·수학</td><td>창의 발산·ideation</td></tr>
+</tbody>
+</table>
+
+<p>이게 너 토론 조건의 prompt 디자인에 결정적 참고. <strong>"비판해라"가 아니라 "build-on해라"</strong>로 prompt를 짜야 함.</p>
+
+<p><strong>Phase 3. Convergence (수렴)</strong></p>
+
+<p>발산만 하다 끝나면 아무 결론도 안 남. 마지막 라운드는 명시적 수렴 단계:</p>
+<div class="quote">
+"This is the last round of the discussion; please finalize and present a list of creative answers."
+</div>
+
+<p>"finalize" + "present a list" 두 단어가 핵심. 종료 신호 + 파싱 가능한 형식.</p>
+
+<h4>Role-Play — 동질성 깨기</h4>
+
+<p>두 번째 기둥. LLM 동질성 깨려고 각 에이전트에 distinct role을 부여. 두 방식 모두 시도:</p>
+
+<p><strong>(1) 창의적 페르소나 자동 생성</strong></p>
+
+<p>GPT-4한테 시켜서 {role, speciality, role prompt} 삼중쌍을 자동 생성. 예시들 (paper 본문 인용):</p>
+
+<ul>
+<li><strong>Visionary Millionaire</strong> — speciality: 재정 통찰 + 미래지향. role prompt: "As a Visionary Millionaire, your mission is to leverage your financial insight and forward-thinking approach to inspire groundbreaking ideas. Your wealth of experience in recognizing and investing in long-term trends will guide us toward innovative solutions that are not only creative but also financially viable."</li>
+<li><strong>Futurist</strong> — 미래 트렌드 전문</li>
+<li><strong>Environmentalist</strong> — 환경 관점</li>
+<li><strong>Academic Researcher</strong></li>
+<li><strong>Social Entrepreneur</strong></li>
+<li><strong>Creative Professional</strong></li>
+</ul>
+
+<p>각 페르소나 = 단순 한 줄이 아니라 detailed description. 이게 LLM이 그 페르소나를 진짜로 유지하는 데 도움.</p>
+
+<p><strong>(2) Six Thinking Hats</strong></p>
+
+<p>Edward de Bono의 클래식. 6 모자가 각각 다른 사고 모드:</p>
+<ul>
+<li>White Hat — 사실/데이터</li>
+<li>Red Hat — 감정/직관</li>
+<li>Black Hat — 비판/위험</li>
+<li>Yellow Hat — 낙관/이점</li>
+<li>Green Hat — 창의/대안</li>
+<li>Blue Hat — 프로세스/관리</li>
+</ul>
+
+<p>이걸 6 LLM 인스턴스에 매핑해서 다양화.</p>
+
+<p><strong>각 라운드 시작 시 LLM이 자기 role 선언</strong>. "I am the Futurist. Building on the Environmentalist's idea..." 식. 이게 다른 에이전트한테도 누가 말하는지 명확하게 함.</p>
+
+<h3>3.3 방법 — 진짜 자세히</h3>
+
+<h4>Benchmark (4가지 표준 정신측정 테스트)</h4>
+
+<p>자작 metric 안 쓰고 인간 창의성 측정의 클래식을 가져옴. 이게 paper의 quality를 결정적으로 올려줘.</p>
+
+<p><strong>Wallach-Kogan Creativity Tests (WKCT, 1965)</strong>에서 3개:</p>
+
+<ul>
+<li><strong>AUT (Alternative Uses Test)</strong> — "포크의 창의적 사용법을 최대한 적어라". 가장 유명한 발산적 사고 테스트</li>
+<li><strong>Instances Test</strong> — "둥근 것을 다 적어라" — 카테고리 확장</li>
+<li><strong>Similarities Test</strong> — "책과 잡지의 유사점" — 연결 짓기</li>
+</ul>
+
+<p><strong>Scientific Creativity Test (Hu & Adey 2002)</strong>:</p>
+<ul>
+<li>"두 스마트폰 중 어느 게 배터리 더 오래 가는지 어떻게 실험할지" 같은 과학적 문제 해결</li>
+</ul>
+
+<h4>Metric (4 TTCT 차원)</h4>
+
+<p><strong>Torrance Tests of Creative Thinking (TTCT, 1966)</strong>의 4 차원:</p>
+
+<ul>
+<li><strong>Originality (1-5 Likert)</strong> — 답의 novelty·unusualness</li>
+<li><strong>Elaboration (1-5 Likert)</strong> — 답의 details·depth</li>
+<li><strong>Fluency</strong> — 관련 응답의 개수</li>
+<li><strong>Flexibility</strong> — 카테고리 다양성</li>
+</ul>
+
+<p>저자가 솔직히 인정: LLM은 token 무한 뽑을 수 있어서 Fluency/Flexibility는 비교 의미 약함. 진짜 informative한 건 <strong>Originality + Elaboration</strong>.</p>
+
+<h4>Task Augmentation</h4>
+
+<p>원래 WKCT 공개 task가 적어서 GPT-4한테 시켜서 각 benchmark당 30개씩 추가 task 생성. 인간 검토로 quality 확인. corpus가 충분히 큼.</p>
+
+<h4>평가 두 갈래</h4>
+
+<p><strong>(1) LLM Evaluation</strong> — ChatGPT(gpt-3.5-turbo-0125)에 같은 rubric으로 채점.<br>
+<strong>(2) Human Evaluation</strong> — 42명 annotator가 온라인으로 총 1,406 응답 평가.</p>
+
+<p>두 평가의 correlation 측정: <strong>Kendall's τ = 0.52 (Originality)</strong>. 즉 LLM-as-judge가 인간 평가와 합리적으로 align.</p>
+
+<h4>Baselines</h4>
+
+<ul>
+<li><strong>Single Agent (zero-shot)</strong> — GPT-3.5 하나에 task 던지기. few-shot/CoT/take-a-deep-breath 등 변형도 시험했는데 큰 차이 없어서 zero-shot이 main baseline</li>
+<li><strong>Brainstorm, then Select (BTS)</strong> — Summers-Stay 2023 제안. single-LLM이 brainstorm 후 selection phase에서 필터. AUT 전용</li>
+<li><strong>LLM Debate (Du et al. 2023)</strong> — 가장 강력한 비교 대상. multi-LLM + multi-round but 자세는 defensive</li>
+<li><strong>LLM Discussion (제안)</strong> — 4 agents × 5 rounds (이게 paper의 optimal)</li>
+</ul>
+
+<h3>3.4 결과 — 숫자 인용</h3>
+
+<p>Table 2 핵심 숫자 (Originality / Elaboration):</p>
+
+<table class="data">
+<thead><tr><th>Benchmark</th><th>Method</th><th>Originality</th><th>Elaboration</th></tr></thead>
+<tbody>
+<tr><td rowspan="4">AUT</td><td>Single Agent</td><td>3.47</td><td>3.08</td></tr>
+<tr><td>BTS</td><td>3.84</td><td>3.32</td></tr>
+<tr><td>LLM Debate</td><td>3.73</td><td>3.78</td></tr>
+<tr><td><strong>LLM Discussion</strong></td><td><strong>4.44</strong></td><td><strong>4.22</strong></td></tr>
+<tr><td rowspan="3">Instances</td><td>Single</td><td>2.46</td><td>1.89</td></tr>
+<tr><td>Debate</td><td>2.61</td><td>1.90</td></tr>
+<tr><td><strong>Discussion</strong></td><td><strong>3.65</strong></td><td><strong>2.20</strong></td></tr>
+<tr><td rowspan="3">Similarities</td><td>Single</td><td>2.66</td><td>1.99</td></tr>
+<tr><td>Debate</td><td>2.81</td><td>2.61</td></tr>
+<tr><td><strong>Discussion</strong></td><td><strong>3.29</strong></td><td>2.52</td></tr>
+<tr><td rowspan="3">Scientific</td><td>Single</td><td>3.18</td><td>2.77</td></tr>
+<tr><td>Debate</td><td>3.52</td><td>3.45</td></tr>
+<tr><td><strong>Discussion</strong></td><td><strong>3.95</strong></td><td><strong>3.47</strong></td></tr>
+</tbody>
+</table>
+
+<p>핵심: <strong>Originality 4개 benchmark 모두에서 우위, Elaboration 3/4에서 우위. 보통 1 표준편차 이상 차이.</strong></p>
+
+<h4>정성 분석 3가지</h4>
+
+<p>저자가 chat log 분석해서 3가지 패턴 도출:</p>
+
+<p><strong>(1) Collaborative Dynamics</strong> — Discussion 조건에서 "Building on those ideas..." 같은 발화가 늘어남. Debate에서는 단순히 남 답 받아서 수정/거부. <strong>이게 너 가설의 직접 증거 — "에이전트가 서로 인지하며 build-on하는 게 평행 자문보다 낫다."</strong></p>
+
+<p><strong>(2) Role-Specific Responses</strong> — 우산의 창의적 사용을 물었을 때:</p>
+<ul>
+<li>Futurist: "VR 기술과 통합"</li>
+<li>Environmentalist: "야생동물 쉘터"</li>
+<li>Single Agent: "쟁반, 코스튬 모자" (평범)</li>
+</ul>
+
+<p><strong>(3) Conceptual Complexity</strong> — "문화에서 쓰이는 것들"을 물었을 때:</p>
+<ul>
+<li>Single: "Art, Music, Clothing" (단답)</li>
+<li>Discussion: "Tattoos, Digital art, Ethical fashion" (각각 detail 포함)</li>
+</ul>
+
+<h4>최적 설정</h4>
+
+<p>Ablation으로 도출: <strong>4 LLM agents × 5 rounds가 optimal</strong>. 너 시스템 출발 파라미터로 이거 쓰면 됨.</p>
+
+<h3>3.5 한계 (저자 명시)</h3>
+
+<ul>
+<li>창의성 정량화 자체가 어려움 — expert evaluation 더 필요</li>
+<li><strong>Framework가 LLM-LLM interaction에만 적용. Human-LLM collaboration은 다룬 적 없음</strong> ← 너 자리</li>
+<li>Elaboration metric이 인간 평가와 correlation 약함 (인간은 길이를 더 중시)</li>
+<li>계산 비용·확장성 안 다룸</li>
+</ul>
+
+<div class="relation-box">
+<h4>박성훈 연구와의 관계</h4>
+
+<p><strong>1. 너 토론 조건의 시스템 디자인 직접 차용.</strong> mad_06의 Three-Phase Framework + Role-Play를 거의 그대로 instantiate 가능:</p>
+<ul>
+<li>Initiation prompt 패턴 그대로</li>
+<li>Discussion phase에서 다른 에이전트 응답을 prompt에 전달</li>
+<li>Convergence phase 명시적 종료</li>
+<li>4 agents × 5 rounds 출발</li>
+</ul>
+
+<p>너 method 섹션 한 줄: "We adopt the three-phase discussion framework (Initiation → Discussion → Convergence) of Lu et al. (2024) with role-play personas..."</p>
+
+<p><strong>2. Role-play 페르소나 디자인 직접 모델.</strong> 너 디자인 도메인용 페르소나를 mad_06 패턴으로 만들 수 있어:</p>
+<ul>
+<li>User Advocate (사용자 입장) — 자동 생성 detailed description</li>
+<li>Aesthetics Critic (미학 비평) — Black Hat 비슷</li>
+<li>Business Realist (비즈니스 현실) — Yellow Hat 비슷</li>
+<li>Visionary Explorer (탐색가) — Green Hat 비슷</li>
+</ul>
+
+<p><strong>3. AI-side 효과 입증 → 사용자-side 효과 검증 = 너 자리.</strong> mad_06이 입증한 것은 <strong>"LLM Discussion이 LLM 출력 quality(Originality/Elaboration)를 높인다"</strong>. 너 연구가 답할 것은 <strong>"그것이 사용자 측 CSI에도 효과 있나"</strong>. 저자가 명시적으로 "human-LLM collaboration은 future work"이라 했으니 정확히 너 자리.</p>
+
+<p><strong>4. 표준 측정 + 외부 평가 패턴 차용.</strong> mad_06이 자작 metric 안 쓰고 WKCT + TTCT + 인간 평가 결합한 게 강점. 너도 자작 ideation metric 만들지 말고 CSI + 외부 expert idea rating + 인터뷰 3-way로 가는 게 정공법.</p>
+
+<p><strong>5. Comparison framing.</strong> mad_06이 "Debate는 defensive, Discussion은 collaborative"라고 명확히 구분. 너 paper에서 이 구분을 가져와서 "we follow LLM Discussion's collaborative paradigm rather than the debate paradigm of MAD (Du et al. 2023)" 한 줄로 너 방향성 명확화.</p>
+</div>
+</section>
+
+<!-- ============================================ mad_07 ============================================ -->
+<section id="mad_07" class="paper-section">
+<div class="paper-header">
+  <div class="paper-num">Paper 04 · 시스템 파라미터 ablation</div>
+  <h2 class="paper-title"><span class="paper-id">mad_07</span> VirSci — Many Heads Are Better Than One</h2>
+  <div class="paper-byline">Su et al., ACL 2025 · Shanghai AI Lab</div>
+</div>
+
+<p class="summary-line"><span class="label">한 문장으로</span> "가상 과학자들이 팀으로 모여 (1) 협력자 선택 (2) 주제 토론 (3) 아이디어 생성 (4) 신규성 평가 (5) 초록 작성 5단계로 과학 논문 아이디어를 만드는 시스템 VirSci. 가장 정교한 multi-agent ideation 시스템이고 <strong>4 차원 ablation 결과(팀 크기 8, 토론 턴 5, 신선도 50%, 다양성 25-75%가 최적)</strong>가 너 시스템 출발 파라미터의 직접 근거."</p>
+
+<div class="info-table">
+<div class="row"><span class="label">정식 제목</span><span>Many Heads Are Better Than One: Improved Scientific Idea Generation by A LLM-Based Multi-Agent System</span></div>
+<div class="row"><span class="label">저자</span><span>Haoyang Su 외 10인 (상하이 AI Lab 주축)</span></div>
+<div class="row"><span class="label">출판</span><span>ACL 2025 Main Conference</span></div>
+<div class="row"><span class="label">DOI</span><span>10.48550/arXiv.2410.09403</span></div>
+<div class="row"><span class="label">코드</span><span>github.com/open-sciencelab/Virtual-Scientists</span></div>
+<div class="row"><span class="label">별칭</span><span>VirSci (Virtual Scientists)</span></div>
+</div>
+
+<h3>4.1 누가, 어디서, 왜</h3>
+
+<p>중국 상하이 AI Lab 주축. 11명 공저인데 그만큼 큰 프로젝트. ACL 2025 Main은 NLP 분야 최상위 컨퍼런스 중 하나라 인정도 높음. v4까지 revision 거침 (2024-10 첫 업로드, 2025 ACL 게재).</p>
+
+<p>이 paper의 동기를 풀어 쓰면:</p>
+
+<p>AI가 과학 발견을 도울 수 있다는 비전이 오래됨. 1990년대 Adam이라는 "robot scientist"부터. ChatGPT 후로 가속됨. 근데 대부분 paper가 <strong>"single LLM에 prompt 한 번 던지면 됨"</strong>이라는 가정 위에 만들어졌어. AI Scientist (Sakana AI), HypoGen 등.</p>
+
+<p>저자들이 지적: <strong>"실제 과학은 한 천재가 혼자 하는 게 아니라 팀 협업이다."</strong> 노벨상 받는 paper도 보통 다수 저자. 그러면 AI도 multi-agent 팀으로 만들어야 더 잘하지 않을까?</p>
+
+<p>이 paper의 핵심 질문:</p>
+<blockquote>
+"LLM 다수가 가상 과학자 팀을 이뤄서 자율적으로 연구 아이디어를 생성·평가·정교화하면, 단일 LLM보다 정말 더 좋은 아이디어가 나오나? 그리고 그 팀의 최적 구성은 어떻게 되나?"
+</blockquote>
+
+<h3>4.2 핵심 개념 풀어주기</h3>
+
+<h4>5-Stage Workflow — 실제 과학 협업 모방</h4>
+
+<p>실제 학술 협업이 어떻게 일어나는지 관찰해서 만든 5단계:</p>
+
+<p><strong>Stage 1. Collaborator Selection (협력자 선택)</strong></p>
+
+<p>리더 에이전트가 선택돼서(랜덤), 다른 잠재 멤버들 중에서 팀을 꾸림. 어떻게? <strong>Explore-exploit dynamics</strong>:</p>
+<ul>
+<li>리더가 협력 이력 매트릭스(누가 누구랑 같이 paper 썼는지)를 확률 분포로 변환</li>
+<li>잠재 멤버한테 초대장 보냄</li>
+<li>잠재 멤버가 chain-of-thought reasoning으로 "이 팀에 들어갈지" 결정 — 팀 구성, 연구 정렬 평가</li>
+<li>타깃 팀 사이즈 달성 때까지 반복</li>
+</ul>
+
+<p>현실 비유: 교수가 새 프로젝트 시작할 때 "누구랑 같이 할지" 고민하는 과정. 과거 협업자 + 주제 적합성 둘 다 고려.</p>
+
+<p><strong>Stage 2. Topic Discussion (주제 토론)</strong></p>
+
+<p>팀 멤버들이 round-table 토론. 연구 방향 결정. 메커니즘:</p>
+<ul>
+<li>대화 이력 요약 + 참가자 기존 기여 정리</li>
+<li>각자 차례로 발언</li>
+<li>관심 없으면 이탈 가능</li>
+<li>합의 도달까지 또는 재시작까지 반복</li>
+</ul>
+
+<p><strong>Stage 3. Idea Generation (아이디어 생성)</strong></p>
+
+<p>에이전트들이 연구 아이디어 생성. 각 아이디어 = 3 구성요소:</p>
+<ul>
+<li>아이디어 설명</li>
+<li>실험 계획</li>
+<li>자기 평가 metric (novelty, feasibility, clarity)</li>
+</ul>
+
+<p>Iterative refinement — 다른 에이전트의 아이디어 수정 또는 새로 제안. 정해진 라운드 후 confidence 가장 높은 top 3 아이디어가 다음 단계로.</p>
+
+<p>핵심: <strong>References from past papers</strong>가 모든 제안에 들어감. Grounding.</p>
+
+<p><strong>Stage 4. Novelty Assessment (신규성 평가)</strong></p>
+
+<p>Blind peer review 시뮬레이션. 3 후보 아이디어 vs 관련 paper들 비교:</p>
+<ul>
+<li>에이전트가 대화 메모리 없이(blind) 평가</li>
+<li>가장 혁신적인 것에 투표</li>
+<li>최다 득표 아이디어 선택</li>
+</ul>
+
+<p><strong>Stage 5. Abstract Generation (초록 작성)</strong></p>
+
+<p>팀 리더가 초안. 5 섹션 — Introduction, Objective, Methods, Expected Results, Conclusion. 다른 에이전트가 평가·수정 제안. Iterative refinement. 자기 검토 메커니즘이 최종 확인.</p>
+
+<h4>Invitation Mechanism — 핵심 차별점</h4>
+
+<p>이게 paper의 novel contribution 중 하나. 토론 중에 팀 멤버가 외부 전문가 도움이 필요하면 <strong>임시로 외부 에이전트 초대</strong> 가능. 초대된 에이전트는 정식 팀 멤버 안 됨 — 일회성 자문. 팀 크기 고정 유지하면서 더 넓은 전문성 활용.</p>
+
+<p>현실 비유: 박사논문 쓰다가 통계 부분에서 막혔을 때 통계 전문 교수한테 한 번 자문 받는 거. 그 교수가 너 지도교수 되는 거 아니지.</p>
+
+<h4>4가지 평가 metric (자작)</h4>
+
+<p>아이디어 quality 측정 표준이 없어서 저자가 4개 metric 제안:</p>
+
+<ul>
+<li><strong>HD (Historical Dissimilarity)</strong> — 과거 paper 5개와의 평균 distance. <strong>높을수록 novel</strong> (과거와 다르다)</li>
+<li><strong>CD (Contemporary Dissimilarity)</strong> — 최근 paper 5개와의 평균 distance. <strong>낮을수록 좋음</strong> (현재 트렌드와 align)</li>
+<li><strong>CI (Contemporary Impact)</strong> — 최근 유사 paper 5개의 평균 citation count. <strong>높을수록 영향력 클 가능성</strong></li>
+<li><strong>ON (Overall Novelty)</strong> — 통합 metric: ON = HD × CI / CD</li>
+</ul>
+
+<p>이게 자작이긴 한데, 인간 expert 평가와 <strong>Pearson 0.52 correlation</strong>으로 validation됨. 즉 사람 판단과 어느 정도 align.</p>
+
+<h3>4.3 방법 — 자세히</h3>
+
+<h4>데이터셋 (두 개)</h4>
+
+<table class="data">
+<thead><tr><th>이름</th><th>저자</th><th>논문 수</th><th>기간</th></tr></thead>
+<tbody>
+<tr><td>AMiner Computer Science</td><td>156명 (필터링)</td><td>178,197</td><td>1948-2014</td></tr>
+<tr><td>Open Academic Graph 3.1</td><td>3,169명 (필터링)</td><td>201,131</td><td>~2023</td></tr>
+</tbody>
+</table>
+
+<h4>Grounding 구성요소</h4>
+
+<ul>
+<li><strong>Author Knowledge Bank</strong> — 실제 과학자 프로필 (이름 마스킹). 소속, 인용수, 연구 관심, 협업 이력</li>
+<li><strong>Past Paper DB (B_past)</strong> — boundary year 이전 paper. 아이디어 생성 + reference retrieval용</li>
+<li><strong>Contemporary Paper DB (B_con)</strong> — boundary year 이후 paper. 신규성 평가용 (이 paper들과 비슷하면 → 이미 했다는 뜻)</li>
+<li><strong>Adjacency Matrix (A)</strong> — 과학자 간 협업 빈도. +1 adjustment로 새 파트너십 encourage</li>
+</ul>
+
+<h4>비교 baseline</h4>
+
+<ul>
+<li><strong>HypoGen</strong> — 최근 multi-agent 시스템</li>
+<li><strong>AI Scientist</strong> — single-agent SOTA</li>
+</ul>
+
+<h3>4.4 결과 — 숫자 인용</h3>
+
+<h4>핵심 성능 비교 (GPT-4o agent)</h4>
+
+<table class="data">
+<thead><tr><th>Metric</th><th>VirSci</th><th>HypoGen</th><th>차이</th></tr></thead>
+<tbody>
+<tr><td>Overall Novelty</td><td>—</td><td>—</td><td>+13.8% (single 대비)</td></tr>
+<tr><td>Contemporary Impact</td><td>—</td><td>—</td><td>+44.1% (single 대비)</td></tr>
+<tr><td>CD (낮을수록 ↑)</td><td>0.34</td><td>0.36</td><td>↓</td></tr>
+<tr><td>CI (높을수록 ↑)</td><td>3.78</td><td>3.10</td><td>↑</td></tr>
+</tbody>
+</table>
+
+<h4>인간 expert 평가 (5점 척도)</h4>
+
+<table class="data">
+<thead><tr><th>차원</th><th>VirSci</th><th>HypoGen</th></tr></thead>
+<tbody>
+<tr><td>Novelty</td><td>5.24</td><td>4.78</td></tr>
+<tr><td>Feasibility</td><td>4.52</td><td>4.43</td></tr>
+<tr><td>Effectiveness</td><td>4.95</td><td>4.77</td></tr>
+</tbody>
+</table>
+
+<p>LLaMA 3.1-8B/70B variant도 일관적 성능 (절대 점수는 낮지만 패턴 동일).</p>
+
+<h3>4.5 Ablation Studies — 4 차원 (이게 너에게 핵심)</h3>
+
+<p><strong>저자가 4가지 변수를 따로따로 변화시키며 optimal을 찾음.</strong> 이게 너 시스템 출발 파라미터의 직접 근거.</p>
+
+<h4>(1) Team Size (팀 크기)</h4>
+
+<ul>
+<li><strong>Optimal = 8명</strong></li>
+<li>작은 팀: 다양성 부족 → novelty 낮음</li>
+<li>큰 팀: coordination overhead + groupthink → novelty 정체</li>
+</ul>
+
+<p>너 시스템: 8명은 너무 많을 수 있음. 사용자가 따라가기 어려움. <strong>4-6명이 현실적</strong>. mad_06 Lu의 4명과 절충.</p>
+
+<h4>(2) Discussion Turns (토론 라운드 수)</h4>
+
+<ul>
+<li><strong>Optimal = 5 turns</strong></li>
+<li>초기 턴: 아이디어 생성</li>
+<li>과도한 턴: 피로 + creativity decline</li>
+</ul>
+
+<p>너 시스템: <strong>5턴이 좋은 출발점</strong>. mad_06과 일치.</p>
+
+<h4>(3) Team Freshness (신선도)</h4>
+
+<ul>
+<li><strong>Optimal = 50%</strong> (절반은 신규, 절반은 returning)</li>
+<li>다 신규: 혁신은 있지만 연구 연속성 없음</li>
+<li>다 returning: 익숙하지만 새 관점 없음</li>
+<li>균형 팀이 best</li>
+</ul>
+
+<p>너 시스템: 단발 실험이라 freshness 관련 없음. 그러나 페르소나 디자인 시 "익숙한 디자이너 시각 + 외부 도메인 시각" 혼합 영감 가능.</p>
+
+<h4>(4) Research Diversity (연구 분야 다양성)</h4>
+
+<ul>
+<li><strong>소팀: 25-50% diversity optimal</strong></li>
+<li><strong>대팀: 50-75% diversity optimal</strong></li>
+<li>과도한 diversity → focus 잃음</li>
+<li>균형 diversity → ON peak</li>
+</ul>
+
+<p>너 시스템: 페르소나 다양성을 어떻게 줄지 가이드. 4명이라면 25-50% 다양성 — 즉 너무 비슷하지도 너무 다르지도 않게.</p>
+
+<h4>요약 결론 (저자)</h4>
+
+<p>"Science of Science" 분야의 Nature/Science 출판된 발견과 정렬:</p>
+<ul>
+<li>"Moderate diversity peaks performance"</li>
+<li>"Optimal team size exists"</li>
+<li>"Fresh blood + returning expertise balance"</li>
+</ul>
+
+<p>즉 인간 과학 협업에서 발견된 원리가 LLM 협업에도 거의 그대로 적용됨.</p>
+
+<h3>4.6 한계 (저자 명시)</h3>
+
+<ul>
+<li>실제 과학자는 여러 팀·프로젝트 동시 진행 — 이 시스템은 over-simplification</li>
+<li>LLM bias 상속 — 잘 알려진 연구 도메인에 편향. 비주류 영역 marginalize</li>
+<li>Hallucination 위험 — 그럴듯하지만 과학적으로 틀린 아이디어. 의학·정책에 위험</li>
+<li>오용 가능성 — 자동 fraudulent paper 생성, 표절</li>
+<li>지역·기관 bias — 비주류 지역 연구자 underrepresented</li>
+<li><strong>사람 user가 워크플로우에 끼지 않음</strong> ← 너 자리</li>
+</ul>
+
+<div class="relation-box">
+<h4>박성훈 연구와의 관계</h4>
+
+<p><strong>1. 시스템 파라미터 직접 차용 (가장 가치 큼).</strong> 너 시스템 디자인에서 "왜 에이전트가 4명이고 토론 5턴이고 다양성이 이 정도인가?"를 정당화할 때:</p>
+<ul>
+<li>"We adopt a team size of 4-6 agents, informed by the optimal team size of 8 in Su et al. (2025)'s scientific ideation context, adjusted downward considering our user-in-the-loop scenario where larger teams may overwhelm participants."</li>
+<li>"Discussion turns = 5, consistent with both Lu et al. (2024) and Su et al. (2025)'s optimal."</li>
+<li>"Persona diversity follows Su et al. (2025)'s 25-50% guideline for small teams."</li>
+</ul>
+
+<p>이게 reviewer가 "왜 그 숫자?" 물었을 때 "ablation 결과 인용"으로 차단.</p>
+
+<p><strong>2. 시스템 architecture 참고.</strong> VirSci의 5-stage workflow를 너 디자인 ideation에 변형 가능:</p>
+<ul>
+<li>(1) Team Selection → 너 시스템에서 사용자가 페르소나 선택 (MultiColleagues 패턴과 결합)</li>
+<li>(2) Topic Discussion → 사용자가 디자인 challenge 정의</li>
+<li>(3) Idea Generation → 토론 라운드</li>
+<li>(4) Novelty Assessment → 자동 평가 또는 사용자 평가</li>
+<li>(5) Abstract Generation → 최종 컨셉 정리</li>
+</ul>
+
+<p><strong>3. Invitation Mechanism 영감.</strong> 너 future work으로 "사용자가 토론 중 외부 전문 에이전트를 일회성 초대"같은 기능 제안 가능.</p>
+
+<p><strong>4. "사용자 없음 = 너 자리"가 가장 명확.</strong> VirSci의 가장 큰 한계가 fully autonomous라는 점. 인간 user가 어디서도 끼지 않음. 너 연구가 "Su et al. (2025)'s VirSci represents the most sophisticated autonomous multi-agent ideation system to date; however, all evaluations are conducted on system outputs without user involvement. We extend this line by examining the user-perceived creativity support (CSI) when humans participate in the discussion loop." 식으로 정확히 자리 잡음.</p>
+
+<p><strong>5. Self-evaluation pattern.</strong> VirSci의 아이디어 생성 시 각 아이디어가 (설명 + 실험 계획 + 자기 평가)로 구성된다는 패턴. 너 에이전트들이 아이디어 던질 때 같이 자기 평가도 첨부하게 하면 사용자가 평가 부담 덜어줌.</p>
+</div>
+</section>
+
+<!-- ============================================ vri_07 ============================================ -->
+<section id="vri_07" class="paper-section">
+<div class="paper-header">
+  <div class="paper-num">Paper 05 · VR+AI에 CSI 적용 유일</div>
+  <h2 class="paper-title"><span class="paper-id">vri_07</span> VRCopilot</h2>
+  <div class="paper-byline">Zhang et al., UIST 2024 · University of Michigan</div>
+</div>
+
+<p class="summary-line"><span class="label">한 문장으로</span> "VR 안에서 3D 인테리어 layout(가구 배치) 디자인할 때, 생성형 AI가 (a) 완전 자동 (b) 사용자가 다 수동 (c) wireframe 중간 표현으로 협력 — 이 세 방식을 비교한 paper. <strong>68편 중 VR+AI 아이데이션에 CSI를 정밀 적용한 유일한 사례</strong>라서 너 VR 확장 시 CSI 사용 정당화의 핵심 레퍼런스."</p>
+
+<div class="info-table">
+<div class="row"><span class="label">정식 제목</span><span>VRCopilot: Authoring 3D Layouts with Generative AI Models in VR</span></div>
+<div class="row"><span class="label">저자</span><span>Lei Zhang, Jin Pan, Jacob Gettig, Steve Oney, Anhong Guo (교신)</span></div>
+<div class="row"><span class="label">소속</span><span>University of Michigan Ann Arbor</span></div>
+<div class="row"><span class="label">출판</span><span>UIST 2024 (Pittsburgh, Oct 13-16)</span></div>
+<div class="row"><span class="label">DOI</span><span>10.1145/3654777.3676451</span></div>
+<div class="row"><span class="label">하드웨어</span><span>Meta Quest</span></div>
+</div>
+
+<h3>5.1 누가, 어디서, 왜</h3>
+
+<p>미국 University of Michigan Ann Arbor. <strong>Anhong Guo</strong>가 senior author로 보이는데, 접근성·HCI 분야에서 잘 알려진 사람. Steve Oney 교수도 같은 그룹. UIST가 user interface 분야 최상위 컨퍼런스.</p>
+
+<p>이 paper의 동기를 풀어 쓰면:</p>
+
+<p>3D 환경(게임 레벨, 인테리어, 건축 등)을 만드는 게 전통적으로 어려워. Maya나 Unity 같은 데서 가구 하나하나 클릭해서 배치. <strong>Immersive authoring</strong>이라는 게 등장 — VR 안에 들어가서 직접 3D 공간에서 가구 잡고 놓는 방식. 직관적이지만 여전히 모든 가구를 수동으로 배치해야 함.</p>
+
+<p>최근 생성형 AI(ATISS, DiffuScene 같은 모델)가 자동으로 가구 배치를 생성할 수 있게 됨. 자연어로 "거실 만들어줘" 하면 자동으로 sofa, TV, table 배치.</p>
+
+<p>그런데 이걸 VR immersive authoring에 통합하면 새 challenge 등장:</p>
+<ul>
+<li>AI가 만든 layout이 사용자 의도와 안 맞으면? 어떻게 수정?</li>
+<li>사용자가 "여기에 의자 둬"라고 가리키면서 말하면 시스템이 이해할까?</li>
+<li>AI 자동 vs 사용자 수동의 균형은 어디?</li>
+</ul>
+
+<p>이게 paper의 RQ.</p>
+
+<h3>5.2 핵심 개념 풀어주기</h3>
+
+<h4>Mixed-initiative system</h4>
+
+<p>HCI의 클래식 개념. 인간과 AI 양쪽이 모두 initiative(주도권)를 가질 수 있는 시스템. 한쪽만 주도하지 않음. 이 paper의 패러다임.</p>
+
+<h4>3가지 협업 방식 — VR-Copilot의 핵심</h4>
+
+<p><strong>(1) Manual Creation (수동)</strong></p>
+<ul>
+<li>사용자가 catalog menu에서 가구 선택해서 직접 배치</li>
+<li><strong>Multimodal specification</strong>로 보조 — 말 + 손가락 가리킴 동시. "여기에 나무 의자 만들어줘" + 위치 가리키기. 시스템이 3개 옵션 제시</li>
+<li>가장 통제력 높음</li>
+</ul>
+
+<p><strong>(2) Automatic Creation (자동)</strong></p>
+<ul>
+<li>음성 명령으로 AI가 전체 room layout 자동 생성</li>
+<li>"빈 방에서 거실 layout 만들어줘"</li>
+<li>가장 빠르지만 사용자 의도 반영 약함</li>
+</ul>
+
+<p><strong>(3) Scaffolded Creation (스캐폴딩) — 핵심 contribution</strong></p>
+<ul>
+<li><strong>Wireframe(와이어프레임) 중간 표현</strong> 사용</li>
+<li>인테리어의 floor plan 같은 2D representation</li>
+<li>사용자가 바닥에 선 그리면서 "여기는 침대, 여기는 책상" 식 정의 (또는 AI가 wireframe 자동 제안)</li>
+<li>그 다음 wireframe → 실제 3D 가구 변환</li>
+<li>중간 단계가 있어서 AI의 의도를 미리 검토·수정 가능 → <strong>통제력 + 효율 균형</strong></li>
+</ul>
+
+<h4>Wireframe = 핵심 발명</h4>
+
+<p>HCI에서 low-fidelity prototyping의 정신이야. 처음부터 high-fidelity로 가지 말고 중간 단계 표현으로. 이게 사용자가 AI의 "의도"를 이해하고 수정할 수 있게 함.</p>
+
+<p>너 연구에 응용: 너 토론 조건에서 에이전트들이 디자인 아이디어를 처음부터 "완성된 컨셉"으로 던지지 말고, <strong>중간 abstraction</strong> (예: 핵심 키워드만, 또는 sketch 같은) 단계에서 사용자와 협상하게 디자인할 수 있어.</p>
+
+<h4>ATISS 모델</h4>
+
+<p>VRCopilot이 사용하는 백엔드 생성 모델. <strong>Autoregressive transformer for 3D indoor scene synthesis</strong>. 가구 하나씩 순차 추가하면서 위치·방향·크기 예측. 2021년에 나온 모델인데 그 시점 SOTA.</p>
+
+<p>너 시스템: 디자인 ideation 도메인엔 ATISS 직접 못 씀. 그러나 "AI 백엔드가 어떻게 작동하는지" 사용자에게 투명하게 보여주는 디자인 패턴은 유사.</p>
+
+<h3>5.3 방법 — 두 차례 user study</h3>
+
+<h4>Study 1: AI 유/무 비교 (N=14)</h4>
+
+<div class="info-table">
+<div class="row"><span class="label">디자인</span><span>두 조건 비교 — AI 있는 immersive authoring vs AI 없는 immersive authoring</span></div>
+<div class="row"><span class="label">N</span><span>14명</span></div>
+<div class="row"><span class="label">하드웨어</span><span>Meta Quest</span></div>
+<div class="row"><span class="label">과제</span><span>인테리어 layout 디자인</span></div>
+</div>
+
+<p>핵심 발견: AI 있는 쪽이 일반적으로 선호 (효율 + 다양성). 하지만 사용자들이 AI의 <strong>non-deterministic 출력</strong>(같은 prompt에 다른 결과)을 어려워함. 의도와 misalign할 때 좌절.</p>
+
+<h4>Study 2: 3 방식 비교 (N=15) — within-subject</h4>
+
+<div class="info-table">
+<div class="row"><span class="label">디자인</span><span>Within-subject — 한 사람이 3 조건 모두 경험</span></div>
+<div class="row"><span class="label">N</span><span>15명</span></div>
+<div class="row"><span class="label">조건</span><span>Manual / Automatic / Scaffolded</span></div>
+<div class="row"><span class="label">측정 (정량)</span><span><strong>CSI (Creativity Support Index)</strong> + NASA-TLX (workload) + agency 자작 척도</span></div>
+<div class="row"><span class="label">측정 (외부)</span><span>외부 전문가의 layout quality 평가</span></div>
+<div class="row"><span class="label">측정 (정성)</span><span>인터뷰</span></div>
+</div>
+
+<h4>NASA-TLX 풀어 설명</h4>
+
+<p>또 다른 표준 척도. <strong>Task Load Index</strong>. NASA에서 개발. 인지·신체적 작업 부담 측정. 6 차원:</p>
+
+<ul>
+<li>Mental Demand (정신적 부담)</li>
+<li>Physical Demand</li>
+<li>Temporal Demand (시간 압박)</li>
+<li>Performance (수행 만족)</li>
+<li>Effort</li>
+<li>Frustration</li>
+</ul>
+
+<p>너 연구 추가 측정으로 고려 가능. CSI가 "창의성 지원"을 잡으면 NASA-TLX는 "인지 부담"을 잡아서 균형.</p>
+
+<h3>5.4 결과</h3>
+
+<h4>Agency (통제감)</h4>
+
+<p>점수 순서: <strong>Manual > Scaffolded > Automatic</strong></p>
+<ul>
+<li>사용자가 직접 만들수록 통제감 ↑</li>
+<li>Scaffolded(wireframe)가 Automatic보다 통제감 유의 ↑ — <strong>중간 단계가 있다는 것만으로 통제감 회복</strong></li>
+</ul>
+
+<h4>Creativity (창의성 지각)</h4>
+
+<p>Manual에서 가장 창의적으로 느낌. Scaffolded와 Automatic은 비슷.</p>
+<ul>
+<li>Manual에서 multimodal specification으로 여러 옵션 제시받는 게 창의 자극</li>
+<li>Automatic은 AI가 던진 결과에 fixation → 창의 탐색 제한</li>
+</ul>
+
+<h4>CSI 종합</h4>
+
+<p><strong>Scaffolded가 agency + CSI 균형이 가장 좋음</strong>. Manual은 창의성 최고지만 효율 낮음. Automatic은 빠르지만 통제감 ↓.</p>
+
+<h4>핵심 시사점</h4>
+
+<blockquote>
+"AI가 즉시 완성된 결과물을 던지면 사용자가 자기 의도를 잃는 경향이 있다. 중간 표현(wireframe 같은)을 거쳐 점진적 협업하는 것이 통제감과 창의성 모두 균형."
+</blockquote>
+
+<h3>5.5 한계</h3>
+
+<ul>
+<li>랩 환경, 짧은 세션</li>
+<li>N=14, 15로 작음</li>
+<li><strong>인테리어 layout 도메인 한정</strong> — 다른 디자인 도메인 일반화 어려움</li>
+<li>AI의 capability/limitation을 사용자에게 보여주는 XAI(설명가능 AI) 시각화 부재 — future work</li>
+<li>음성 인식 가끔 의도 오인식</li>
+<li><strong>단일 사용자, 단일 AI</strong> — 멀티 사용자나 멀티 AI 시나리오 미답</li>
+</ul>
+
+<div class="relation-box">
+<h4>박성훈 연구와의 관계</h4>
+
+<p><strong>1. VR + CSI의 직접 정당화.</strong> 너 VR 확장 시 CSI를 측정 도구로 쓰는 것을 정당화할 때 ma_27과 함께 핵심 인용:</p>
+<ul>
+<li>"CSI has been successfully applied to VR-based creative authoring contexts (Zhang et al. 2024, UIST), where it discriminated between different AI integration paradigms (manual/scaffolded/automatic). We adopt CSI for similar reasons in our VR extension..."</li>
+</ul>
+
+<p><strong>2. "Scaffolded" 디자인 원리 차용.</strong> Wireframe 중간 표현 = 사용자 통제감 회복. 너 시스템에서 에이전트가 던지는 아이디어를 처음부터 완성된 컨셉으로 주지 말고, <strong>중간 abstraction</strong>(핵심 컨셉 키워드 정도)으로 먼저 보여주고 사용자 승인 후 정교화하는 디자인이 agency 유지에 좋을 가능성.</p>
+
+<p><strong>3. Within-subject + 3 조건 패턴.</strong> 너도 만약 토론 vs 독립만이 아니라 3-condition 비교를 고려한다면(예: 토론 / 독립 / hybrid) vri_07이 모델. N=15가 잘 작동했으니까 너도 비슷한 규모 가능.</p>
+
+<p><strong>4. CSI + NASA-TLX 결합 패턴.</strong> CSI만 쓰면 "지원은 잘 됐지만 너무 힘들었다"를 못 잡음. NASA-TLX 같이 쓰면 인지 부담도 측정. 너 토론 조건이 정보 과부하 위험이 있으니 NASA-TLX 같이 쓰는 게 안전.</p>
+
+<p><strong>5. AI Non-determinism의 부작용 인지.</strong> Study 1에서 사용자들이 "같은 prompt에 다른 결과"를 어려워했다는 발견. 너 토론 조건에서도 매번 다른 토론 결과가 나올 수 있는데, 이게 사용자한테 어떻게 인식될지 사후 분석에서 고려할 변수.</p>
+
+<p><strong>6. 외부 expert quality 평가 결합.</strong> vri_07이 사용자 측 CSI + 외부 전문가의 layout quality 평가를 결합. 너도 같은 패턴 가면 "사용자가 느끼는 지원" vs "실제 결과물 quality" 두 갈래 다 잡을 수 있어. reviewer 설득에 강함.</p>
+</div>
+</section>
+
+<!-- ============================================ mad_02 ============================================ -->
+<section id="mad_02" class="paper-section">
+<div class="paper-header">
+  <div class="paper-num">Paper 06 · 분야 갭 진단</div>
+  <h2 class="paper-title"><span class="paper-id">mad_02</span> Creativity in LLM-MAS Survey</h2>
+  <div class="paper-byline">Lin et al., EMNLP 2025 · National Taiwan University</div>
+</div>
+
+<p class="summary-line"><span class="label">한 문장으로</span> "LLM 멀티 에이전트가 텍스트·이미지 같은 창의적 산출물을 만드는 방법을 처음으로 종합한 서베이. <strong>"인간 사용자 user study가 매우 드물고 평가 표준이 통일 안 됨"을 분야의 핵심 갭으로 명시</strong>해서 너 석사논문의 동기와 정확히 일치 — introduction 인용 핵심."</p>
+
+<div class="info-table">
+<div class="row"><span class="label">정식 제목</span><span>Creativity in LLM-based Multi-Agent Systems: A Survey</span></div>
+<div class="row"><span class="label">저자</span><span>Yi-Cheng Lin, Kang-Chieh Chen, Zhe-Yan Li, Tzu-Heng Wu, Tzu-Hsuan Wu, Kuan-Yu Chen, Hung-yi Lee, Yun-Nung Chen (8명 공저, 앞 6명 공동 1저자)</span></div>
+<div class="row"><span class="label">소속</span><span>National Taiwan University (NTU). <strong>Hung-yi Lee + Yun-Nung Chen</strong> 그룹 — mad_06 LLM Discussion과 같은 그룹</span></div>
+<div class="row"><span class="label">출판</span><span>EMNLP 2025 Main Conference (Findings 아닌 main)</span></div>
+<div class="row"><span class="label">DOI</span><span>10.48550/arXiv.2505.21116</span></div>
+<div class="row"><span class="label">코드</span><span>github.com/MiuLab/MultiAgent-Survey</span></div>
+</div>
+
+<h3>6.1 누가, 어디서, 왜</h3>
+
+<p>대만 NTU. <strong>주목할 점: 1저자 그룹 6명이 공동 1저자</strong>야. 그리고 senior author로 Hung-yi Lee + Yun-Nung Chen 둘. 둘 다 NLP 분야 유명 교수. 특히 Yun-Nung Chen(이건 여성 교수, IEEE Senior Member)이 첫 senior로 적힘.</p>
+
+<p>EMNLP 2025 Main Conference 게재 — NLP 분야 최상위 컨퍼런스. Main proceedings는 Findings보다 acceptance rate 낮고 인정도 높음.</p>
+
+<p>흥미로운 점: <strong>같은 NTU 그룹이 mad_06 LLM Discussion(COLM 2024)도 만들었어</strong>. 즉 시스템 만들고(mad_06), 1년 후 서베이 쓴(mad_02) 사이클. 분야를 잘 아는 그룹의 서베이.</p>
+
+<p>이 paper의 동기를 풀어 쓰면:</p>
+
+<p>2024년에 LLM 멀티 에이전트 서베이가 여러 편 나왔어 (mad_01 Tran, mad_03 Yan, mad_04 Chen, mad_05 He). 그런데 이들 다 <strong>architecture</strong>(시스템이 어떻게 생겼나) 또는 <strong>communication</strong>(어떻게 통신하나) 중심. 아무도 <strong>creativity</strong>(창의성)이라는 차원으로 본 적 없어.</p>
+
+<p>창의성이 별도 차원이 필요한 이유:</p>
+<ul>
+<li>창의 작업은 closed-task와 다름 — 정답이 없음</li>
+<li>평가가 어려움 — quality 측정 표준 부재</li>
+<li>인간 user가 들어가야 진짜 평가됨 — 자동 평가만으로 부족</li>
+</ul>
+
+<p>그래서 이 paper의 명시 목표:</p>
+
+<blockquote>
+"LLM 멀티 에이전트의 창의성을 다룬 첫 서베이. 기법·데이터셋·평가 metric·남은 challenge를 종합 매핑해서 분야의 통합 framework 제공."
+</blockquote>
+
+<h3>6.2 핵심 개념 풀어주기</h3>
+
+<h4>3-Stage Workflow — 창의 작업 일반 framework</h4>
+
+<p>저자가 창의 작업을 3단계로 모델링:</p>
+
+<p><strong>(1) Planning (계획)</strong></p>
+<ul>
+<li>높은 수준 목표 설정</li>
+<li>전체 목표를 sub-task로 분해</li>
+<li>생성 파이프라인 구성</li>
+<li>전통적으로 인간이 함 — task 할당 전략, 역할 위계, 실행 프로토콜 명시</li>
+<li>최근 일부 paper에서 AI가 이 역할도 함 (Co-Scientist, VirSci의 leader 에이전트)</li>
+</ul>
+
+<p><strong>(2) Process (실행)</strong></p>
+<ul>
+<li>에이전트들이 실제 산출물 생성</li>
+<li>중간 artifact 만들고, 동료 공유, 피드백에 따라 정교화</li>
+<li>가장 활발한 단계</li>
+</ul>
+
+<p><strong>(3) Decision Making (결정)</strong></p>
+<ul>
+<li>Process에서 만든 후보들 중 선택</li>
+<li>인간이 결정 (low proactivity) vs 평가자 에이전트가 점수 (mid proactivity) vs loss-driven 자동 선택 (low-mid)</li>
+</ul>
+
+<h4>Agent Proactivity (에이전트 능동성) Spectrum</h4>
+
+<p>이게 paper의 흥미로운 분류 차원. 에이전트가 얼마나 능동적으로 행동하느냐 — 두 측면:</p>
+
+<ul>
+<li><strong>Initiative (주도성)</strong> — 누가 action을 시작·확장하나</li>
+<li><strong>Control (통제권)</strong> — 누가 action이 만족스러운지 판단하나</li>
+</ul>
+
+<p>이 둘이 합쳐서 연속선:</p>
+
+<table class="data">
+<thead><tr><th>Proactivity</th><th>특성</th><th>예</th></tr></thead>
+<tbody>
+<tr><td><strong>Reactive (낮음)</strong></td><td>명시적 prompt 기다림. 지시된 것만 함</td><td>Scideator — 사용자가 모든 결정</td></tr>
+<tr><td>중간</td><td>일부 자동, 일부 사람 결정</td><td>evaluator agent 추가</td></tr>
+<tr><td><strong>Proactive (높음)</strong></td><td>sub-goal 직접 설정, subtask 분배, 자기 평가</td><td>LLM Discussion, VirSci</td></tr>
+</tbody>
+</table>
+
+<h4>Creativity Analysis — 능동성의 trade-off</h4>
+
+<p>저자가 중요한 발견 종합:</p>
+
+<p><strong>능동성이 너무 높으면 부작용</strong>:</p>
+
+<ul>
+<li><strong>Collaborative Canvas (He et al. 2024)</strong> — AI-initiated suggestion이 과도하면 아이디어 공간이 무너지고 의견 균질화. <strong>homogeneous output</strong> 위험</li>
+<li><strong>Co-Quest (Liu et al. 2024)</strong> — 에이전트 initiative ↑하면 아이디어 양 ↑지만 사용자 satisfaction·trust ↓. 투명성·해석가능성 중요</li>
+<li><strong>정밀 task</strong> (예: 자동 정리 증명)는 low proactivity 필수 — 인간이 검증해야 신뢰</li>
+</ul>
+
+<p>결론: <strong>에이전트 능동성을 task·user에 맞게 적응적으로 보정해야 함</strong>. 너무 높으면 over-reliance·창의 독립성 저하·신뢰 결여.</p>
+
+<h4>3가지 창의 기법 (Generation Techniques)</h4>
+
+<p>저자가 MAS의 창의 기법을 3가지로 분류:</p>
+
+<p><strong>(1) Divergent Exploration (발산적 탐색)</strong></p>
+<ul>
+<li>early filter 없이 다양한 아이디어 생성</li>
+<li>각 에이전트에 distinct perspective/prompt/domain 부여</li>
+<li>독립 탐색으로 early narrowing 방지</li>
+<li>대표 사례: Co-GPT Ideation</li>
+</ul>
+
+<p><strong>(2) Iterative Refinement (반복 정교화)</strong></p>
+<ul>
+<li>critique-revision loop</li>
+<li>아이디어 quality 향상</li>
+<li>mad_06 LLM Discussion, mad_07 VirSci, ma_05 Ueda가 다 이 패턴</li>
+</ul>
+
+<p><strong>(3) Collaborative Synthesis (협력 종합)</strong></p>
+<ul>
+<li>여러 에이전트의 결과 통합</li>
+<li>여러 관점이 한 산출물로 융합</li>
+</ul>
+
+<h3>6.3 평가 방법 분류</h3>
+
+<p>이 paper가 평가 방법도 정리. 너 측정 전략에 도움.</p>
+
+<ul>
+<li><strong>Subjective (인간 평가)</strong> — 인간 평가자의 Likert. Gold standard지만 비쌈</li>
+<li><strong>Objective (자동 metric)</strong> — diversity, novelty 등을 알고리즘으로</li>
+<li><strong>LLM-as-judge</strong> — 다른 LLM에 평가시킴. 빠르지만 bias 위험</li>
+</ul>
+
+<h3>6.4 명시된 4가지 갭 (paper의 핵심 메시지)</h3>
+
+<p>이 4가지가 너 introduction의 핵심 인용:</p>
+
+<ol>
+<li><strong>Inconsistent evaluation standards</strong> — 평가 표준 불일치. paper마다 다른 metric</li>
+<li><strong>Insufficient bias mitigation</strong> — bias 완화 부족</li>
+<li><strong>Coordination conflicts</strong> — 에이전트 간 조정 갈등</li>
+<li><strong>Lack of unified benchmarks</strong> — 통일된 벤치마크 부재</li>
+</ol>
+
+<p>특히 1번과 4번이 너 연구의 직접 동기와 일치. 너가 표준 CSI를 쓰는 것이 1번·4번 갭에 대한 응답.</p>
+
+<h3>6.5 한계</h3>
+
+<ul>
+<li>텍스트·이미지 도메인에 집중 — 3D, 음악, 디자인 등 일부 영역 적게 다룸</li>
+<li>분야 빠르게 변해서 paper 작성 후 6개월이면 update 필요</li>
+<li>비-CS 분야 paper(예: 디자인 연구) 적게 다룸</li>
+</ul>
+
+<div class="relation-box">
+<h4>박성훈 연구와의 관계</h4>
+
+<p><strong>1. 너 introduction의 핵심 인용 paper (가장 강력).</strong> 너 motivation을 분야 갭과 정확히 align하는 데 가장 좋은 한 줄 인용:</p>
+
+<blockquote>
+"Lin et al. (EMNLP 2025) recently surveyed creativity in LLM-based multi-agent systems and identified four key gaps: inconsistent evaluation standards, insufficient bias mitigation, coordination conflicts, and lack of unified benchmarks. Our work directly addresses gaps 1 and 4 by adopting the standardized Creativity Support Index (CSI) and providing a controlled comparison of multi-agent discussion conditions."
+</blockquote>
+
+<p>이게 reviewer한테 "이 사람이 분야 동향을 잘 파악하고 있고, 본인 연구가 식별된 갭에 정확히 응답한다"는 강한 인상.</p>
+
+<p><strong>2. 너 시스템의 능동성 수준 정당화.</strong> Lin et al.의 proactivity spectrum 어휘로 너 시스템 위치 짓기:</p>
+<ul>
+<li>너 토론 조건 = mid-high proactivity (에이전트가 토론 주도하지만 사용자가 facilitator)</li>
+<li>너 독립 조건 = low proactivity (사용자가 모든 결정, 에이전트는 reactive)</li>
+</ul>
+
+<p>"우리 시스템의 proactivity 수준이 Lin et al.이 권고한 'adaptive calibration' 원칙을 따른다"고 정당화.</p>
+
+<p><strong>3. 부작용 사전 인지.</strong> Lin et al.이 인용한 Collaborative Canvas(He et al. 2024)·Co-Quest의 발견 — "AI 능동성 과도하면 homogenization, trust 저하". 너 토론 조건에서 이 위험이 잠복할 수 있음을 limitation 섹션에 명시하면 reviewer가 "사전 인지하고 있다"고 안심.</p>
+
+<p><strong>4. 3 기법 어휘로 너 시스템 설명.</strong> 너 토론 조건은 Lin et al.의 3 기법 중 Iterative Refinement에 해당. "We employ the iterative refinement technique (Lin et al. 2025) as the core mechanism of our discussion condition." 한 줄.</p>
+
+<p><strong>5. 도메인 확장 정당화.</strong> Lin et al.이 텍스트·이미지 도메인에 집중. <strong>너 연구가 디자인 ideation 도메인으로 확장</strong>한다는 점이 신규 기여. "While Lin et al. (2025) focus on text and image generation, our work extends the investigation to design ideation, a creative domain underexplored in the multi-agent literature."</p>
+</div>
+</section>
+
+<!-- ============================================ mad_03 ============================================ -->
+<section id="mad_03" class="paper-section">
+<div class="paper-header">
+  <div class="paper-num">Paper 07 · 너 연구 슬로건</div>
+  <h2 class="paper-title"><span class="paper-id">mad_03</span> Beyond Self-Talk</h2>
+  <div class="paper-byline">Yan et al., arXiv 2025 · Beihang University</div>
+</div>
+
+<p class="summary-line"><span class="label">한 문장으로</span> "LLM 멀티 에이전트 시스템을 'communication 관점'에서 본 서베이. <strong>제목 'Beyond Self-Talk'가 너 연구 가설의 슬로건</strong> — 지금까지 LLM 협업이 '혼잣말'(self-talk, 각자 답하고 합치는 평행 자문)에 머물러 있다는 진단. 너 토론 조건이 정확히 이걸 넘어서는 시도."</p>
+
+<div class="info-table">
+<div class="row"><span class="label">정식 제목</span><span>Beyond Self-Talk: A Communication-Centric Survey of LLM-Based Multi-Agent Systems</span></div>
+<div class="row"><span class="label">저자</span><span>Bingyu Yan 외 8명 (Beihang University 주축)</span></div>
+<div class="row"><span class="label">소속</span><span>북경 항공항천대학(北京航空航天大学, Beihang University) + 기타</span></div>
+<div class="row"><span class="label">출판</span><span>arXiv 2502.14321 v2 (2025-02-20)</span></div>
+<div class="row"><span class="label">DOI</span><span>10.48550/arXiv.2502.14321</span></div>
+</div>
+
+<h3>7.1 누가, 어디서, 왜</h3>
+
+<p>중국 베이항 대학(Beihang) 주축. 9명 공저로 큰 프로젝트. arxiv 2025-02 업로드, 어디 저널·컨퍼런스 submission인지 명시 안 됨 — preprint 상태.</p>
+
+<p>이 paper의 동기 — 진짜 한 단어로 다 설명 가능: <strong>"Self-talk"</strong>.</p>
+
+<p>저자들 진단:</p>
+
+<blockquote>
+"기존 LLM 멀티 에이전트 연구가 대부분 'self-talk' 패러다임이다 — 즉 한 에이전트가 자기 생각을 단독으로 추론(monologue)하거나, 여러 에이전트가 각자 답을 내고 합치는 정도. 진짜 inter-agent dialogue, 즉 에이전트들이 서로의 발화를 깊이 인지하며 응답을 빌드하는 구조는 부재하다."
+</blockquote>
+
+<p>이게 분야의 미답 영역이고, 그래서 communication 관점에서 분야를 다시 보겠다는 것.</p>
+
+<p>왜 communication이 중요한가? 저자 논리:</p>
+<ul>
+<li>Multi-agent의 핵심 가치는 collective intelligence (합쳐진 지능)</li>
+<li>Collective intelligence는 정보 흐름에 결정적으로 의존</li>
+<li>정보 흐름 = communication pattern</li>
+<li>따라서 communication을 잘 분석해야 collective intelligence 이해 가능</li>
+</ul>
+
+<h3>7.2 핵심 개념 풀어주기 — 2-Layer Framework</h3>
+
+<p>이 paper의 핵심 contribution. communication을 두 층으로 분리.</p>
+
+<h4>Layer 1: System-Level Communication</h4>
+
+<p>시스템 전체의 큰 그림. 3 구성요소:</p>
+
+<p><strong>(a) Architecture (아키텍처) — 5 패턴</strong></p>
+
+<table class="data">
+<thead><tr><th>패턴</th><th>설명</th><th>예시 시스템</th></tr></thead>
+<tbody>
+<tr><td><strong>Flat (평면)</strong></td><td>모든 에이전트 동등, P2P 직접 통신</td><td>Generative Agents (Park 2023)</td></tr>
+<tr><td><strong>Hierarchical (위계)</strong></td><td>상하 관계, 리더-팔로워</td><td>ChatDev, MetaGPT</td></tr>
+<tr><td><strong>Team (팀)</strong></td><td>특화된 sub-team들로 그룹화</td><td>POLCA</td></tr>
+<tr><td><strong>Society (사회)</strong></td><td>emergent norm, 자발적 규범 형성</td><td>Smallville (Park 2023)</td></tr>
+<tr><td><strong>Hybrid (혼합)</strong></td><td>위 패턴들 결합</td><td>FixAgent, ChatSim</td></tr>
+</tbody>
+</table>
+
+<p>너 시스템: Hierarchical (사회자 에이전트가 호명) 또는 Flat (P2P 자유 토론) — 너 결정.</p>
+
+<p><strong>(b) Goals (목표) — 3 유형</strong></p>
+<ul>
+<li>Cooperation (협력, 직접 또는 debate-driven)</li>
+<li>Competition (적대적)</li>
+<li>Mixed (혼합)</li>
+</ul>
+
+<p><strong>(c) Protocols (프로토콜) — 통신 표준</strong></p>
+
+<p>이게 흥미로워. 최근 LLM 에이전트 통신 프로토콜이 표준화 시도되고 있어:</p>
+<ul>
+<li><strong>MCP (Model Context Protocol)</strong> — Anthropic이 제안. JSON-RPC client-server로 LLM 도구 접근. 2024년 폭발적 채택</li>
+<li><strong>A2A (Agent-to-Agent)</strong> — 에이전트 간 capability exchange. peer 통신</li>
+<li><strong>ANP (Agent Network Protocol)</strong> — 분산. DID(Decentralized ID) 사용</li>
+</ul>
+
+<p>저자가 비판: 프로토콜이 너무 많아서(MCP·A2A·ANP·기타 6+) <strong>functional redundancy</strong> 문제. 표준화 부재.</p>
+
+<h4>Layer 2: Internal Communication</h4>
+
+<p>에이전트 내부의 통신 메커니즘. 4 차원:</p>
+
+<p><strong>(a) Strategies (전략) — 3 종류</strong></p>
+<ul>
+<li><strong>One-by-one (순차)</strong> — 한 명씩 발화. mad_06 LLM Discussion이 이 패턴</li>
+<li><strong>Simultaneous-talk (동시)</strong> — 여러 명 동시 발화. 정보 폭발 위험</li>
+<li><strong>Simultaneous-with-summarizer (동시 + 요약자)</strong> — 동시 발화 후 별도 요약자 에이전트가 정리. 큰 시스템에서 점점 사용 늘어남</li>
+</ul>
+
+<p><strong>(b) Paradigms (패러다임) — 3 패턴</strong></p>
+<ul>
+<li><strong>Message passing (메시지 전달)</strong> — 직접 송신. 가장 일반적</li>
+<li><strong>Speech acts (발화 행위)</strong> — 명령·요청·약속 같은 의도 표현. 협상 task에 자주</li>
+<li><strong>Blackboard (칠판)</strong> — 중앙 저장소에 메시지 게시. 다른 에이전트가 꺼내 봄</li>
+</ul>
+
+<p>너 시스템: Message passing이 표준. Blackboard는 토론 history 공유에 쓸 수도.</p>
+
+<p><strong>(c) Objects (대상) — 누구한테 말하나</strong></p>
+<ul>
+<li><strong>Self</strong> — 자기 자신에게 (reflection). chain-of-thought, self-critique</li>
+<li><strong>Other agents</strong> — 다른 에이전트에게</li>
+<li><strong>Environment</strong> — 외부 도구·센서</li>
+<li><strong>Humans</strong> — 사용자에게</li>
+</ul>
+
+<p>너 토론 조건: Other agents + Humans 둘 다.</p>
+
+<p><strong>(d) Content (내용) — 무엇을</strong></p>
+<ul>
+<li><strong>Explicit (명시적)</strong> — 자연어, 코드 같은 명확한 표현</li>
+<li><strong>Implicit (암묵적)</strong> — 행동 신호, 환경 신호 (예: 에이전트 위치)</li>
+</ul>
+
+<p>너 시스템: 100% explicit natural language.</p>
+
+<h3>7.3 분석 corpus와 발견</h3>
+
+<p>68+ 시스템 분석. 주요 발견:</p>
+
+<p><strong>지배적 패턴들:</strong></p>
+<ul>
+<li>Hierarchical 아키텍처 + Cooperative goal 조합이 가장 많음 (ChatDev, MetaGPT, AutoDefense)</li>
+<li>One-by-one 또는 simultaneous strategy가 우세 — summarizer는 큰 시스템에서 증가</li>
+<li>Message passing이 거의 모든 시스템 사용. Speech acts는 협상에만</li>
+<li>Other-agent communication이 가장 흔함. Environment sensing은 상대적으로 적음</li>
+</ul>
+
+<p><strong>분야의 문제 (저자 지적):</strong></p>
+<ul>
+<li>프로토콜 선택 heterogeneity 큼 → cross-system collaboration 어려움</li>
+<li>Natural language 의존 → 구조화된 데이터 형식 underutilized</li>
+<li>Communication 전략 design guideline 없음</li>
+<li>System-level coordination 효율성·공정성 평가 거의 없음</li>
+</ul>
+
+<h3>7.4 명시 challenge·갭 5가지</h3>
+
+<ol>
+<li><strong>Scalability</strong> — 에이전트 수 늘면 communication overhead 폭발. Hierarchical에서 병목</li>
+<li><strong>Interoperability</strong> — 6+ 프로토콜이 cross-system 협업 막음</li>
+<li><strong>Multimodal content</strong> — 텍스트 지배, 이미지·오디오·비디오 통합 미답</li>
+<li><strong>Security</strong> — 변조·도청·spoofing 취약성</li>
+<li><strong>Evaluation</strong> — 기존 벤치마크가 coordination metric 누락. agent-centric leaderboard만 있음</li>
+</ol>
+
+<h3>7.5 강조 시스템 (예시)</h3>
+
+<ul>
+<li><strong>Cooperative hierarchical</strong>: ChatDev (소프트웨어 with manager), MetaGPT (구조화 워크플로우 + blackboard)</li>
+<li><strong>Cooperative flat</strong>: Generative Agents (sandbox emergent behavior), AutoAgents (parallel talk brainstorming)</li>
+<li><strong>Competitive/mixed</strong>: Agent4Debate (적대적 인간 debate), EconAgent (시장 신호 + 거시경제 시뮬레이션)</li>
+<li><strong>Team-based</strong>: MAGIS (GitHub issue resolution), POLCA (정치 협상)</li>
+<li><strong>Hybrid</strong>: FixAgent (adaptive debugging), ChatSim (top-down rendering + peer collaboration)</li>
+</ul>
+
+<h3>7.6 한계</h3>
+
+<ul>
+<li>분야 빠르게 변해서 6개월이면 update 필요</li>
+<li>중국 그룹이라 일부 서구 신생 시스템 누락 가능</li>
+<li>arxiv preprint이라 peer review 안 거침</li>
+</ul>
+
+<div class="relation-box">
+<h4>박성훈 연구와의 관계</h4>
+
+<p><strong>1. 너 연구의 슬로건으로 차용 (가장 강력).</strong> "Beyond Self-Talk"가 너 연구 framing의 한 줄 슬로건이 될 수 있어. paper title 또는 introduction 첫 문단:</p>
+
+<blockquote>
+"Recent LLM multi-agent research has been criticized for remaining within the 'self-talk' paradigm — where agents reason in monologue or generate parallel responses without deep mutual awareness (Yan et al. 2025). Despite proposals for systems that move beyond self-talk, the user-side effects of such mutually aware discussions remain untested. Our work addresses this gap by directly comparing independent generation (self-talk equivalent) vs mutually aware discussion conditions, with user-perceived creativity support (CSI) as the dependent variable."
+</blockquote>
+
+<p>이 한 문단이 너 연구 motivation의 70%를 깔아줘.</p>
+
+<p><strong>2. 너 시스템의 communication 패턴 명시.</strong> Yan et al. 2-layer framework로 너 시스템 명세:</p>
+
+<table class="data">
+<thead><tr><th>차원</th><th>너 토론 조건</th><th>너 독립 조건</th></tr></thead>
+<tbody>
+<tr><td>Architecture</td><td>Hierarchical (facilitator 중심) 또는 Flat</td><td>N/A (단일 에이전트 또는 독립 병렬)</td></tr>
+<tr><td>Goals</td><td>Cooperation</td><td>N/A</td></tr>
+<tr><td>Strategy</td><td>One-by-one (round-robin)</td><td>Simultaneous (병렬, 통신 없음)</td></tr>
+<tr><td>Paradigm</td><td>Message passing</td><td>N/A</td></tr>
+<tr><td>Objects</td><td>Other agents + Humans</td><td>Humans only</td></tr>
+<tr><td>Content</td><td>Explicit natural language</td><td>Explicit natural language</td></tr>
+</tbody>
+</table>
+
+<p>이게 너 method 섹션의 시스템 명세 표 그대로 들어갈 수 있어. reviewer가 시스템 구조에 모호함 못 잡음.</p>
+
+<p><strong>3. "User-side effect는 미답" 갭이 너 자리.</strong> Yan et al.이 명시 갭 5개 중 "Evaluation" — coordination metric 부재. 너 연구가 user-perceived CSI로 그 측면을 보충.</p>
+
+<p><strong>4. 인접 시스템 비교에 어휘 차용.</strong> 너 related work에서 ChatDev/MetaGPT/Generative Agents 같은 시스템과 비교할 때 Yan et al.의 분류로 정렬:</p>
+<ul>
+<li>"ChatDev (cooperative hierarchical, software engineering)"</li>
+<li>"Generative Agents (cooperative flat, social simulation)"</li>
+<li>"Our work: cooperative hierarchical, design ideation, with user as facilitator-in-chief"</li>
+</ul>
+
+<p><strong>5. Multimodal future direction.</strong> Yan et al.이 multimodal content 미답으로 지적. 너 VR 확장에서 음성·표정·제스처 추가가 이 갭에 응답하는 시도.</p>
+</div>
+</section>
+
+<!-- ============================================ ma_05 ============================================ -->
+<section id="ma_05" class="paper-section">
+<div class="paper-header">
+  <div class="paper-num">Paper 08 · 시스템 변수 ablation</div>
+  <h2 class="paper-title"><span class="paper-id">ma_05</span> Multi-Agent LLM Dialogues</h2>
+  <div class="paper-byline">Ueda et al., SIGDIAL 2025 · AIST + EPFL + Stockmark</div>
+</div>
+
+<p class="summary-line"><span class="label">한 문장으로</span> "LLM 멀티 에이전트가 연구 아이디어를 생성할 때 (a) 에이전트 다양성 (b) 평행 비평가 수 (c) 토론 깊이 — 이 세 변수를 따로따로 조작해서 어떤 게 결정적인지 본 controlled study. <strong>너 시스템 변수 설계의 직접 근거</strong>이고 '사용자 없는 시스템 사이드'의 갭을 명확히 보여줌."</p>
+
+<div class="info-table">
+<div class="row"><span class="label">정식 제목</span><span>Exploring Design of Multi-Agent LLM Dialogues for Research Ideation</span></div>
+<div class="row"><span class="label">저자</span><span>Keisuke Ueda, Wataru Hirota, Takuto Asakura, Takahiro Omi, Kosuke Takahashi, Kosuke Arima, Tatsuya Ishigaki</span></div>
+<div class="row"><span class="label">소속</span><span>AIST(일본 산업기술종합연구소) + EPFL(스위스) + Stockmark(일본 기업)</span></div>
+<div class="row"><span class="label">출판</span><span>SIGDIAL 2025 (Special Interest Group on Discourse and Dialogue, Aug 25-27)</span></div>
+<div class="row"><span class="label">코드</span><span>github.com/g6000/MultiAgent-Research-Ideator</span></div>
+</div>
+
+<h3>8.1 누가, 어디서, 왜</h3>
+
+<p>일본 AIST(우리가 본 vri_04 Lyu와 같은 기관) + 스위스 EPFL + 일본 기업 Stockmark 협업. 1저자 Ueda가 EPFL 박사과정이고 AIST 인턴. 흥미로운 산학연 협업.</p>
+
+<p>SIGDIAL = ACL 산하 대화 시스템 전문 컨퍼런스. 작지만 인정받는 venue.</p>
+
+<p>이 paper의 동기:</p>
+
+<p>LLM 멀티 에이전트로 연구 아이디어를 만드는 시도가 늘어남(mad_07 VirSci 등). 그런데 이 시스템들의 디자인 변수들이 <strong>"heuristic하게" 정해짐</strong>. 즉 저자들이 "4 에이전트가 좋더라", "5 라운드가 좋더라" 식으로 경험적으로 선택. 그게 정말 최적인지는 검증 안 됨.</p>
+
+<p>저자들 질문:</p>
+<blockquote>
+"멀티 에이전트 토론을 디자인할 때 3가지 핵심 변수 — 다양성, 평행 비평가 수, 토론 깊이 — 가 각각 아이디어 quality에 어떤 영향을 주는가? 한 변수씩 조작하면 효과가 분리될까?"
+</blockquote>
+
+<p>즉 ma_05는 시스템 디자인을 위한 <strong>ablation study</strong>. 새 system 제안이 아니라 기존 system들의 변수 효과를 분리.</p>
+
+<h3>8.2 핵심 개념 풀어주기 — 3 디자인 차원</h3>
+
+<p>저자가 토론 디자인을 3 차원으로 분해:</p>
+
+<h4>(1) Agent Diversity (에이전트 다양성)</h4>
+
+<p>같은 GPT-4 인스턴스만 띄울 게 아니라, <strong>domain-specific persona</strong>를 주입해서 다양화. 예:</p>
+
+<ul>
+<li><strong>"Physics-AI"</strong> — 물리학 전공 persona</li>
+<li><strong>"Psychology-AI"</strong> — 심리학 전공</li>
+<li>그 외 Biology-AI, Economics-AI, CS-AI 등</li>
+</ul>
+
+<p>이렇게 다양한 도메인 persona를 던지면 한 주제에 대해 다양한 관점 나옴. mad_06 Lu의 Visionary Millionaire 패턴과 비슷한데, ma_05는 더 학문 분야 중심.</p>
+
+<h4>(2) Agent Parallelism (에이전트 평행성)</h4>
+
+<p>비평가(critic) 에이전트를 몇 명 동시 가동할지. N=1, 2, 3, 4 비교.</p>
+
+<p>흐름:</p>
+<ol>
+<li>제안자(proposer) 에이전트가 초기 아이디어 생성</li>
+<li>N명의 비평가(critic)가 <strong>병렬로</strong> 독립 비평</li>
+<li>비평이 합쳐져서 단일 수정 단계로</li>
+</ol>
+
+<p>한 명의 비평보다 여러 비평이 더 잘 잡아낸다는 가설.</p>
+
+<h4>(3) Agent Interaction Depth (토론 깊이)</h4>
+
+<p>같은 비평-수정 cycle을 몇 번 반복할지. L=1, 2, 3, 4 비교.</p>
+
+<p>흐름:</p>
+<ol>
+<li>아이디어 생성 → 비평 → 수정 (이게 1 cycle)</li>
+<li>수정된 아이디어 → 비평 → 수정 (cycle 2)</li>
+<li>... L번 반복</li>
+</ol>
+
+<p>깊이가 깊을수록 아이디어가 정교화되지만 cost가 늘어남.</p>
+
+<h3>8.3 7 dialogue configurations (실험 설계)</h3>
+
+<p>저자가 7개 설정을 비교:</p>
+
+<table class="data">
+<thead><tr><th>#</th><th>설정</th><th>설명</th></tr></thead>
+<tbody>
+<tr><td>1</td><td><strong>Single (No Critique)</strong></td><td>단일 LLM이 아이디어 생성. 비평 없음. Si et al. 2025의 baseline 재현</td></tr>
+<tr><td>2</td><td><strong>Baseline (Self-Critique)</strong></td><td>단일 LLM이 ideate → 자기 비평 → 자기 수정. 단순 self-reflection</td></tr>
+<tr><td>3</td><td><strong>Iterative Self-Critique L=2</strong></td><td>ideation-critique-revision cycle을 단일 LLM이 2번 반복</td></tr>
+<tr><td>4</td><td>L=3</td><td>3번 반복</td></tr>
+<tr><td>5</td><td>L=4</td><td>4번 반복</td></tr>
+<tr><td>6</td><td><strong>Parallel Self-Critique N=2</strong></td><td>2 비평가가 병렬 독립 비평 후 단일 수정</td></tr>
+<tr><td>7</td><td>N=3</td><td>3 평행 비평가</td></tr>
+<tr><td>—</td><td>N=4</td><td>4 평행 비평가</td></tr>
+<tr><td>—</td><td><strong>Diverse Personas</strong></td><td>도메인 persona(Physics-AI 등) 주입. 비평 또는 제안 역할에</td></tr>
+</tbody>
+</table>
+
+<h3>8.4 방법 — 자세히</h3>
+
+<div class="info-table">
+<div class="row"><span class="label">평가 task</span><span>7개 다양한 AI/NLP 연구 주제</span></div>
+<div class="row"><span class="label">총 생성 idea</span><span>R = 4,000개 (각 설정마다)</span></div>
+<div class="row"><span class="label">필터링</span><span>Embedding-based similarity filter로 중복 제거</span></div>
+<div class="row"><span class="label">평가</span><span>LLM-as-judge (GPT-4 preference tournament) + diversity metric</span></div>
+<div class="row"><span class="label">평가 차원</span><span>Originality, Feasibility, Clarity</span></div>
+<div class="row"><span class="label">사용자</span><span><strong>없음</strong> — 순수 AI 측 평가</span></div>
+</div>
+
+<h4>중요한 점: GPT-4 Preference Tournament</h4>
+
+<p>아이디어 quality 평가 방법인데, 두 아이디어 쌍을 GPT-4한테 던지고 "어느 게 더 originalp/feasible/clear?"라고 물음. 토너먼트 방식으로 ranking. <strong>주의: LLM-as-judge라 bias 위험</strong>.</p>
+
+<h3>8.5 결과 — 핵심 발견</h3>
+
+<p>저자가 명시한 3가지 핵심 결과:</p>
+
+<p><strong>(1) Agent cohort 확대 (에이전트 수 증가) → 아이디어 다양성 증가</strong></p>
+<ul>
+<li>Parallel critique 수 N 늘릴수록 다양성 ↑</li>
+<li>다양성 증가는 robust한 효과</li>
+</ul>
+
+<p><strong>(2) Interaction depth 심화 → 다양성 증가</strong></p>
+<ul>
+<li>L 늘릴수록 다양성 ↑</li>
+<li>특히 L=2→3에서 큰 점프</li>
+</ul>
+
+<p><strong>(3) Persona heterogeneity (다양화) → 다양성 증가</strong></p>
+<ul>
+<li>domain persona 주입이 다양성에 가장 큰 영향</li>
+</ul>
+
+<p><strong>(4) 결정적 발견: critic-side diversity가 feasibility 증가</strong></p>
+
+<p>이게 paper의 가장 정밀한 발견. 같은 persona를 어디 주입할지가 중요:</p>
+
+<ul>
+<li><strong>제안자(proposer)에 persona</strong> → 아이디어 다양성에 약간 도움</li>
+<li><strong>비평가(critic)에 persona</strong> → <strong>최종 아이디어의 feasibility(실현 가능성)에 큰 효과</strong></li>
+</ul>
+
+<p>즉 다양한 비평가가 다양한 각도에서 비평하면 약점이 잘 잡혀서 결과가 더 robust해진다는 거.</p>
+
+<h3>8.6 한계 (저자 명시)</h3>
+
+<ul>
+<li><strong>인간 평가 부재</strong> — 모두 LLM-as-judge. bias 잠재</li>
+<li>GPT-4 단일 모델에만 의존</li>
+<li>AI/NLP 연구 도메인 한정 — 다른 도메인 일반화 미검증</li>
+<li>비용·시간 분석 부족</li>
+<li><strong>사용자 경험은 다루지 않음</strong> ← 너 자리</li>
+</ul>
+
+<div class="relation-box">
+<h4>박성훈 연구와의 관계</h4>
+
+<p><strong>1. 너 시스템 변수 ablation의 직접 근거.</strong> 너 토론 조건의 디자인 변수들 — 에이전트 수, 다양성, 라운드 수 — 를 왜 그렇게 정했는지 정당화할 때 ma_05 인용:</p>
+
+<blockquote>
+"Our system design choices are informed by Ueda et al. (2025)'s controlled study of multi-agent dialogue design variables. Specifically, we adopt N=4 agents with high persona diversity, following their finding that critic-side persona heterogeneity is most decisive for output quality."
+</blockquote>
+
+<p><strong>2. Critic-side diversity 패턴 차용.</strong> ma_05의 가장 정밀한 발견 — "비평가에 다양한 persona 줘야 효과 ↑". 너 시스템에서 비평가 역할 에이전트(Critic, User Advocate, Business Realist 등)가 서로 매우 다른 관점을 가지도록 의도적으로 디자인. ma_05가 그 근거.</p>
+
+<p><strong>3. "사용자 없음" 갭이 너 자리 (이게 핵심).</strong> ma_05의 가장 큰 한계가 사용자 부재. 자동 평가만. 너 연구가 정확히 이 자리:</p>
+
+<blockquote>
+"Ueda et al. (2025) systematically investigated how multi-agent dialogue design variables (diversity, parallelism, depth) influence idea quality, but their evaluation relied entirely on LLM-as-judge without human user involvement. We extend this line by examining how a multi-agent discussion condition with carefully designed personas affects user-perceived creativity support (CSI) when humans participate in the loop."
+</blockquote>
+
+<p><strong>4. Iterative Self-Critique 패턴.</strong> ma_05의 L=2-4 iterative refinement가 mad_06 LLM Discussion의 Discussion phase와 결이 같음. 너 토론 조건에서 비평-수정 cycle을 명시적으로 디자인하면 ma_05의 ablation 결과(L=3이 보통 sweet spot)를 직접 차용.</p>
+
+<p><strong>5. AI-side vs User-side 측정의 보완 framing.</strong> 너 paper에서 "AI-side 평가(ma_05, mad_06, mad_07)와 user-side 평가(우리 연구) 둘이 보완적이다"라고 framing. 둘 다 필요. 너 연구가 user-side를 추가하는 가치 강조.</p>
+</div>
+</section>
+
+<!-- ============================================ 종합 ============================================ -->
+<section class="summary-section">
+<div class="paper-header">
+  <div class="paper-num">Synthesis · 8편을 어떻게 묶을지</div>
+  <h2 class="paper-title">종합 — 인용 전략 + 읽는 순서</h2>
+</div>
+
+<h3>너 석사논문 paper 구조 기준 인용 전략</h3>
+
+<table class="data">
+<thead><tr><th>섹션</th><th>핵심 인용</th><th>역할</th></tr></thead>
+<tbody>
+<tr><td><strong>Introduction (분야 부상)</strong></td><td>mad_06 → mad_07 → ma_01 → ma_27</td><td>multi-agent LLM ideation의 시간순 진화 (2024→2026)</td></tr>
+<tr><td><strong>Motivation (갭 진단)</strong></td><td><strong>mad_02 (Lin EMNLP) + mad_03 (Yan)</strong></td><td>"user study scarcity" + "Beyond Self-Talk" 슬로건</td></tr>
+<tr><td><strong>Related Work — 시스템</strong></td><td>mad_06 (LLM Discussion) + mad_07 (VirSci) + ma_01 (MultiColleagues) + ma_27 (IdeationWeb)</td><td>가까운 친척 4편의 도달 지점 + 한계 매트릭스</td></tr>
+<tr><td><strong>Related Work — VR</strong></td><td>vri_07 (VRCopilot)</td><td>VR+AI에 CSI 적용 유일</td></tr>
+<tr><td><strong>Method 정당화</strong></td><td>mad_06 (3-phase + role-play) + mad_07 (4-D ablation) + ma_05 (critic diversity)</td><td>시스템 변수의 직접 근거</td></tr>
+<tr><td><strong>Method (측정)</strong></td><td>ma_27 + vri_07</td><td>CSI 사용 정당화</td></tr>
+<tr><td><strong>Discussion — 갭 메움</strong></td><td>mad_06·mad_07·ma_05의 "사용자 없음" 한계 → 너 연구가 메움</td><td>너 contribution 강조</td></tr>
+</tbody>
+</table>
+
+<h3>읽는 순서 추천</h3>
+
+<ol>
+<li><strong>mad_06 LLM Discussion</strong> — 시스템 디자인 토대 (가장 먼저)</li>
+<li><strong>ma_01 MultiColleagues</strong> — 비교 디자인 모델</li>
+<li><strong>ma_27 IdeationWeb</strong> — 측정 (CSI) 모델</li>
+<li><strong>mad_07 VirSci</strong> — 시스템 파라미터 근거</li>
+<li><strong>mad_02 Lin Survey</strong> — 분야 갭 진단 (motivation 보강)</li>
+<li><strong>mad_03 Yan Beyond Self-Talk</strong> — 너 슬로건</li>
+<li><strong>ma_05 Ueda</strong> — 변수 ablation 근거</li>
+<li><strong>vri_07 VRCopilot</strong> — VR 확장 시 (나중에)</li>
+</ol>
+
+<h3>한 단락 요약</h3>
+
+<blockquote>
+이 8편은 너 석사논문의 핵심 골격을 형성한다. <strong>mad_06과 mad_07</strong>이 시스템 디자인의 architectural blueprint를 주고 (3-phase + role-play + 4-D ablation 파라미터), <strong>ma_01</strong>이 within-subject 비교 디자인의 직접 모델이며 (단 CSI 미사용이 한계), <strong>ma_27과 vri_07</strong>이 CSI 측정의 정당화를 주고 (디자인 도메인 + VR 도메인 각각), <strong>ma_05</strong>가 시스템 변수 선택의 ablation 근거이며 (단 사용자 없음이 한계), <strong>mad_02</strong>가 너 motivation을 분야 갭(user study scarcity)과 align시키고, <strong>mad_03</strong>이 "Beyond Self-Talk"라는 한 줄 슬로건을 제공한다. 이 8편의 한계가 정확히 너 연구의 자리 — multi-agent + 사용자 in the loop + 표준 CSI + (VR 확장 시) 임바디드 — 를 정의한다.
+</blockquote>
+
+</section>
+
+<p class="page-footer">생성: 2026-05-22 · 출처 텍스트: <code>.omc/text/</code> + <code>.omc/text_mad/</code> · 작성 깊이: vra_10 재설명 수준 (한국어 일상어, 구체 예시, 사담조)</p>
+
+</main>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,1253 @@
+                                       Are Semantic Networks Associated with Idea Originality in
+                                         Artificial Creativity? A Comparison with Human Agents
+
+                                             Umberto Domanti                                                        Lorenzo Campidelli
+
+                                       Free University of Bozen-Bolzano                                               University of Trieste
+                                                    Bolzano, Italy                                                         Trieste, Italy
+
+                                       umberto.domanti@student.unibz.it                                         lorenzo.campidelli@phd.units.it
+
+arXiv:2602.02048v1 [cs.HC] 2 Feb 2026         Sergio Agnoli                                                         Antonella De Angeli
+
+                                             University of Trieste                                              Free University of Bozen-Bolzano
+                                                  Trieste, Italy                                                            Bolzano, Italy
+
+                                       Marconi Institute for Creativity                                            antonella.deangeli@unibz.it
+                                                 Bologna, Italy
+
+                                            sergio.agnoli@units.it
+
+                                                                         Restricted originality range
+
+                                                                                                                Potential
+
+                                                                                                                for higher originality
+
+                                       Figure 1: Kernel density estimates of the distributions of mean idea originality scores collected by administering the Alternate
+                                       Uses Task to ChatGPT-4o and a sample of 81 students
+
+                                       Abstract                                                                 CCS Concepts
+
+                                       The application of generative artificial intelligence in Creativity      · Human-centered computing  Empirical studies in HCI;
+                                       Support Tools (CSTs) presents the challenge of interfacing two           HCI theory, concepts and models.
+                                       black boxes: the user's mind and the machine engine. According to
+                                       Artificial Cognition, this challenge involves theories, methods, and     Keywords
+                                       constructs developed to study human creativity. Consistently, the
+                                       paper investigated the relationship between semantic networks or-        Artificial Cognition, Large Language Models, Creative Cognition,
+                                       ganisation and idea originality in Large Language Models. Data was       Semantic Memory, Divergent Thinking
+                                       collected by administering a set of standardised tests to ChatGPT-4o
+                                       and 81 psychology students, divided into higher and lower creative       1 Introduction
+                                       individuals. The expected relationship was confirmed in the compar-
+                                       ison between ChatGPT-4o and higher creative humans. However,             Creativity is a complex aspect of human cognition with wide-
+                                       despite having a more rigid network, ChatGPT-4o emerged as more          ranging implications for individual, societal, and technological
+                                       original than lower creative humans. We attributed this difference       progress [4, 39]. The standard psychological definition describes cre-
+                                       to human motivational processes and model hyperparameters, ad-           ativity as a multidimensional construct [107] based on the ability to
+                                       vancing a research agenda for the study of artificial creativity. In     produce original and effective products [99]. Despite the extensive
+                                       conclusion, we illustrate the potential of this construct for designing  application of this definition in many disciplines, Human-Computer
+                                       and evaluating CSTs.                                                     Interaction (HCI) research has long lacked conceptual clarity in
+                                                                                                                defining what creativity means [52]. Furthermore, the application of
+                                                                                                                generative artificial intelligence (GenAI) to creative tasks has added
+                                                                                                                further terminological complexity. As a result, the word creativity is
+                                                                                                                now used indifferently to denote human and machine performance,
+                                                                                                                as well as their interaction [24, 56, 90, 97]. However, psychology
+suggests substantial differences between human and artificial cre-                                                                                             Domanti et al.
+ativity in intentionality and authenticity [97, 98], emotional depth
+and cultural understanding [46], or experience [1]. Consistently,        box example, as no information on model hyperparameters was
+the study reported in this paper has highlighted differences in the      available. The human sample included 81 psychology students di-
+distribution of mean original ideas produced by humans and ma-           vided into higher and lower creative individuals. Results confirmed
+chines (Figure 1). Human scores are distributed along a larger range     the expected association between semantic networks and original-
+of responses. On the contrary, machine scores are centred on the         ity only with respect to higher creative individuals. Consistently,
+average performance of humans cutting out both lower and higher          ChatGPT-4o was less original than higher creative humans, who
+creative ideas [47].                                                     also displayed a more flexible semantic memory network. However,
+                                                                         the expected association did not manifest in the comparison with
+   The question of whether GenAI can be creative has stimulated a        lower creative individual. Despite having a more rigid network,
+stream of research comparing the performance of machines and hu-         ChatGPT-4o emerged as more original than them.
+mans using psychological tests [58]. The results are contradictory,
+with some studies showing better machine performance [45, 64, 68],          The contribution of this paper to the CHI community is empiri-
+equal performance [65], or better human performance [11, 108].           cal, operational, and methodological. To the best of our knowledge,
+Despite their differences, this research shares an implicit product-     the paper provides the first empirical evidence of an association
+centred definition of creativity [99]. GenAI is considered creative      between semantic networks (an indication of the creative process)
+because it generates outcomes that would be defined creative if pro-     and idea originality (an indication of the creative product). The
+duced by humans [97, 98]. Inevitably, this definition is bound to have   relationship mirrored human creativity only with regard to the
+a limited impact on the design and development of rapidly evolving       comparison with higher creative individuals. This unexpected out-
+obscure models and algorithms. The product-centred definition ac-        come inspired new fascinating research directions for the study of
+knowledges the occurrence of creative outputs but cannot explain         artificial creativity in HCI. In short, the paper has the following
+how they were generated. The question is no longer whether GenAI         organisation. Section 2 presents the related work about creativity in
+can be creative or which model generates more creative outputs           HCI and psychology, with the aim to seed a ground for our research
+[97]. The pertinent question is: what are the mechanisms that could      agenda. Section 3 presents the method of the study advancing best
+lead to artificial creativity? Only this answer will provide designers   psychological practices. Section 4 reports the results and Section
+of Creativity Support Tools, CSTs [52, 103, 104], the control they       5 discusses their relevance and limitations as directions for future
+need to infrastructure effective and original interactions, which by     work. Section 6 advances the definition of artificial creativity as a
+definition are creative solutions to complex interfaces.                 relevant construct for the design of CSTs, discusses contributions,
+                                                                         and provides two operational insights (OPI) and three methodolog-
+   The distinction between human and artificial creativity [97, 98]      ical recommendations (MER) for a systematic research agenda on
+is relevant to the design of CSTs [52, 103, 104]. The ultimate chal-     artificial creativity. Finally, Section 7 concludes the manuscript with
+lenge is how to interface two different types of black-boxes: the        a call for further research on artificial creativity.
+human mind and nondeterministic systems. In this fussy context,
+the outcome of the interaction is difficult to predict [114], and        2 Related Work
+therefore potentially creative. Both human and artificial agents pro-
+vide unique requirements for creAItive collaboration [10], cyber-        According to Rhodes [96], the study of creativity can be differenti-
+creativity [36, 38], or entangled authorship [20, 21]. Such complex-     ated in four areas: person (personality traits, abilities, attitudes, and
+ity requires psychological knowledge [52, 53] because: "Compared         self-concepts), product (originality and effectiveness), process (cogni-
+to nearly seven decades of pathbreaking contributions from psycho-       tive and neurophysiological mechanisms), and press (environmental
+logical creativity research, it is evident that HCI-oriented creativity  context). Following this categorisation, we identify the specific re-
+research does not have an equally strong research tradition" [52,        mit of HCI in the press and review research on the application of
+p.3]. To overcome this gap, the current paper investigates artificial    GenAI in artistic practices as a paramount example [26, 28, 57].
+creativity by applying theories and methods of creative cognition
+[17]. Accordingly, creativity is the process that emerges from the       2.1 HCI and Creativity
+combination of basic neurocognitive mechanisms (memory, atten-
+tion, and control) in divergent and convergent thinking. The paper       The interest in CSTs dates back in time [103, 104], and extends
+focuses on the association between semantic memory network               across a wide range of practices [27, 52, 53, 95] recently challenged
+(the representation of the organisation of the conceptual units          by the widespread adoption of AI [24, 29, 34, 82]. On the one hand,
+in memory) and idea originality in a divergent task. Psychology          GenAI provides immediate feedback and hints, thus offering users
+has demonstrated that more flexible networks are associated with         the possibility to explore new ideas [34, 93]. On the other hand,
+higher originality [70, 71]. Therefore, the specific research question   designers must be aware that these systems may distract the cre-
+addressed in this paper is:                                              ative process [109]. Negative outcomes on the long run include
+                                                                         over-reliance and homogenisation [7, 10, 24, 50, 75]. In artistic do-
+     RQ What is the relationship between semantic networks and           mains, HCI researchers and designers should take into account that
+         idea originality in ChatGPT-4o?                                 GenAI may eventually lead to a reduction of variability and diver-
+                                                                         sity in divergent thinking [7, 50, 75], and induce a form of Creative
+   To answer it, we conducted an experiment comparing human              Mortification [15] where people perceive their own work as less
+and artificial originality. The machine data was collected by using      valuable than those generated by AI. Additional concerns relate
+the chat interface of GPT-4o, which reproduced a complete black          to ownership, plagiarism, and originality [30, 91, 114]. Unresolved
+                                                                         constraints have emerged in the context of creative writing due to
+Semantic Network and Idea Originality in Artificial Creativity                      Creative cognition
+                                                                          Memory Attention Control
+the inability of commercial LLMs to deal with conflict or humour,
+which are the essence of tragedy and comedy, respectively [62].           Creative thought
+
+   Despite its implicit limitations, some artists recognise a creative    Divergent  Convergent
+potential in GenAI [20, 21, 26]. Particularly, they found hints of
+inspirations in its "hallucinations" [21, 26] -- the generation of plau-  Figure 2: Creative Cognition framework, adapted by [17]
+sible information that is factually incorrect or unsupported by data
+[55]. Following the standard definition of creativity [99], we asso-      and the production of words that are as different from each other
+ciate this preference with the intrinsic originality of hallucinations.   as possible [DAT; 83]. A common verbal test is the Alternate Uses
+Far from interpreting them as system bugs, artists value hallucina-       Task [AUT; 63], which requires generating as many alternative uses
+tions as seed incidents, surprising and intriguing clues that can in-     as possible for common objects (e.g. a brick) within a fixed time.
+spire their work [21, 48, 92]. Altogether, this research demonstrates     Responses provide a measure of fluency (the number of generated
+that occasionally GenAI produces outcomes that are perceived as           ideas), flexibility (the number of different categories of ideas), elab-
+creative [97]. A provocative example is Théâtre D'opéra Spatial, a        oration (the level of idea detail), and originality (the idea novelty
+"painting" generated by Midjourney following a prompt by Jason            and uncommonness). Historically, originality has been assessed
+M. Allen. The artwork won the fine art competition at the 2022 Col-       based on interrater agreement between at least two expert judges
+orado State Fair. Yet, the U.S. Registration Office denied copyright      on a Likert scale [3]. Recently, however, deep neural network-based
+to the artist based on the impossibility of differentiating between       LLMs have been trained to perform this task. An example is OCSAI
+human and artificial contributions in the creative process [20].          (Open creativity scoring with artificial intelligence), which achieved
+                                                                          a correlation  = 0.81 with human raters [85].
+2.2 Creativity as a Cognitive Process
+                                                                             The findings of experimental studies comparing humans and
+To move beyond product-oriented research [99], we follow the              LLMs on divergent thinking tasks are contradictory, likely reflect-
+definition of creativity as the dynamic interplay between inconclu-       ing methodological and procedural differences, each with its own
+siveness (when originality or effectiveness has not yet been reached)     strengths and limitations. Table 1 provides an overview starting
+and achievement (the fulfilment of both originality and effective-        from the articles reviewed by Gilhooly [58] and including only pub-
+ness). In other words, creativity requires "potential" originality and    lished papers which underwent peer-review by July 2025. Most of
+effectiveness [35]. The term potential allows the shift from a fo-        these studies addressed originality, with a preference for the AUT.
+cus on the product to a focus on the process. It acknowledges the         Based on such comparison, some experiments have shown that
+existence of countless instances in which the value of a product          humans outperform machines [11, 108], while others have demon-
+was not initially understood but was rediscovered and recognised          strated that machines have higher divergent thinking capabilities
+later, as well as cases in which the outcome itself is not primarily      than humans [45, 64, 68]. The inconsistency can be explained by sev-
+important [36].                                                           eral factors. These include procedural differences in the collection
+                                                                          of human and machine data; cognitive, affective, and motivational
+   As illustrated in Figure 2, the creative process emerges from basic    variations in the human sample; and the evolving capabilities of
+neurocognitive abilities: memory, attention, and cognitive control        LLMs. Furthermore, at a conceptual level, the comparison between
+[17]. They converge into two generative modalities: convergent            humans and machines is oversimplified.
+and divergent thinking [63]. Convergent thinking considers all
+available information to assemble it in the most compact form [54]           As reported in Table 1, some studies revealed that the machine
+and possibly arrive at a single result through integration [78]. In       performance outperformed human average, but others noted how
+contrast, divergent thinking is an exploratory cognitive mode that        a small portion of humans (the higher creative individuals) con-
+aims to generate multiple solutions or ideas for a problem or task.       sistently outperformed the machine [61, 65, 74]. Therefore, this
+The current paper investigates the relationship between semantic          paper adopted an experimental design that includes Higher Cre-
+memory network as a basic mechanism of the creative process and           ative Humans (HCH) and Lower Creative Humans (LCH). Within
+idea originality as an indicator of divergent creative outcomes.          this methodology, we posit that HCH will outperform ChatGPT-4o
+                                                                          (GPT) in originality, while GPT is expected to be more original than
+2.3 Divergent Creativity                                                  LCH (H1.1).
+
+Previous works have demonstrated how the divergent creative po-
+tential of LLMs is improving over time [113]. Furthermore, research
+suggests that LLMs reflect typical human patterns in idea genera-
+tion, such as the serial order effect, whereby later responses tend
+to be more novel than earlier ones [13, 58, 108]. Other authors
+have suggested that it is possible to enhance LLM creativity by
+incrementally prompting the model more forcefully to generate
+original responses across interactions [59]. Most of these studies
+investigated artificial creativity using experimental divergent tests.
+
+   As a reliable indicator of real world achievements [69, 100], di-
+vergent thinking can be assessed through a set of tasks, including
+verbal and visual stimuli [TTCT; 111], ambiguous figures [FIQ; 61]
+                                                                                                                   Domanti et al.
+
+       Table 1: Overview of studies comparing humans and LLMs with divergent creativity tasks
+
+Paper Comparison                  Creativity Assessment                 Main                             Main
+                                                                        Limitations                      Findings
+
+[108]  42 psychology students vs  1. Two human coders rated orig-       1. Small human sample.           H > LLM in originality,
+       ChatGPT-3 on AUT.          inality, utility, and surprise.                                        surprise, flexibility, se-
+                                  2. Semantic distance.                                                  mantic distance.
+                                  3. Flexibility.                                                        LLM > H in utility.
+
+[11] 20 psychology students in cou- 1. Fluency.                         1. Small human sample.           H > LLMs
+           ples vs 10 chatbots on AUT. 2. Flexibility.                                                   in originality, flexibility.
+                                                    3. Originality.                                      LLMs > H
+                                                    4. Elaboration.                                      in elaboration.
+
+[65] 100 participants vs 6 chatbots 1. Six human coders and OCSAI 1. Paid Prolific participants.         LLMs = H.
+          (Alpa.ai, Copy.ai, ChatGPT-3/4, rated originality.                                             9% of H > LLMs.
+           Studio.ai, YouChat) on AUT.
+
+[74] 256 participants vs 3 chatbots 1. Semantic distance.               1. Paid Prolific participants. LLMs > H.
+
+       (ChatGPT-3/4, Copy.ai) on AUT. 2. Six trained judges rated origi- 2. Small number of chatbot ob- Best H = or > LLMs.
+
+                                  nality.                               servations.
+
+[61] 256 participants             1. Flexibility (semantic distance     1. Paid Prolific participants.   LLM > H in flexibility.
+          vs ChatGPT-4 on FIQ.    between interpretations).             2. Only four                     H > LLM in subjective
+                                  2. Subjective Perceived Creativ-      figures analysed.                creativity.
+                                  ity.                                  3. Fluency and elaboration con-  Best H > LLM
+                                                                        trolled.                         in flexibility and subjec-
+                                                                                                         tive creativity.
+
+[64] 24 undergraduates            1. TTCT standard scoring (flu- 1. Small human sample. 2. Only LLM > H
+
+       + school performance data vs ency, flexibility, originality) by one TTCT task.                    in fluency, flexibility,
+
+       ChatGPT-4 on TTCT.         human scorers                                                          and originality.
+
+                                  at STS.
+
+[68] 151 participants vs GPT-4 on 1. Fluency.                           1. Paid Prolific participants.   LLM > H in originality
+                                                                                                         and elaboration.
+       AUT, DAT, TTCT.            2. OCSAI rated originality and 2.Only one TTCT task.
+
+                                  elaboration.
+
+[45] Large human baseline [83] vs 1. Semantic distance.                 1. Small differences in mean LLMs > H;
+           ChatGPT-3/4 on DAT.
+                                                                        scores between groups.           Concerns on AI reliabil-
+
+                                                                                                         ity.
+
+2.4 Semantic Memory                                                     these networks is generally collected by verbal production tasks
+                                                                        [70, 77]. They require participants to generate as many words as
+Memory plays a crucial role in human creativity [16, 17]. However,      possible belonging to a given semantic category or related to a
+the study of the memory-creativity link is complex as there are         target word, within a fixed amount of time. In the resulting net-
+different types of memory (working, semantic, episodic, short/long-     work, each node represents a category exemplar (e.g., tiger), and
+term) and different modalities of creative thinking (e.g., divergent    the edges represent associations between two exemplars. In other
+and convergent). According to the MemiC framework, the role of          words, these associations constitute the tendency to generate an
+memory in the creative ideation stages extends from the search for      exemplar b (lion) when a (tiger) is produced.
+memory and the construction of candidate ideas to the evaluation
+of novelty and effectiveness [16]. In particular, the role of semantic     A large body of psychological research has shown how the se-
+memory in creative thinking has recently been explored. Recent          mantic network of higher creative individuals differs from that of
+research has highlighted how semantic memory structures and             lower creative individuals [18, 66, 70, 71, 86]. As summarised in
+the ability to access these structures are fundamentally related to     Table 2, the former is characterised by (a) lower distance to traverse
+creative performance across the lifespan [25, 40­42].                   from one node to another, ASPL; (b) higher connectivity between
+                                                                        conceptual nodes, CC; and (c) fewer sub-communities within the
+   The structure of semantic memory can be represented as a net-        network, Q [70, 71]. Moreover, higher creative individuals appear
+work and analysed based on mathematical graph theory [105]. The         to have a more resilient and flexible network, which is more resis-
+network consists of nodes (the basic unit of the system) and edges      tant to targeted "attacks" than lower creative individuals, R [72].
+(the semantic associations between two concepts). Data to construct
+Semantic Network and Idea Originality in Artificial Creativity
+
+                        Table 2: The network measures used to test H1.2: Network Flexibility
+
+Analysis Measure        Acronym Description                                                               Expected Results
+
+                 Average Short ASPL  Average shortest number of steps (i.e., edges) needed to traverse    LCH > GPT > HCH
+                 Path Length         between any pair of nodes. A higher value means the network is       LCH < GPT < HCH
+                                     more spread out.                                                     LCH > GPT > HCH
+Structural Connectivity CC           Clustering coefficient of a network, describing how much the neigh-
+                                     bours of a node are interconnected. A higher value means more
+Modularity              Q            interconnection.
+                                     Degree to which a network can be divided into sub-communities.
+                                     A higher value means more segregation.
+
+Percolation Resiliency  R            Measure of flexibility of a network. A higher value means more LCH < GPT < HCH
+                                     resilience.
+
+Thus, a robust and flexible structure enables the activation of a         3.1 Participants and Design
+broader range of associations, thereby increasing the possibility of
+generating new ideas [72].                                                Human responses were obtained from the dataset collected by
+                                                                          Campidelli et al. [25]. The sample analysed in the present study
+   Despite semantic network flexibility being a reliable indicator of     included 81 psychology students (mean age = 20.3 years, SD = 1.71,
+human creative performance, it remains unclear how such struc-            men = 12, women = 69). Machine data was obtained on the 6th and
+tures are represented in LLMs [46, 74]. Moreover, much uncertainty        7th of March 2025 by using ChatGPT-4o chat interface1 with the
+exists about the association between network organisation and idea        "Plus" subscription package [113]. This interface neither displayed
+originality in artificial creativity. To the best of our knowledge, only  nor allowed for the modification of the values of the hyperparame-
+one published study has investigated the difference in semantic net-      ters. Based on the mean originality scores of each human partici-
+work structures between humans and different LLMs [115]. Human            pant, the human sample was median split into (a) LCH and (b) HCH.
+data was obtained from a random selection of 30 participants in the       Accordingly, the experiment compared the networks and creative
+animal category of the semantic fluency database reported in [116].       performances of three groups: GPT, LCH, and HCH.
+LLM data was extracted by instructing the LLMs to play specific
+roles related to 30 common occupations (e.g., pretend that you are        3.2 Procedure
+a chef) before performing the task. This procedure was intended
+to enrich the diversity of the machine responses [101]. The results       The experiment with human participants took place in a room free
+showed that the semantic network of LLMs has higher ASPL, lower           of acoustic and visual distractors and was conducted by an expert
+CC, and higher Q compared to humans [115]. Despite creativity             researcher. After signing informed consent, they sat in front of
+not being a variable of the study, the authors concluded that "LLMs       an empty desk and were asked to complete two different verbal
+have poorer creativity and flexibility compared to humans" [115,          production tasks and the AUT. The target words were printed
+p. 6].                                                                    on a sheet of paper, which remained on the desk for the entire
+                                                                          duration of the tasks. The responses were recorded with an audio
+   The current study was designed to explicitly study the associ-         recorder and manually transcribed by one of the experimenters. The
+ation between semantic networks and originality in artificial vs.         procedure was repeated by creating a new separate chat for each of
+human creativity. Following Artificial Cognition [110] and expand-        the 81 ChatGPT-4o participants (Appendix A) [113]. All human and
+ing the study of Wang et al. [115], we expected GPT to have sig-          machine responses were merged, anonymised, sorted in alphabetic
+nificantly different semantic networks than HCH and LCH, given            order within each object, and finally scored for originality by two
+the expected direction of idea originality stated in H1.1. We tested      expert coders, blind to the experimental goals and the origin of the
+this hypothesis with structural and percolation analysis using the        data, as recommended by Silvia et al. [106]. The interrater reliability
+measures described in Table 2. Consistently, we hypothesise that          was high, ICC = .93.
+GPT would display a more flexible network compared to LCH and
+the reverse compared to HCH (H1.2).                                       3.3 Experimental Tasks
+
+3 Method                                                                  Appendix A presents the instructions given to humans and prompts
+                                                                          received by ChatGPT-4o across three tasks. The Verbal Fluency
+The study was designed to test the hypothesis that the semantic           Test and the Free Association Task were used to construct semantic
+network flexibility of an LLM provides an indication of its idea          networks. Finally, the AUT was used to estimate originality. The
+originality (H1). Instantiating the principle of Artificial Cognition     Verbal Fluency Test required participants to produce as many words
+[110] with research on human creativity [17, 115], we refined it          as possible belonging to the "animals" and "fruit and vegetables"
+into two sub-hypotheses, both of which were expected to be true.          categories within one minute for each target [60]. The Free Associ-
+                                                                          ation Task required participants to verbally produce as many words
+      · H1.1 -- Idea Originality: HCH > GPT > LCH
+      · H1.2 -- Network Flexibility: HCH > GPT > LCH                      1 https://chat.openai.com
+                                                                                               Domanti et al.
+
+as possible associated with "building" and "notebook" within one       Table 3: Descriptive statistics of fluency by group
+minute for each target [81]. The presentation order of the verbal
+production tasks was randomised. For the AUT, human participants       Measure Group Mean Median SD Min Max
+were asked to generate as many original alternative uses as possible
+for "shoe" and "fork" within 3 minutes for each target. ChatGPT-4o                   GPT 43.8  40 5.36 35 55
+was prompted with the same instruction provided to human partic-       Fluency LCH 12.2        11 6.87 2 31
+ipants (Appendix A). Appendix B provides examples of interactions                              19 7.03 8 36
+(i.e., prompts and outputs), for both humans and ChatGPT-4o. The                     HCH 19.1
+databases containing all responses for each task and the scripts for
+the analyses are available in the Supplementary Materials.             4 Results
+
+3.4 Semantic Networks                                                  Figure 3 illustrates the kernel density estimates2 of AUT mean
+                                                                       originality across groups. The distribution of the human scores al-
+The network estimation followed the procedure and pipelines pro-       lowed us to differentiate between HCH and LCH by median split for
+vided by Christensen et al. [31]. The entire verbal production data-   the measure of total production and originality peaks. In contrast,
+base was translated from Italian to English and pre-processed with     the distribution of GPT scores showed a more restricted range. Its
+the R packages SemNetDictionaries and SemNetCleaner. The cleaned       peak overlapped with the human average with minimal standard
+data was entered into a binary response matrix with participants       deviation, which did not allow the median split of the machine
+in rows and words in columns. Each cell was filled with 1 if the       performance into different levels.
+participant had produced the word and 0 if they had not. The net-
+works were estimated using the SemNet package and applying the            Table 3 presents descriptive statistics of fluency for the three
+correlation-based method [31]. The cosine similarity function was      groups. An ANOVA revealed a significant difference, (2,159) = 438,
+employed to estimate the edges between nodes and compute the            < .001, 2 = 0.846. The mean fluency of GPT was more than
+association profiles of the responses. To control for confounding      double in comparison to the fluency emerged in both HCH, (159) =
+factors (e.g., different numbers of nodes or edges among groups),      26.8,  < .001, and LCH, (159) = 20.74,  < .001. Finally, HCH
+the matrices only included responses that were provided by at          showed higher mean fluency than LCH, (159) = 5.08,  < .001.
+least two participants in each group [see, for example, 22, 42]. Fur-
+thermore, in line with the literature on network construction [31­     Table 4: Descriptive statistics of total production and origi-
+33, 42, 77, 80, 115], the Triangulated Maximally Filtered Graph        nality peaks by group
+(TMFG) was adopted to minimise noise and spurious association
+by creating different networks with the same number of nodes and       Measure      Group Mean Median SD Min Max
+edges [31, 32, 80]. This method aims to maximise the strength of
+node associations while maintaining the extant network planar          Total        GPT 1.99 1.98 0.03 1.93 2.07
+to be depicted graphically [32]. TMFG represents the only consol-      production   LCH 1.97 2.00 0.08 1.57 2.00
+idate alternative to the Planar Maximally Filtered Graph, PMFG                      HCH 2.11 2.10 0.08 2.02 2.44
+[73, 80, 112]. Generally, the two methods align with one another       Originality
+[31], but TMFG is more efficient than PMFG [80]. The resulting         peaks        GPT 2.25 2.17 0.32 2.00 3.50
+networks of GPT, LCH, and HCH were compared using structural                        LCH 2.00 2.00 0.00 2.00 2.00
+and percolation analyses.                                                           HCH 2.59 2.42 0.46 2.17 4.00
+
+Figure 3: Kernel density estimates of mean originality scores          4.1 Originality
+across groups
+                                                                       We tested H1.1 related to idea originality with two linear mixed
+                                                                       models. The first one included the originality of all AUT responses
+                                                                       generated by each human and machine participant (total produc-
+                                                                       tion). The second one considered only the top 3 original responses
+                                                                       generated by each participant (originality peaks). Descriptive sta-
+                                                                       tistics are reported in Table 4.
+
+                                                                       4.1.1 Total Production. To investigate differences in originality
+                                                                       among the three groups, we run a linear mixed model with the lme4
+                                                                       package [12] and lmerTest [76] in R. The analysis included the entire
+                                                                       set of responses as the dependent variable. The fixed effect was
+                                                                       Group (GPT, LCH, HCH), while intercepts for participants' ID and
+                                                                       object (shoe and fork) served as random effects. As hypothesised,
+                                                                       results showed that GPT originality scores were significantly higher
+                                                                       than those of LCH,  = 0.03,  = 0.013, 95%  [0.0003, 0.052],
+                                                                       (359.46) = 1.98,  = .048, and lower than those of HCH,  = -0.12,
+                                                                        = 0.011, 95%  [-0.144, -0.102], (193.59) = -11.35,  < .001.
+
+                                                                       2A kernel density estimate provides a smooth curve that represents the data distribution
+Semantic Network and Idea Originality in Artificial Creativity
+
+Moreover, HCH originality scores were significantly higher than                            significantly lower CC compared to LCH and HCH. Fur-
+those of LCH,  = 0.15,  = 0.016, 95%  [0.119, 0.180], (391.45) =
+9.51,  < .001.                                                                             thermore, LCH showed lower CC in comparison to HCH.
+
+4.1.2 Originality Peaks. In this analysis, the top 3 original responses            · Modularity (Q): The analyses returned a significant main ef-
+per participant were included as the dependent variable. The fixed
+effect was Group (GPT, LCH, HCH), and intercepts for participants'                         fect  of  Group,   (2,2996)  =  942.253,      <  .001,  2   =  0.386.  Post
+ID served as a random effect. Results showed that GPT original-
+ity scores were significantly higher than those of LCH,  = 0.24,                                                                                     
+ = 0.07, 95%  [0.11, 0.38], (160.06) = 3.59,  < .001, and lower
+than those of HCH,  = -0.34,  = 0.06, 95%  [-0.46, -0.22],                                 hoc comparisons revealed that GPT showed significantly
+(158.95) = -5.51,  < .001. Finally, HCH originality scores were
+significantly higher than those of LCH,  = 0.59,  = 0.08, 95%                              higher Q compared to LCH and HCH. Finally, LCH showed
+[0.44, 0.74], (159.85) = 7.77,  < .001.
+                                                                                           higher CC in comparison to HCH.
+
+                                                                                   4.2.2 Percolation Results. Percolation analysis investigates the flex-
+
+                                                                                   ibility of a network under targeted attacks [51, 87] by removing
+
+                                                                                   edges that are below a given threshold for each percolation step
+
+                                                                                   [72]. The analysis was conducted using the CliquePercolation pack-
+
+                                                                                   age in R [42]. The size of the largest cluster of connected nodes
+
+                                                                                   (Largest Connected Component, LCCS) was measured at any step.
+
+                                                                                   The intensity threshold (I, Min 0, Max 1) was gradually increased
+
+4.2 Semantic Networks                                                              by a coefficient of 0.01. This causes the networks to transition from
+
+Figure 4 illustrates a 2D graphical representation of GPT, LCH, and                being totally intact (I = 0) to maximally fragmented (I = 1). Fi-
+HCH semantic networks. There were apparent visual differences
+that were compared by structural and percolation analyses.                         nally, the integral of percolation (i.e., the area under the curve)
+
+                                                                                   for each group was calculated considering the number of node
+
+                                                                                   communities in the semantic network across a range of threshold
+
+4.2.1 Structural Results. Bootstrapping [9] was used to estimate                   values between 0.01 and 1 [42]. Figure 5a shows how the semantic
+the network measures detailed in Table 2. The node-wise approach
+was run on 50% of the data with 1000 iterations, assuming that if                  network of ChatGPT-4o breaks apart quicker than those of lower
+the full networks differ from each other, then the partial network
+consisting of the same nodes should also differ [19, 89, 102]. This                and higher creative humans, as it is characterised by a steeper
+method was adopted because it is the most conservative of the node-
+wise approaches, aiming at reporting only significant differences.                 percolation curve and therefore a lower integral [42]. To test for
+The measures ASPL, CC and Q were computed for each group and
+compared with an ANCOVA with Group as independent variable                         statistical significance, 500 realisations of the percolation test were
+and the number of edges as a covariate [31]. Post hoc comparisons
+were performed applying the Bonferroni correction. Results are                     conducted. Then a One-Way Welch's ANOVA was performed on
+described below and summarised in Table 5.
+                                                                                   the percolation integrals to investigate whether the means of the
+
+                                                                                   three groups were significantly different (Figure 5b). Regarding the
+
+                                                                                   measure of Resiliency (R), the analysis showed a significant main
+
+                                                                                   effect  of  Group,   (2,977)  =  2544,    <  .001,  2   =  0.84.  Games-Howell
+
+                                                                                                                                         
+
+                                                                                   post hoc tests revealed that GPT ( = 77.9,  = 1.98) showed
+
+                                                                                   significantly lower average percolation integrals compared to LCH
+
+· Average Short Path Length (ASPL): The analyses revealed a                        ( = 85.2,  = 1.65), (967) = -63.3,  < .001,  = 4.01, and
+                                                                                   HCH ( = 85.8,  = 2.08), (996) = -61.48,  < .001,  = 3.89.
+significant main effect of Group, (2,2996) = 2430.562,  <                          Moreover, HCH showed significantly higher average integrals than
+
+.001,  2   =  0.619.  Post  hoc  comparisons  revealed                that  GPT    LCH, (949) = 5.04,  < .001,  = 0.32.
+
+         
+
+showed significantly higher ASPL compared to LCH and                               5 Discussion
+
+HCH. Moreover, LCH showed higher ASPL in comparison                                This study investigated the association between semantic networks
+                                                                                   and idea originality in ChatGPT-4o and a sample of 81 psychology
+to HCH.                                                                            students divided into higher and lower creative individuals. In the
+                                                                                   following subsections, we discuss the results in comparison with
+· Clustering Coefficient (CC): The analyses revealed a signif-
+
+icant main effect of Group, (2,2996) = 352.412,  < .001,
+
+2   =  0.19.  Post  hoc  comparisons  revealed                  that  GPT  showed
+
+  
+
+                                 Table 5: Comparisons of network measures across groups
+
+    Measure Comparison                df t-statistic p-value d Mean1 SD1 Mean2 SD2 Direction
+
+                    GPT vs LCH        1998                            51.91 < .001 2.32 4.378 0.53 3.429 0.24 GPT > LCH
+                    GPT vs HCH
+    ASPL            LCH vs HCH        1998                            56.93 < .001 2.55 4.378 0.53 3.325 0.26 GPT > HCH
+
+                                      1998                            9.38 < .001 0.42 3.429 0.24 3.325 0.26 LCH > HCH
+
+                    GPT vs LCH        1998                            -8.76 < .001 0.39 0.705 0.01 0.710 0.01 GPT < LCH
+
+    CC              GPT vs HCH        1998                      -19.84 < .001 0.89 0.705 0.01 0.715 0.01 GPT < HCH
+
+                    LCH vs HCH        1998                            -9.15 < .001 0.41 0.710 0.01 0.715 0.01 LCH < HCH
+
+                    GPT vs LCH        1998                            31.42 < .001 1.41 0.692 0.01 0.666 0.02 GPT > LCH
+
+    Q               GPT vs HCH        1998                            37.17 < .001 1.66 0.692 0.01 0.662 0.02 GPT > HCH
+
+                    LCH vs HCH        1998                            4.40 < .001 0.20 0.666 0.02 0.662 0.02 LCH > HCH
+                                                                         Domanti et al.
+
+Figure 4: 2D representation of GPT, LCH, and HCH semantic networks
+
+research on human creativity [17, 70, 115] and then reflect on the       5.1.1 Main Effects on Idea Originality and Network Flexibility. Re-
+implications of artificial creativity [97] for CSTs design [52, 103].    sults supported H1.1 related to idea originality. They showed that
+                                                                         ChatGPT-4o was less original than higher creative humans but
+5.1 Hypotheses testing                                                   more original than lower creative humans (Table 6). The effect
+                                                                         emerged consistently, considering both the total production and
+Extending Artificial Cognition [110] with research on creative cog-      the originality peaks. Differently, the results of the structural and
+nition [17, 70, 115], the study tested the hypothesis of a relationship  percolation analyses only partially confirmed H1.2 related to net-
+between the semantic network of ChatGPT-4o and its idea original-        work flexibility. Consistent with previous studies [70, 71], higher
+ity (H1). To address it, we tested two sub-hypotheses related to the     creative humans were characterised by a more organised, flexible,
+analysed constructs (Table 6).
+
+Figure 5: Percolation analysis. On the left (a): Representation of the number of connected nodes in each network at increasing
+thresholds (I). On the right (b): Comparison of the percolation integrals between groups
+Semantic Network and Idea Originality in Artificial Creativity
+
+Table 6: Summary of hypotheses and results                              [47]. In this study, we tested ChatGPT-4o using its chat interface.
+                                                                        Accordingly, although its network was more rigid, ChatGPT-4o
+Hypothesis   Expected direction Result                                  may have emerged as more original than lower creative humans
+             HCH > GPT > LCH HCH > GPT > LCH                            because this model configuration allowed the generation of original
+Idea                                                                    alternative uses without sacrificing coherence with respect to the
+Originality  HCH > GPT > LCH HCH > LCH > GPT                            AUT prompt.
+
+Network                                                                    Another explanation for these inconsistencies could be related
+Flexibility                                                             to the impact of affective and motivational processes on human
+                                                                        creative performance [2, 5, 6, 37, 49, 74, 79]. While we might as-
+and robust semantic memory network compared to lower creative           sume that ChatGPT-4o consistently performed the task at the best
+humans. Furthermore, as expected, the network of ChatGPT-4o             of its incredibly fast computational capabilities [74], lower creative
+was found to be less flexible than that of higher creative humans.      humans might have experienced a higher cognitive effort. Further-
+However, the same pattern also emerged in the comparison with           more, they were likely more affected by scarce motivation to do
+lower creative individuals, who appeared to be more flexible than       the task, low self-efficacy, external pressure of being evaluated,
+the machine.                                                            time constraints, or cognitive fatigue than higher creative humans.
+                                                                        Consequently, even with a less flexible network, ChatGPT-4o per-
+   To summarise, ChatGPT-4o semantic network was characterised          formed the test consistently at its best capacity and generated more
+by more distances, weaker local interconnectivity and higher modu-      original responses than participants with lower creative abilities.
+larity compared to those of both lower and higher creative humans.      Finally, these inconsistent results could be due to the impact of the
+This configuration indicates higher internal rigidity and less cohe-    ChatGPT-4o speed in processing large data structures [74]. Even
+sion, which reflects the sparser connections between concepts in        if its network was not flexible, its rapidity in navigating complex
+different sub-communities [70, 115]. It suggests an increased diffi-    information structures might have led to the retrieval of remote as-
+culty in "navigating" the semantic structures to reach remote con-      sociations at a pace that compensated for its structural limitations.
+cepts and to create original associations between them [14, 16]. This
+conclusion was confirmed by the percolation analysis. It showed         5.2 Limitations and Future Directions
+that the semantic network of ChatGPT-4o broke apart faster as its
+intensity thresholds increased.                                         This paper provides a first step in linking semantic networks and
+                                                                        artificial creativity. The novelty of the approach encompasses a
+5.1.2 Association between Idea Originality and Network Flexibility.     number of limitations, which limit the generalisability of our results.
+Our main hypothesis (H1) stated that the semantic network flex-         These pertain to the data sample, the study procedure, and the
+ibility provides an indication of idea originality in LLMs. Results     complexity of the creativity construct.
+revealed that higher creative humans consistently outperformed
+ChatGPT-4o in terms of originality. This result supports psycholog-     5.2.1 Data Sample. A main limitation concerns the type of human
+ical literature suggesting that highly creative individuals, who are    sample and the reliance on only ChatGPT-4o. The human partici-
+characterised by a less spread out, less segregated, more flexible      pants were psychology students, who may have been more intrin-
+and robust semantic memory network, exceed AI in creative tasks         sically motivated to perform the tasks because of their academic
+[46, 74]. However, despite a more rigid and segregated network,         background as compared to other individuals. Since motivation is a
+ChatGPT-4o consistently exceeded lower creative humans in idea          key dimension of the creative process [5, 6, 37, 49, 74, 79], it is pos-
+originality (Table 6).                                                  sible that different participants would have led to different results.
+                                                                        Furthermore, we only tested ChatGPT-4o using its chat interface
+   These results seem to suggest independence between semantic          [113]. This choice tested an extreme black-box that improved eco-
+network structures and creative performance in machines. Yet,           logical validity as it represents the typical interface employed by
+they may be better understood in light of the Entropy Modulation        most users. However, the chat interface does not allow to know and
+Theory of Creative Exploration [67]. The authors of this theory         modify the values of the model hyperparameters. Future research
+suggest that even when the semantic memory structure of groups of       is needed to compare different models while manipulating hyper-
+individuals is equivalent, higher creative ones navigate the network    parameters, in order to investigate their effects on the correlation
+faster by increasing activation variance or lowering production         pattern between semantic network flexibility and originality.
+threshold. While in humans this capacity reflects executive control,
+in ChatGPT-4o it may be mimicked by different hyperparameters           5.2.2 Study Procedure. Following a strict application of Artifi-
+of the model, such as temperature, top_p, max tokens, frequency         cial Cognition [110] and consistent with [45, 61, 64, 65, 113], we
+and presence penalty.                                                   prompted ChatGPT-4o with the same instructions given to human
+                                                                        participants. Yet, research suggests that prompting plays a fun-
+   Temperature, for example, defines the level of randomness of         damental role in the potential creativity of GenAI [84]. There is
+text generation, with lower values producing more deterministic         evidence that LLMs can be incrementally enforced to generate orig-
+responses, and higher values increasing unpredictability [47, 88].      inal responses across interactions [59] and creative outcomes are
+However, preliminary results suggest a weak effect of tempera-          more likely to occur during roleplay [62, 101]. Furthermore, both
+ture on creative outputs, despite it being described as the creativity  humans and ChatGPT-4o were given the same time constraints (Ta-
+parameter in the literature [88]. The effect of the other hyperparam-   ble 7), but we controlled it only for the human sample. Although it
+eters remains largely unexplored and much uncertainty still exists
+has been suggested that ChatGPT may reflect the serial order effect                                                                                           Domanti et al.
+typical of human creativity [13, 58, 108], no rigorous investigation
+has yet examined how time limitation affects both machine and                     consider the average nature of artificial creativity when
+human performance. Altogether, these considerations highlight the                 designing interfaces connecting human and artificial cre-
+urgency of research on how prompting affects the production of                    ativity to ensure that the former benefits from rather than
+artificial creativity.                                                            being hindered by the interaction [38, 75].
+                                                                          OPI2 Artificial Creativity is a Process, not only a Product: Artifi-
+5.2.3 Construct Complexity. Following previous research, we in-                   cial creativity expands and connects HCI and psychological
+vestigated divergent thinking through the AUT focusing on orig-                   research by advancing a dynamic definition of artificial
+inality [10, 11, 65, 74, 108]. AUT is "regularly used in work on AI               creativity [35]. Not only does this definition address the
+creativity" [10, p. 2] (Table 1). Nevertheless, divergent thinking rep-           question of whether AI can be creative, but it also attempts
+resents only one aspect of the multi-componential construct that                  to understand the processes embedded in AI mechanisms.
+is creativity [35, 61], and originality is only one requirement of a              The current paper provides preliminary evidence of a par-
+creative idea [97]. Due to its popularity in research, AUT responses              tial association between idea originality (as an indication of
+may have been included in the training databases of the machine                   the product) and semantic networks (as an indication of the
+[58, 65]. However, as Haase & Hanel [65] noted, this possibility                  process) in ChatGPT-4o. The results confirmed the expecta-
+does not imply that these words would appear in the generated                     tion derived by human cognition [70, 71] of a relationship
+output. Future research should extend to more ecological methods                  between originality and network flexibility only with re-
+to assess creativity, including real world activities, and non-verbal,            spect to the comparison with higher creative individuals.
+visual, or figurative performance. Additional creativity measures                 Therefore, the potentiality of generating original ideas may
+(i.e., flexibility, elaboration) should also be considered to compre-             not be strictly associated with the semantic structure, but
+hensively investigate both human and artificial creativity. Finally,              certain hyperparameters may partly compensate for the
+future studies should clarify the the directionality of the association           rigidity of the network and enable the production of original
+between network flexibility and creativity. Altogether, these limita-             responses. This papers offers HCI researchers a structured
+tions provide directions for future research on artificial creativity.            methodology for systematically addressing artificial cre-
+                                                                                  ativity. Future research should also focus on supporting
+6 Artificial Creativity                                                           different stages of the creative process [27, 36, 98], and how
+                                                                                  their use affects users' performance in subsequent tasks
+Given all the limitations acknowledged in the previous section,                  with and without them [10, 75].
+we now reflect on the relevance of artificial creativity [97, 98] for    MER1 Human Creativity Provides Methodological Scaffolding: Re-
+CSTs design and evaluation [52, 103]. Following [97, 98], artificial              search on Artificial Cognition draws parallels between the
+creativity refers to the potential of a machine to provide output that           AI black-box and the human mind -- the original black box
+if generated by humans would be defined as creative. Building on                  [110]. In sharp contrast with the influential Media Equa-
+this definition, we provide two operational insights (OPI) and three              tion Theory [94], artificial creativity does not assume a
+methodological recommendations (MER) for a systematic research                    similarity between machine and human behaviour. On the
+agenda on artificial creativity in HCI.                                           contrary, this paper provides evidence of differences in idea
+                                                                                  originality and its association with semantic memory struc-
+  OPI1 Artificial Creativity is Average Performance: The mean origi-              ture between human and artificial creativity. The evidence
+         nality scores of ChatGPT-4o on the AUT reflected the aver-               enriches related work describing higher level psychological
+         age human performance [47], but cut out lower and higher                 differences in drivers, experiences and norms [1, 97, 98].
+         creative individuals. Therefore, the machine outcome was                 The framework of creative cognition [17] provides concepts,
+         good enough, but it could not achieve excellence. This re-               methods, and theories to approach the study of artificial cre-
+         sult supports and explains previous qualitative research                 ativity. From a design perspective, it addresses the interface
+         showing how at first encounter artists tended to perceive                at a micro-level, directly connecting machine hyperparam-
+         artificial creativity as inadequate, constrained, or even con-           eters and human executive functions. In this paper we have
+         straining [28, 44, 48, 57, 62]. In particular, they were con-            analysed semantic memory, future research should address
+         cerned about a risk of homogenisation which threatened                   attention and control (Figure 2), as relevant dimensions of
+         their professional identity and personal style. It was feared            both human and artificial creativity.
+         that GenAI could make creativity less authentic [8] and         MER2 Collecting Reliable Human Baselines: The human sample
+         elaborated [10], fostering convergence towards similar av-               used as a baseline is of critical importance for the study of
+         erage results [7, 24, 50, 75]. On the other hand, this average           artificial creativity. From a cognitive perspective, indeed,
+         definition suggests that GenAI could be beneficial, specifi-             creativity emerges as the expression of personal abilities,
+         cally for less creative individuals, whose output becomes               which vary across individuals and along the lifespan [97].
+         more novel, enjoyable, and useful when supported by AI                   Furthermore, the natural black box is affected by hidden cog-
+         [50]. Therefore, it is of primary importance to consider the             nitive functions, motivations, and experiences, all of which
+         user experience and skills when introducing users to arti-               can affect creative performance. Consequently, an average
+         ficial creativity. Regardless of their background, all users             representation of creativity only applies to the machine,
+         require new interfaces to bridge human and artificial cre-               but it fails to explain the richness of the human counterpart
+         ativity. Therefore, designers of human-AI systems should                 (Figures 1 and 3). It makes limited sense to talk about the
+Semantic Network and Idea Originality in Artificial Creativity           and for discussions of technical aspects. The second author is sup-
+
+         average creativity of humankind. Consequently, it needs to      ported by a scholarship funded by the European Union ­ NextGener-
+         be better characterised taking into account possibilities and
+         limitations. The median split applied in this study offers a    ationEU and the Italian Ministry of University and Research (MUR),
+         simple way to obtain a finer-grained operationalisation of
+         creativity for future research. Other individual and contex-    CUP J92B23001680007. We acknowledge financial support by Euro-
+         tual factors also need careful consideration. They relate to
+         participants' recruitment and experimental design.              pean Union ­ NextGenerationEU, CUP J53D2300799 0001.
+MER3 Artificial Creativity Provides Metaphors for Design: Over
+         20 years ago, Shneiderman [103] suggested that "Graphics        References
+         composition tools show the enormous power of software
+         to enable more people to be more creative " [103, p. 119].        [1] Anna Abraham. 2025. Why the standard definition of creativity fails to cap-
+         Consistently, the metaphor of semantic network opens up                 ture the creative act. Theory & Psychology 35, 1 (2025), 40­60. doi:10.1177/
+         stimulating design trajectories for HCI research. We can                09593543241290232
+         imagine new CSTs allowing different types of users (artists
+         and researchers) to visualise and manipulate the semantic         [2] Sergio Agnoli and Giovanni Emanuele Corazza. 2019. Emotions: The Spinal Cord
+         networks of the model. By modifying these networks as                   of the Creative Thinking Process. In Dynamic Perspectives on Creativity: New
+         creative interfaces, artists may explore new semantic spaces            Directions for Theory, Research, and Practice in Education, Ronald A. Beghetto and
+         which may lead to seed incidents at the core of their mas-              Giovanni Emanuele Corazza (Eds.). Springer International Publishing, Cham,
+         terpieces [48]. There is evidence indeed that experimental              47­65. doi:10.1007/978-3-319-99163-4_4
+         artists engage in experiments with extensive data curation
+         [26], subverting conceptual spaces, forcing the machine to        [3] Sergio Agnoli, Serena Mastria, Marco Zanon, and Giovanni Emanuele Corazza.
+         fail and hallucinate [20, 21], or introducing deliberate fric-          2023. Dopamine supports idea originality: the role of spontaneous eye blink
+         tions in tangible interactions [43]. Experimental artists may           rate on divergent thinking. Psychological Research 87, 1 (Feb. 2023), 17­27.
+         value the tool as a medium for transformational practices               doi:10.1007/s00426- 022- 01658- y
+         [20, 21, 26]. Scientists, on the other hand, may exploit the
+         interactive visualisation of semantic networks to support a       [4] Sergio Agnoli, Tiziana Pozzoli, Giacomo Mancini, Laura Franchin, Serena Mas-
+         systematic program of research on artificial creativity. They           tria, and Giovanni Emanuele Corazza. 2022. This is My Fairy Tale: How Emo-
+         could manipulate prompts, hyperparameters, and tasks to                 tional Intelligence Interacts with a Training Intervention in Enhancing Chil-
+         understand their effect on the system output. This research             dren's Creative Potential. The Journal of Creative Behavior 56, 3 (2022), 465­482.
+         requires different methods and sensibilities when testing               doi:10.1002/jocb.541
+         humans or machines. Current research has paid extensive
+         attention to the prompt provided to the machine [59, 84].         [5] Sergio Agnoli, Mark A. Runco, Christiane Kirsch, and Giovanni Emanuele
+         This paper instead highlighted methodological considera-                Corazza. 2018. The role of motivation in the prediction of creative achievement
+         tions for user research.                                                inside and outside of school environment. Thinking Skills and Creativity 28
+                                                                                 (2018), 167­176. doi:10.1016/j.tsc.2018.05.005
+7 Conclusion
+                                                                           [6] Teresa M. Amabile and Michael G. Pratt. 2016. The dynamic componential
+To conclude, we go back to the question posed in the introduc-                   model of creativity and innovation in organizations: Making progress, making
+tion about the the mechanisms that could lead to artificial creativity.          meaning. Research in Organizational Behavior 36 (2016), 157­183. doi:10.1016/j.
+Extending the framework of Artificial Cognition [110] to account                 riob.2016.10.001
+for creativity [17], this paper provides initial evidence of the role
+of semantic networks on idea originality in LLMs using the the             [7] Barrett R Anderson, Jash Hemant Shah, and Max Kreminski. 2024. Homog-
+Alternate Uses Task. We demonstrated that this role differed ac-                 enization Effects of Large Language Models on Human Creative Ideation. In
+cording to the human sample used for the comparison. Higher                      Proceedings of the 16th Conference on Creativity & Cognition (Chicago, IL, USA)
+creative individuals were more original than ChatGPT-4o, which,                  (C&C '24). Association for Computing Machinery, New York, NY, USA, 413­425.
+despite its rigidity, emerged as more original than lower creative               doi:10.1145/3635636.3656204
+individuals. Taken together, the evidence extends previous studies
+comparing human and artificial creativity by providing operational         [8] Jaan Aru. 2025. Artificial Intelligence and the Internal Processes of Creativity.
+and methodological advances. Finally, we provide methodological                  The Journal of Creative Behavior 59, 2 (June 2025), e1530. doi:10.1002/jocb.1530
+guidance for a more rigorous investigation of artificial creativity in           Publisher: John Wiley & Sons, Ltd.
+the field of HCI.
+                                                                           [9] B. Efron. 1979. Bootstrap Methods: Another Look at the Jackknife. The Annals
+Acknowledgments                                                                  of Statistics 7, 1 (Jan. 1979), 1­26. doi:10.1214/aos/1176344552
+
+The authors are grateful to all participants who took part in the         [10] Mia Magdalena Bangerl, Leonie Disch, Tamara David, and Viktoria Pammer-
+study. We thank Fe Simeoni and Moritz Mock for their availability                Schindler. 2025. CreAItive Collaboration? Users' Misjudgment of AI-Creativity
+                                                                                 Affects Their Collaborative Performance. In Proceedings of the 2025 CHI Con-
+                                                                                 ference on Human Factors in Computing Systems (CHI '25). Association for
+                                                                                 Computing Machinery, New York, NY, USA, Article 195, 17 pages. doi:10.1145/
+                                                                                 3706598.3713886
+
+                                                                          [11] Mia Magdalena Bangerl, Katharina Stefan, and Viktoria Pammer-Schindler.
+                                                                                 2024. Explorations in human vs. generative AI creative performances: A study
+                                                                                 on human-AI creative potential. TREW 2024: Trust and Reliance in Evolving
+                                                                                 Human-AI Workflows, at CHI 2024, May 11 (2024).
+
+                                                                          [12] Douglas Bates, Martin Mächler, Ben Bolker, and Steve Walker. 2015. Fitting
+                                                                                 Linear Mixed-Effects Models Using lme4. Journal of Statistical Software 67, 1
+                                                                                 (2015), 1­48. doi:10.18637/jss.v067.i01
+
+                                                                          [13] Roger Beaty and Paul Silvia. 2012. Why Do Ideas Get More Creative Across
+                                                                                 Time? An Executive Interpretation of the Serial Order Effect in Divergent
+                                                                                 Thinking Tasks. Psychology of Aesthetics Creativity and the Arts 6 (Aug. 2012),
+                                                                                 309­319. doi:10.1037/a0029171
+
+                                                                          [14] Roger E. Beaty and Yoed N. Kenett. 2023. Associative thinking at the core of
+                                                                                 creativity. Trends in Cognitive Sciences 27, 7 (July 2023), 671­683. doi:10.1016/j.
+                                                                                 tics.2023.04.004 Publisher: Elsevier.
+
+                                                                          [15] Ronald A. Beghetto. 2014. Creative mortification: An initial exploration. Psy-
+                                                                                 chology of Aesthetics, Creativity, and the Arts 8, 3 (2014), 266­276. doi:10.1037/
+                                                                                 a0036618
+
+                                                                          [16] Mathias Benedek, Roger E. Beaty, Daniel L. Schacter, and Yoed N. Kenett. 2023.
+                                                                                 The role of memory in creative ideation. Nature Reviews Psychology 2, 4 (April
+                                                                                 2023), 246­257. doi:10.1038/s44159-023-00158-z
+
+                                                                          [17] Mathias Benedek and Andreas Fink. 2019. Toward a neurocognitive framework
+                                                                                 of creative cognition: the role of memory, attention, and cognitive control.
+                                                                                 Current Opinion in Behavioral Sciences 27 (2019), 116­122. doi:10.1016/j.cobeha.
+                                                                                 2018.11.002
+
+                                                                          [18] Mathias Benedek, Yoed N. Kenett, Konstantin Umdasch, David Anaki, Miriam
+                                                                                 Faust, and Aljoscha C. Neubauer. 2017. How semantic memory structure
+                                                                                 and intelligence contribute to creative thought: a network science approach.
+       Thinking & Reasoning 23, 2 (April 2017), 158­183. doi:10.1080/13546783.2016.                                                                                            Domanti et al.
+       1278034 Publisher: Routledge.
+[19] Patrice Bertail. 1997. Second-Order Properties of an Extrapolated Bootstrap                 1817­1833. doi:10.1145/3461778.3462050
+       without Replacement under Weak Assumptions. Bernoulli 3, 2 (1997), 149­            [35] Giovanni Emanuele Corazza. 2016. Potential Originality and Effectiveness:
+       179. doi:10.2307/3318585 Publisher: International Statistical Institute (ISI) and
+       Bernoulli Society for Mathematical Statistics and Probability.                            The Dynamic Definition of Creativity. Creativity Research Journal 28, 3 (2016),
+[20] Federico Bomba and Antonella De Angeli. 2025. Agency and authorship in AI                   258­267. doi:10.1080/10400419.2016.1195627
+       art: Transformational practices for epistemic troubles. International Journal of   [36] Giovanni Emanuele Corazza (Ed.). 2025. The Cyber-Creativity Process: How
+       Human-Computer Studies 205 (2025), 103652. doi:10.1016/j.ijhcs.2025.103652                Humans Co-Create with Artificial Intelligence. Springer Nature Switzerland,
+[21] Federico Bomba, María Menéndez-Blanco, Paolo Grigis, Michele Cremaschi,                     Cham. doi:10.1007/978-3-031-84535-2
+       and Antonella De Angeli. 2024. The Choreographer-Performer Contin-                 [37] Giovanni Emanuele Corazza and Sergio Agnoli. 2022. The DA VINCI Model for
+       uum: A Diffraction Tool to Illuminate Authorship in More Than Human Co-                   the Creative Thinking Process. In Homo Creativus: The 7 C's of Human Creativity,
+       Performances. ACM Trans. Comput.-Hum. Interact. 31, 6, Article 75 (Dec. 2024),            Todd Lubart, Marion Botella, Samira Bourgeois Bougrine, Xavier Caroff, Jerome
+       23 pages. doi:10.1145/3689040                                                             Guegan, Christophe Mouchiroud, Julien Nelson, and Franck Zenasni (Eds.).
+[22] Katy Borodkin, Yoed N. Kenett, Miriam Faust, and Nira Mashal. 2016. When                    Springer International Publishing, Cham, 49­67. doi:10.1007/978-3-030-99674-
+       pumpkin is closer to onion than to squash: The structure of the second language           1_4
+       lexicon. Cognition 156 (2016), 60­70. doi:10.1016/j.cognition.2016.07.014          [38] Giovanni Emanuele Corazza, Sergio Agnoli, Ana Jorge Artigau, Ronald A.
+[23] Tom Brown, Benjamin Mann, Nick Ryder, Melanie Subbiah, Jared D Kaplan,                      Beghetto, Nathalie Bonnardel, Irene Coletto, Angela Faiella, Katusha Gerar-
+       Prafulla Dhariwal, Arvind Neelakantan, Pranav Shyam, Girish Sastry, Amanda                dini, Kenneth Gilhooly, Vlad P. Glveanu, Michael Hanchett Hanson, Han-
+       Askell, Sandhini Agarwal, Ariel Herbert-Voss, Gretchen Krueger, Tom Henighan,             sika Kapoor, James C. Kaufman, Yoed N. Kenett, Anatoliy V. Kharkhurin, Si-
+       Rewon Child, Aditya Ramesh, Daniel Ziegler, Jeffrey Wu, Clemens Winter,                   mone Luchini, Margaret Mangion, Mario Mirabile, Felix-Kingsley Obialo, Con-
+       Chris Hesse, Mark Chen, Eric Sigler, Mateusz Litwin, Scott Gray, Benjamin                 nie Phelps, Roni Reiter-Palmon, Jeb S. Puryear, Eleonora Diletta Sarcinella,
+       Chess, Jack Clark, Christopher Berner, Sam McCandlish, Alec Radford, Ilya                 Min Tang, Giulia Maria Vavassori, Florent Vinchon, Indre Viskontas, Selina
+       Sutskever, and Dario Amodei. 2020. Language Models are Few-Shot Learners.                Weiss, Dimitrios Zbainos, and Todd Lubart. 2025. Cyber-Creativity: A Deca-
+       In Advances in Neural Information Processing Systems, H. Larochelle, M. Ran-              logue of Research Challenges. Journal of Intelligence 13, 8 (2025). doi:10.3390/
+       zato, R. Hadsell, M. F. Balcan, and H. Lin (Eds.), Vol. 33. Curran Associates,            jintelligence13080103
+       Inc., 1877­1901. https://proceedings.neurips.cc/paper_files/paper/2020/file/       [39] Giovanni Emanuele Corazza, Sergio Agnoli, and Serena Mastria. 2022. The
+       1457c0d6bfcb4967418bf b8ac142f64a- Paper.pdf                                              Dynamic Creativity Framework. European Psychologist 27, 3 (2022), 191­206.
+[24] Carmen Bruno, Marita Canina, and Michael Mose Biskjaer. 2025. The Three                     doi:10.1027/1016- 9040/a000473
+      Waves Paradigm: Tracing the Evolution of Artificial Intelligence in Design. In      [40] Abigail L. Cosgrove, Roger E. Beaty, Michele T. Diaz, and Yoed N. Kenett. 2023.
+       The Cyber-Creativity Process: How Humans Co-Create with Artificial Intelligence,          Age differences in semantic network structure: Acquiring knowledge shapes
+       Giovanni Emanuele Corazza (Ed.). Springer Nature Switzerland, Cham, 129­162.              semantic memory. Psychology and Aging 38, 2 (2023), 87­102. doi:10.1037/
+       doi:10.1007/978- 3- 031- 84535- 2_5                                                       pag0000721
+[25] Lorenzo Campidelli, Umberto Domanti, Giulia Fusi, Yoed N. Kenett, and Sergio         [41] Abigail L. Cosgrove, Michele T. Diaz, Paul V. DiStefano, Yoed N. Kenett, and
+       Agnoli. 2026. Creativity, the fountain of youth: Association between creativity           Roger E. Beaty. 2025. Associative Thinking and Creative Ability in Older
+       and semantic memory networks across the lifespan. Cognition 266 (2026),                   Adulthood. Creativity Research Journal (2025), 1­14. doi:10.1080/10400419.2024.
+       106318. doi:10.1016/j.cognition.2025.106318                                               2443720 Publisher: Routledge.
+[26] Baptiste Caramiaux and Sarah Fdili Alaoui. 2022. "Explorers of Unknown               [42] Abigail L. Cosgrove, Yoed N. Kenett, Roger E. Beaty, and Michele T. Diaz. 2021.
+       Planets": Practices and Politics of Artificial Intelligence in Visual Arts. Proc.         Quantifying flexibility in thought: The resiliency of semantic networks differs
+       ACM Hum.-Comput. Interact. 6, CSCW2, Article 477 (Nov. 2022), 24 pages.                   across the lifespan. Cognition 211 (2021), 104631. doi:10.1016/j.cognition.2021.
+       doi:10.1145/3555578                                                                       104631
+[27] Simon M Ceh, Janet Rafner, and Mathias Benedek. 2024. Creativity in digitally        [43] Michele Cremaschi, Max Dorfmann, and Antonella De Angeli. 2024. A Steam-
+       mediated times: How digital tools support creativity across domains. Psychology           punk Critique of Machine Learning Acceleration. In Proceedings of the 2024
+       of Aesthetics, Creativity, and the Arts (2024).                                           ACM Designing Interactive Systems Conference (Copenhagen, Denmark) (DIS
+[28] Tuhin Chakrabarty, Philippe Laban, Divyansh Agarwal, Smaranda Muresan,                     '24). Association for Computing Machinery, New York, NY, USA, 246­257.
+       and Chien-Sheng Wu. 2024. Art or Artifice? Large Language Models and the                  doi:10.1145/3643834.3660688
+       False Promise of Creativity. In Proceedings of the 2024 CHI Conference on Human    [44] Michele Cremaschi, Paolo Grigis, Max Dorfmann, and Antonella De Angeli.
+       Factors in Computing Systems (Honolulu, HI, USA) (CHI '24). Association for               2025. Exposing the Ideology of Large Language Models with Creative Practices.
+       Computing Machinery, New York, NY, USA, Article 30, 34 pages. doi:10.1145/                In Proceedings of the 2025 ACM Designing Interactive Systems Conference (DIS
+       3613904.3642731                                                                          '25). Association for Computing Machinery, New York, NY, USA, 1928­1940.
+[29] Tuhin Chakrabarty, Vishakh Padmakumar, Faeze Brahman, and Smaranda                          doi:10.1145/3715336.3735715
+       Muresan. 2024. Creativity Support in the Age of Large Language Models:             [45] David Cropley. 2023. Is artificial intelligence more creative than humans?:
+       An Empirical Study Involving Professional Writers. In Proceedings of the 16th             ChatGPT and the Divergent Association Task. Learning Letters 2 (Sept. 2023),
+       Conference on Creativity & Cognition (Chicago, IL, USA) (C&C '24). Association            13. doi:10.59453/ll.v2.13
+       for Computing Machinery, New York, NY, USA, 132­155. doi:10.1145/3635636.          [46] David H Cropley (Ed.). 2025. Creations: The Nature of Creative Products in the 21st
+       3656201                                                                                   Century. Springer Nature Switzerland, Cham. doi:10.1007/978-3-031-82415-9
+[30] Minsuk Chang, Stefania Druga, Alexander J. Fiannaca, Pedro Vergani, Chin-            [47] David H. Cropley. 2025. "The Cat Sat on the . . . ?" Why Generative AI Has
+       may Kulkarni, Carrie J Cai, and Michael Terry. 2023. The Prompt Artists. In               Limited Creativity. The Journal of Creative Behavior 59, 4 (Dec. 2025), e70077.
+       Proceedings of the 15th Conference on Creativity and Cognition (Virtual Event,            doi:10.1002/jocb.70077
+       USA) (C&C '23). Association for Computing Machinery, New York, NY, USA,            [48] Antonella De Angeli and Paolo Grigis. 2025. Setting the Stage for Fictional
+       75­87. doi:10.1145/3591196.3593515                                                        and Artificial Characters. In Proceedings of the 16th Biannual Conference of the
+[31] Alexander P. Christensen and Yoed N. Kenett. 2023. Semantic network analysis                Italian SIGCHI Chapter (CHItaly '25). Association for Computing Machinery,
+       (SemNA): A tutorial on preprocessing, estimating, and analyzing semantic                  New York, NY, USA, Article 19, 10 pages. doi:10.1145/3750069.3750155
+       networks. Psychological Methods 28, 4 (2023), 860­879. doi:10.1037/met0000463      [49] Alwin de Rooij and Ruben D. Vromans. 2020. The (Dis)Pleasures of Creativity:
+       Place: US Publisher: American Psychological Association.                                  Spontaneous Eye Blink Rate during Divergent and Convergent Thinking De-
+[32] Alexander P. Christensen, Yoed N. Kenett, Tomaso Aste, Paul J. Silvia, and                  pends on Individual Differences in Positive and Negative Affect. The Journal of
+       Thomas R. Kwapil. 2018. Network structure of the Wisconsin Schizotypy                     Creative Behavior 54, 2 (2020), 436­452. doi:10.1002/jocb.379
+       Scales­Short Forms: Examining psychometric network filtering approaches.           [50] Anil R. Doshi and Oliver P. Hauser. 2024. Generative AI enhances individual
+       Behavior Research Methods 50, 6 (Dec. 2018), 2531­2550. doi:10.3758/s13428-               creativity but reduces the collective diversity of novel content. Science Ad-
+       018- 1032- 9                                                                              vances 10, 28 (2024), eadn5290. doi:10.1126/sciadv.adn5290 Publisher: American
+[33] Alexander P. Christensen, Yoed N. Kenett, Katherine N. Cotter, Roger E.                     Association for the Advancement of Science.
+       Beaty, and Paul J. Silvia. 2018. Remotely Close Associations: Open-                [51] Illés Farkas, Dániel Ábel, Gergely Palla, and Tamás Vicsek. 2007. Weighted
+       ness to Experience and Semantic Memory Structure. European Jour-                          network modules. New Journal of Physics 9, 6 (June 2007), 180. doi:10.1088/1367-
+       nal of Personality 32, 4 (2018), 480­492. doi:10.1002/per.2157 _eprint:                   2630/9/6/180
+       https://onlinelibrary.wiley.com/doi/pdf/10.1002/per.2157.                          [52] Jonas Frich, Lindsay MacDonald Vermeulen, Christian Remy, Michael Mose
+[34] John Joon Young Chung, Shiqing He, and Eytan Adar. 2021. The Intersection                   Biskjaer, and Peter Dalsgaard. 2019. Mapping the Landscape of Creativity
+       of Users, Roles, Interactions, and Technologies in Creativity Support Tools.              Support Tools in HCI. In Proceedings of the 2019 CHI Conference on Human
+       In Designing Interactive Systems Conference 2021. ACM, Virtual Event USA,                 Factors in Computing Systems (Glasgow, Scotland Uk) (CHI '19). Association for
+                                                                                                 Computing Machinery, New York, NY, USA, 1­18. doi:10.1145/3290605.3300619
+                                                                                          [53] Jonas Frich, Michael Mose Biskjaer, and Peter Dalsgaard. 2018. Twenty Years of
+                                                                                                 Creativity Research in Human-Computer Interaction: Current State and Future
+Semantic Network and Idea Originality in Artificial Creativity                                    with cochlear implants: computational analysis of verbal fluency. Frontiers in
+                                                                                                  Psychology Volume 4 - 2013 (2013). doi:10.3389/fpsyg.2013.00543
+        Directions. In Proceedings of the 2018 Designing Interactive Systems Conference    [74] Mika Koivisto and Simone Grassini. 2023. Best humans still outperform artificial
+        (Hong Kong, China) (DIS '18). Association for Computing Machinery, New York,              intelligence in a creative divergent thinking task. Scientific Reports 13, 1 (Sept.
+        NY, USA, 1235­1257. doi:10.1145/3196709.3196732                                           2023), 13601. doi:10.1038/s41598-023-40858-3
+ [54] Liane Gabora. 2018. The neural basis and evolution of divergent and convergent       [75] Harsh Kumar, Jonathan Vincentius, Ewan Jordan, and Ashton Anderson. 2025.
+        thought. The Cambridge handbook of the neuroscience of creativity (2018), 58­70.          Human Creativity in the Age of LLMs: Randomized Experiments on Divergent
+ [55] Vladimir Geroimenko. 2025. Generative AI Hallucinations in Healthcare: A                    and Convergent Thinking. In Proceedings of the 2025 CHI Conference on Human
+        Challenge for Prompt Engineering and Creativity. In Human-Computer Creativ-               Factors in Computing Systems (CHI '25). Association for Computing Machinery,
+        ity: Generative AI in Education, Art, and Healthcare, Vladimir Geroimenko (Ed.).          New York, NY, USA, Article 23, 18 pages. doi:10.1145/3706598.3714198
+        Springer Nature Switzerland, Cham, 321­335. doi:10.1007/978-3-031-86551-           [76] Alexandra Kuznetsova, Per B. Brockhoff, and Rune H. B. Christensen. 2017.
+        0_17                                                                                      lmerTest Package: Tests in Linear Mixed Effects Models. Journal of Statistical
+ [56] Vladimir Geroimenko (Ed.). 2025. Human-Computer Creativity: Generative                      Software 82, 13 (2017), 1­26. doi:10.18637/jss.v082.i13
+        AI in Education, Art, and Healthcare. Springer Nature Switzerland, Cham.           [77] Yangping Li, Yoed N. Kenett, Weiping Hu, and Roger E. Beaty. 2021. Flexible
+        doi:10.1007/978- 3- 031- 86551- 0                                                         Semantic Network Structure Supports the Production of Creative Metaphor.
+ [57] Maliheh Ghajargar, Jeffrey Bardzell, and Love Lagerkvist. 2022. A Redhead                   Creativity Research Journal 33, 3 (2021), 209­223. doi:10.1080/10400419.2021.
+        Walks into a Bar: Experiences of Writing Fiction with Artificial Intelligence. In         1879508
+        Proceedings of the 25th International Academic Mindtrek Conference (Tampere,       [78] Todd Lubart, Franck Zenasni, and Baptiste Barbot. 2013. Creative potential and
+        Finland) (Academic Mindtrek '22). Association for Computing Machinery, New                its measurement. International Journal for Talent Development and Creativity 1,
+        York, NY, USA, 230­241. doi:10.1145/3569219.3569418                                       2 (2013), 41­51.
+ [58] Ken Gilhooly. 2024. AI vs humans in the AUT: Simulations to LLMs. Journal of         [79] Sarah R. Luria and James C. Kaufman. 2017. Chapter 18 - The Dynamic Force
+        Creativity 34, 1 (2024), 100071. doi:10.1016/j.yjoc.2023.100071                           Before Intrinsic Motivation: Exploring Creative Needs. In The Creative Self,
+ [59] Fabrício Góes, Piotr Sawicki, Marek Grzes, Marco Volpe, and Jacob Watson. 2023.             Maciej Karwowski and James C. Kaufman (Eds.). Academic Press, San Diego,
+        Pushing GPT's Creativity to Its Limits: Alternative Uses and Torrance Tests. In           317­325. doi:10.1016/B978-0-12-809790-8.00018-2
+        Proceedings of the 14th International Conference on Computational Creativity,      [80] Guido Previde Massara, T. Di Matteo, and Tomaso Aste. 2016. Network Filtering
+        Alison Pease, João Miguel Cunha, Maya Ackerman, and Daniel G. Brown (Eds.).               for Big Data: Triangulated Maximally Filtered Graph. Journal of Complex
+        Association for Computational Creativity, Ontario, Canada, 342­346. https:                Networks 5, 2 (June 2016), 161­178. doi:10.1093/comnet/cnw015
+        //computationalcreativity.net/iccc23/papers/ICCC- 2023_paper_90.pdf                [81] Douglas L. Nelson, Cathy L. Mcevoy, and Simon Dennis. 2000. What is free
+ [60] Joaquín Goñi, Gonzalo Arrondo, Jorge Sepulcre, Iñigo Martincorena, Nieves                   association and what does it measure? Memory & Cognition 28, 6 (Nov. 2000),
+        Vélez De Mendizábal, Bernat Corominas-Murtra, Bartolomé Bejarano, Sergio                  887­899. doi:10.3758/BF03209337
+        Ardanza-Trevijano, Herminia Peraita, Dennis P. Wall, and Pablo Villoslada. 2011.   [82] Bin Ning, Fang Liu, and Zhixiong Liu. 2023. Creativity Support in AI Co-
+        The semantic organization of the animal category: evidence from semantic                  creative Tools: Current Research, Challenges and Opportunities. In 2023 26th
+        verbal fluency and network theory. Cognitive Processing 12, 2 (May 2011), 183­            International Conference on Computer Supported Cooperative Work in Design
+        196. doi:10.1007/s10339-010-0372-x Publisher: Springer Science and Business              (CSCWD). 5­10. doi:10.1109/CSCWD57460.2023.10152832 ISSN: 2768-1904.
+        Media LLC.                                                                         [83] Jay A. Olson, Johnny Nahas, Denis Chmoulevitch, Simon J. Cropper, and Mar-
+ [61] Simone Grassini and Mika Koivisto. 2025. Artificial Creativity? Evaluating                  garet E. Webb. 2021. Naming unrelated words predicts creativity. Proceed-
+        AI Against Human Performance in Creative Interpretation of Visual Stimuli.                ings of the National Academy of Sciences 118, 25 (June 2021), e2022340118.
+        International Journal of Human­Computer Interaction 41, 7 (April 2025), 4037­             doi:10.1073/pnas.2022340118
+        4048. doi:10.1080/10447318.2024.2345430 Publisher: Taylor & Francis.               [84] Jonas Oppenlaender, Rhema Linder, and Johanna Silvennoinen. 2025. Prompting
+ [62] Paolo Grigis and Antonella De Angeli. 2024. Playwriting with Large Language                 AI Art: An Investigation into the Creative Skill of Prompt Engineering. Inter-
+        Models: Perceived Features, Interaction Strategies and Outcomes. In Proceedings           national Journal of Human­Computer Interaction 41, 16 (2025), 10207­10229.
+        of the 2024 International Conference on Advanced Visual Interfaces (Arenzano,             doi:10.1080/10447318.2024.2431761
+        Genoa, Italy) (AVI '24). Association for Computing Machinery, New York, NY,        [85] Peter Organisciak, Selcuk Acar, Denis Dumas, and Kelly Berthiaume. 2023.
+        USA, Article 38, 9 pages. doi:10.1145/3656650.3656688                                     Beyond semantic distance: Automated scoring of divergent thinking greatly
+ [63] J. P. GUILFORD. 1967. Creativity: Yesterday, Today and Tomorrow. The Journal                improves with large language models. Thinking Skills and Creativity 49 (2023),
+        of Creative Behavior 1, 1 (1967), 3­14. doi:10.1002/j.2162-6057.1967.tb00002.x            101356. doi:10.1016/j.tsc.2023.101356
+ [64] Erik E. Guzik, Christian Byrge, and Christian Gilde. 2023. The originality of        [86] Marcela Ovando-Tellez, Yoed N. Kenett, Mathias Benedek, Matthieu Bernard,
+        machines: AI takes the Torrance Test. Journal of Creativity 33, 3 (2023), 100065.         Joan Belo, Benoit Beranger, Theophile Bieth, and Emmanuelle Volle. 2022. Brain
+        doi:10.1016/j.yjoc.2023.100065                                                            connectivity­based prediction of real-life creativity is mediated by semantic
+ [65] Jennifer Haase and Paul H.P. Hanel. 2023. Artificial muses: Generative artificial           memory structure. Science Advances 8, 5 (2022), eabl4294. doi:10.1126/sciadv.
+        intelligence chatbots have risen to human-level creativity. Journal of Creativity         abl4294 Publisher: American Association for the Advancement of Science.
+        33, 3 (2023), 100066. doi:10.1016/j.yjoc.2023.100066                               [87] Gergely Palla, Imre Derényi, Illés Farkas, and Tamás Vicsek. 2005. Uncovering
+ [66] Li He, Yoed N. Kenett, Kaixiang Zhuang, Cheng Liu, Rongcan Zeng, Tingrui                    the overlapping community structure of complex networks in nature and society.
+        Yan, Tengbin Huo, and Jiang Qiu. 2020. The relation between semantic mem-                 Nature 435, 7043 (June 2005), 814­818. doi:10.1038/nature03607
+        ory structure, associative abilities, and verbal and figural creativity. Thinking  [88] Max Peeperkorn, Tom Kouwenhoven, Dan Brown, and Anna Jordanous. 2024.
+        & Reasoning 27, 2 (Sept. 2020), 268­293. doi:10.1080/13546783.2020.1819415                Is Temperature the Creativity Parameter of Large Language Models?. In Pro-
+        Publisher: Routledge.                                                                     ceedings of the 15th International Conference on Computational Creativity,
+ [67] Thomas T. Hills and Yoed N. Kenett. 2025. An entropy modulation theory of                   Kazjon Grace, Maria Teresa Llano, Pedro Martins, and Maria M. Hedblom
+        creative exploration. Psychological Review 132, 1 (Jan. 2025), 239­251. doi:10.           (Eds.). Association for Computational Creativity, Jönköping, Sweden, 226­235.
+        1037/rev0000511                                                                           https://computationalcreativity.net/iccc24/papers/ICCC24_paper_70.pdf
+ [68] Kent F. Hubert, Kim N. Awa, and Darya L. Zabelina. 2024. The current state of        [89] Dimitris N. Politis and Joseph P. Romano. 1994. Large Sample Confidence
+        artificial intelligence generative language models is more creative than humans           Regions Based on Subsamples under Minimal Assumptions. The Annals of
+        on divergent thinking tasks. Scientific Reports 14, 1 (Feb. 2024), 3440. doi:10.          Statistics 22, 4 (Dec. 1994), 2031­2050. doi:10.1214/aos/1176325770 Publisher:
+        1038/s41598- 024- 53303- w                                                                Institute of Mathematical Statistics.
+ [69] Emanuel Jauk, Mathias Benedek, and Aljoscha C. Neubauer. 2014. The Road              [90] Janet Rafner, Roger E. Beaty, James C. Kaufman, Todd Lubart, and Jacob Sherson.
+        to Creative Achievement: A Latent Variable Model of Ability and Personality               2023. Creativity in the age of generative AI. Nature Human Behaviour 7, 11
+        Predictors. European Journal of Personality 28, 1 (2014), 95­105. doi:10.1002/            (Nov. 2023), 1836­1838. doi:10.1038/s41562-023-01751-1
+        per.1941 PMID: 24532953.                                                           [91] Nina Rajcic, Maria Teresa Llano Rodriguez, and Jon McCormack. 2024. Towards
+ [70] Yoed N. Kenett, David Anaki, and Miriam Faust. 2014. Investigating the structure            a Diffractive Analysis of Prompt-Based Generative AI. In Proceedings of the 2024
+        of semantic networks in low and high creative persons. Frontiers in Human                 CHI Conference on Human Factors in Computing Systems (Honolulu, HI, USA)
+        Neuroscience Volume 8 - 2014 (2014). doi:10.3389/fnhum.2014.00407                        (CHI '24). Association for Computing Machinery, New York, NY, USA, Article
+ [71] Yoed N. Kenett and Miriam Faust. 2019. A Semantic Network Cartography                       844, 15 pages. doi:10.1145/3613904.3641971
+        of the Creative Mind. Trends in Cognitive Sciences 23, 4 (April 2019), 271­274.    [92] Clara Rastelli, Antonino Greco, Yoed N. Kenett, Chiara Finocchiaro, and Nicola
+        doi:10.1016/j.tics.2019.01.007 Publisher: Elsevier.                                       De Pisapia. 2022. Simulated visual hallucinations in virtual reality enhance
+ [72] Yoed N. Kenett, Orr Levy, Dror Y. Kenett, H. Eugene Stanley, Miriam Faust,                  cognitive flexibility. Scientific Reports 12, 1 (March 2022), 4027. doi:10.1038/
+        and Shlomo Havlin. 2018. Flexibility of thought in high creative individuals              s41598- 022- 08047- w
+        represented by percolation analysis. Proceedings of the National Academy of        [93] Jude Rayan, Dhruv Kanetkar, Yifan Gong, Yuewen Yang, Srishti Palani, Haijun
+        Sciences 115, 5 (2018), 867­872. doi:10.1073/pnas.1717362115                              Xia, and Steven P. Dow. 2024. Exploring the Potential for Generative AI-based
+ [73] Yoed N. Kenett, Deena Wechsler-Kashi, Dror Y. Kenett, Richard G. Schwartz,
+        Eshel Ben Jacob, and Miriam Faust. 2013. Semantic organization in children
+                                                                                             Domanti et al.
+
+        Conversational Cues for Real-Time Collaborative Ideation. In Proceedings of          [114] Florent Vinchon, Todd Lubart, Sabrina Bartolotta, Valentin Gironnay, Marion
+        the 16th Conference on Creativity & Cognition (Chicago, IL, USA) (C&C '24).                  Botella, Samira Bourgeois-Bougrine, Jean-Marie Burkhardt, Nathalie Bonnardel,
+        Association for Computing Machinery, New York, NY, USA, 117­131. doi:10.                     Giovanni Emanuele Corazza, Vlad Glveanu, Michael Hanchett Hanson, Zorana
+        1145/3635636.3656184                                                                         Ivcevic, Maciej Karwowski, James C. Kaufman, Takeshi Okada, Roni Reiter-
+ [94] Byron Reeves and Clifford Nass. 1996. The media equation: how people treat                     Palmon, and Andrea Gaggioli. 2023. Artificial Intelligence & Creativity: A
+        computers, television, and new media like real people and places. Cambridge                  Manifesto for Collaboration. The Journal of Creative Behavior 57, 4 (Dec. 2023),
+        University Press, USA.                                                                       472­484. doi:10.1002/jocb.597 Publisher: John Wiley & Sons, Ltd.
+ [95] Christian Remy, Lindsay MacDonald Vermeulen, Jonas Frich, Michael Mose
+        Biskjaer, and Peter Dalsgaard. 2020. Evaluating Creativity Support Tools in          [115] Ye Wang, Yaling Deng, Ge Wang, Tong Li, Hongjiang Xiao, and Yuan Zhang.
+        HCI Research. In Proceedings of the 2020 ACM Designing Interactive Systems                   2025. The fluency-based semantic network of LLMs differs from humans.
+        Conference (Eindhoven, Netherlands) (DIS '20). Association for Computing                     Computers in Human Behavior: Artificial Humans 3 (2025), 100103. doi:10.1016/
+        Machinery, New York, NY, USA, 457­476. doi:10.1145/3357236.3395474                           j.chbah.2024.100103
+ [96] Mel Rhodes. 1961. An Analysis of Creativity. The Phi Delta Kappan 42, 7 (1961),
+        305­310. http://www.jstor.org/stable/20342603                                        [116] Jeffrey C. Zemla, Kesong Cao, Kimberly D. Mueller, and Joseph L. Austerweil.
+ [97] Mark A. Runco. 2023. AI can only produce artificial creativity. Journal of                     2020. SNAFU: The Semantic Network and Fluency Utility. Behavior Research
+        Creativity 33, 3 (2023), 100063. doi:10.1016/j.yjoc.2023.100063                              Methods 52, 4 (Aug. 2020), 1681­1699. doi:10.3758/s13428-019-01343-w
+ [98] Mark A. Runco. 2025. Updating the Standard Definition of Creativity to Account
+        for the Artificial Creativity of AI. Creativity Research Journal 37, 1 (2025), 1­5.  A Human instructions and ChatGPT-4o
+        doi:10.1080/10400419.2023.2257977                                                         prompts
+ [99] Mark A. Runco and Garrett J. Jaeger. 2012. The Standard Definition of Creativity.
+        Creativity Research Journal 24, 1 (2012), 92­96. doi:10.1080/10400419.2012.          Table 7 presents a comparison between the instructions given to hu-
+        650092                                                                               man participants and the prompts received by ChatGPT-4o across
+[100] Sameh Said-Metwaly, Christa L. Taylor, Anaëlle Camarda, and Baptiste Barbot.           all tasks3. Human participants saw the target word (e.g., animals)
+        2024. Divergent thinking and creative achievement--How strong is the link?           printed on a sheet of paper, and in the examples reported in Table 7
+        An updated meta-analysis. Psychology of Aesthetics, Creativity, and the Arts 18,     and in the Appendix B.1, this appears in square brackets. For obtain-
+        5 (2024), 869­881. doi:10.1037/aca0000507                                            ing machine data, no system prompts were used and one example
+[101] Murray Shanahan, Kyle McDonell, and Laria Reynolds. 2023. Role play with               was included in the instructions (i.e., a one-shot prompting strategy
+        large language models. Nature 623, 7987 (Nov. 2023), 493­498. doi:10.1038/           was applied [23], see Table 7). For each ChatGPT-4o participant,
+        s41586- 023- 06647- 8                                                                the chat window was not reset between tasks.
+[102] Jun Shao. 2003. Impact of the Bootstrap on Sample Surveys. Statist. Sci. 18, 2
+        (2003), 191 ­ 198. doi:10.1214/ss/1063994974                                         B Example of Human and ChatGPT-4o
+[103] Ben Shneiderman. 2002. Creativity support tools. Commun. ACM 45, 10 (Oct.                   performances
+        2002), 116­120. doi:10.1145/570907.570945
+[104] Ben Shneiderman, Gerhard Fischer, Mary Czerwinski, Mitch Resnick, Brad                 This Appendix is organised as follows. Section B.1 presents the
+        Myers, Linda Candy, Ernest Edmonds, Mike Eisenberg, Elisa Giaccardi, Tom             interaction (i.e., instructions and outputs) for a human participant.
+        Hewett, Pamela Jennings, Bill Kules, Kumiyo Nakakoji, Jay Nunamaker, Randy           Section B.2 presents the interaction (i.e., prompts and outputs)
+        Pausch, Ted Selker, Elisabeth Sylvan, and Michael Terry. 2006. Creativity            for a ChatGPT-4o participant. To anonymise the responses for the
+        Support Tools: Report From a U.S. National Science Foundation Sponsored              expert coders, in the final database, all hyphens in ChatGPT-4o AUT
+        Workshop. International Journal of Human-Computer Interaction 20, 2 (May             responses were replaced with commas. Moreover, any sentences
+        2006), 61­77. doi:10.1207/s15327590ijhc2002_1                                        appearing before and after the list of words related to the tasks
+[105] Cynthia S. Q. Siew, Dirk U. Wulff, Nicole M. Beckage, and Yoed N. Kenett. 2019.        were excluded (e.g., here is a list of animals that come to mind
+        Cognitive Network Science: A Review of Research on Cognition through the             or time is up!). All responses provided by human and ChatGPT-
+        Lens of Network Representations, Processes, and Dynamics. Complexity 2019,           4o participants for each task are available in the Supplementary
+        1 (2019), 2108423. doi:10.1155/2019/2108423                                          Materials.
+[106] Paul Silvia, Beate Winterstein, John Willse, Christopher Barona, Joshua Cram,
+        Karl Hess, Jenna Martinez, and Crystal Richard. 2008. Assessing Creativity           B.1 Human performance
+        With Divergent Thinking Tasks: Exploring the Reliability and Validity of New
+        Subjective Scoring Methods. Psychology of Aesthetics, Creativity, and the Arts 2     This section presents the interaction for the human participant S01.
+        (May 2008), 68­85. doi:10.1037/1931-3896.2.2.68
+[107] Robert J. Sternberg and Todd I. Lubart. 1996. Investing in creativity. American        B.1.1 Verbal Production Tasks.
+        Psychologist 51, 7 (1996), 677­688. doi:10.1037/0003-066X.51.7.677
+[108] Claire Stevenson, Iris Smal, Matthijs Baas, Raoul Grasman, and Han van der                Verbal Fluency Test (VF).
+        Maas. 2022. Putting GPT-3's Creativity to the (Alternative Uses) Test. In Proceed-
+        ings of the 13th International Conference on Computational Creativity, Maria M.         VF1 Instruction.
+        Hedblom, Anna Aurora Kantosalo, Roberto Confalonieri, Oliver Kutz, and Tony
+        Veale (Eds.). Association for Computational Creativity, Bozen-Bolzano, Italy,                 Now I will present you with a sheet of paper on
+        164­168. http://computationalcreativity.net/iccc22/papers/ICCC-2022_paper_                    which a word representing a category [animals]
+        140.pdf                                                                                       is written, and I will ask you to tell me as many
+[109] Lev Tankelevitch, Viktor Kewenig, Auste Simkute, Ava Elizabeth Scott, Advait                    words that come to your mind that belong to that
+        Sarkar, Abigail Sellen, and Sean Rintel. 2024. The Metacognitive Demands and                  particular category. You will have one minute. For
+        Opportunities of Generative AI. In Proceedings of the 2024 CHI Conference on                  example, for the category Trees, you might say:
+        Human Factors in Computing Systems (Honolulu, HI, USA) (CHI '24). Association                 Oak, Poplar, Fir, etc.
+        for Computing Machinery, New York, NY, USA, Article 680, 24 pages. doi:10.
+        1145/3613904.3642902                                                                    VF1 Response.
+[110] J. Eric T. Taylor and Graham W. Taylor. 2021. Artificial cognition: How ex-
+        perimental psychology can help generate explainable artificial intelligence.         3The instructions are translated from Italian to English
+        Psychonomic Bulletin & Review 28, 2 (April 2021), 454­475. doi:10.3758/s13423-
+        020- 01825- 5
+[111] Ellis Paul Torrance. 1966. Torrance Tests of Creative Thinking: Norms-technical
+        Manual. Research Edition. Verbal Tests, Forms A and B. Figural Tests, Forms A
+        and B. Personnel Press.
+[112] M. Tumminello, T. Aste, T. Di Matteo, and R. N. Mantegna. 2005. A tool for
+        filtering information in complex systems. Proceedings of the National Acad-
+        emy of Sciences 102, 30 (July 2005), 10421­10426. doi:10.1073/pnas.0500298102
+        Publisher: Proceedings of the National Academy of Sciences.
+[113] Florent Vinchon, Valentin Gironnay, and Todd Lubart. 2024. GenAI Creativity
+        in Narrative Tasks: Exploring New Forms of Creativity. Journal of Intelligence
+        12, 12 (2024). doi:10.3390/jintelligence12120125
+Semantic Network and Idea Originality in Artificial Creativity
+
+Table 7: Comparison between human instructions and ChatGPT-4o prompts
+
+Human instructions                                               ChatGPT-4o prompts
+
+Verbal Fluency Test 1                                            Verbal Fluency Test 1
+Now I will present you with a sheet of paper on which a          Now I will present you with a word representing a category,
+word representing a category [animals] is written, and I will    and I will ask you to tell me as many words that come to your
+ask you to tell me as many words that come to your mind          mind that belong to that particular category. You will have
+that belong to that particular category. You will have one       one minute. For example, for the category Trees, you might
+minute. For example, for the category Trees, you might say:      say: Oak, Poplar, Fir, etc. The word is "animals".
+Oak, Poplar, Fir, etc.
+Verbal Fluency Test 2                                            Verbal Fluency Test 2
+Now, the category is [fruit and vegetables]. You will have one   Now, the category is "fruit and vegetables". You will have one
+minute.                                                          minute.
+
+Free Association Task 1                                          Free Association Task 1
+Now I will present you with a sheet of paper on which a word     Now I will present you a word, and I will ask you to tell me as
+[building] will be written, and I will ask you to tell me as     many words as come to your mind that are associated with
+many words as come to your mind that are associated with         the presented word. You will have one minute. For example,
+the presented word. You will have one minute. For example,       for the word Father, you might say: Mother, Son, Family, etc.
+for the word Father, you might say: Mother, Son, Family, etc.    The word is "building".
+Free Association Task 2                                          Free Association Task 2
+Now, the word is [notebook]. You will have one minute.           Now, the word is "notebook". You will have one minute.
+
+Alternate Uses Task 1                                            Alternate Uses Task 1
+Now I will present you with a sheet of paper on which a          Now I will present you with a word denoting an object. The
+word [shoe] denoting an object is written. The task consists     task consists of producing original uses for that object. All
+of producing original uses for that object. All objects have     objects have a common use. For example, what is the common
+a common use. For example, what is the common use of a           use of a tablecloth? To put it on the table when we set it, in
+tablecloth? To put it on the table when we set it, in order to   order to avoid getting it dirty. But that is the common use;
+avoid getting it dirty. But that is the common use; what we are  what we are interested in are the original uses of the object,
+interested in are the original uses of the object, which I will  which I will tell you in a moment. For instance, if we take the
+tell you in a moment. For instance, if we take the tablecloth    tablecloth off the table and put it on ourselves, it can become
+off the table and put it on ourselves, it can become a blanket   a blanket if we are cold or a cape if we are playing with a
+if we are cold or a cape if we are playing with a child. Or, if  child. Or, if it is old, we could cut it up and use it as rags. Your
+it is old, we could cut it up and use it as rags. Your task is   task is to come up with as many original alternative uses
+to come up with as many original alternative uses for that       for that object as possible. You will have three minutes. The
+object as possible. You will have three minutes.                 object is "shoe".
+Alternate Uses Task 2                                            Alternate Uses Task 2
+Now, the object is [fork]. You will have three minutes.          Now, the object is "fork". You will have three minutes.
+
+      Lion, Horse, Cow, Kid, Sheep, Pig, Dog, Cat, Mouse,        FA1 Instruction.
+      Giraffe, Rhinoceros, Coyote, Eagle, Condor, Dol-
+      phin, Whale, Hummingbird, Pigeon, Dove, Rabbit,                  Now I will present you with a sheet of paper on
+      Deer, Roe Deer, Little Sparrow, Fallow Deer, Pan-                which a word [building] will be written, and I will
+      ther, Cheetah, Leopard.                                          ask you to tell me as many words as come to your
+                                                                       mind that are associated with the presented word.
+VF2 Instruction.                                                       You will have one minute. For example, for the word
+      Now, the category is [fruit and vegetables]. You will            Father, you might say: Mother, Son, Family, etc.
+      have one minute.
+                                                                 FA1 Response.
+VF2 Response.
+      Banana, Apple, Apricot, Strawberry, Blackberries,                Condominium, Building, Families, Parties, Windows,
+      Raspberries, Blueberries, Lettuce, Valerian, Peppers,            Elevator, Stairs, Doorbell, Rug, Entrance, Dog, Cat,
+      Potatoes, Onions, Zucchinis, Shallot, Cauliflower,               Cloister, Garden, Garage, Machine, Street, Pedes-
+      Broccoli, Brussels Sprouts, Peach, Mango, Papaya,                trian Crossing, Semaphore, Concierge, Doorman,
+      Tomato, Avocado, Turnip, Nettle, Lemon, Orange.                  Mail, Postbox, Neighbors, Tenants.
+
+Free Association Task (FA).                                      FA2 Instruction.
+         Now, the word is [notebook]. You will have one                                                                                                   Domanti et al.
+         minute.
+                                                                    B.2 ChatGPT-4o performance
+   FA2 Response.
+                                                                    This section presents the interaction for the ChatGPT-4o participant
+         Pencil, Quill, Eraser, Sharpener, Assignments, Pen-        M43.
+         cil Case, Diary, Backpack, Italian, Mathematics, Squares,
+         Colors, Drawing, Credibility, Ruler, Squad, Scissors,      B.2.1 Verbal Production Tasks.
+         Teachers, Teachers, Companions, Games, Board,
+         Plaster, Explanations, Desks.                                 Verbal Fluency Test (VF).
+
+B.1.2 Alternate Uses Task (AUT).                                       VF1 Prompt.
+
+   AUT1 Instruction.                                                         Now I will present you with a word representing
+                                                                             a category, and I will ask you to tell me as many
+         Now I will present you with a sheet of paper on                     words that come to your mind that belong to that
+         which a word [shoe] denoting an object is written.                  particular category. You will have one minute. For
+         The task consists of producing original uses for                    example, for the category Trees, you might say:
+         that object. All objects have a common use. For                     Oak, Poplar, Fir, etc. The word is "animals".
+         example, what is the common use of a tablecloth?
+         To put it on the table when we set it, in order to            VF1 Response.
+         avoid getting it dirty. But that is the common use;
+         what we are interested in are the original uses of                  Of course! Here is a list of animals that come to
+         the object, which I will tell you in a moment. For                  mind:
+         instance, if we take the tablecloth off the table and               Dog, Cat, Lion, Tiger, Elephant, Giraffe, Rhinoceros,
+         put it on ourselves, it can become a blanket if we                  Hippopotamus, Deer, Wolf, Fox, Bear, Monkey, Dol-
+         are cold or a cape if we are playing with a child. Or,              phin, Shark, Whale, Penguin, Eagle, Owl, Snake,
+         if it is old, we could cut it up and use it as rags. Your           Crocodile, Turtle, Horse, Cow, Sheep, Goat, Hen,
+         task is to come up with as many original alternative                Duck, Swan, Crow, Wolf, Squirrel, Curly, Mole, Bat,
+         uses for that object as possible. You will have three               Cheetah, Panther, Zebra, Ostrich, Ant, Bee, Wasp,
+         minutes.                                                            Cicada, Kangaroo, Koala, Panda, Earthworm, Oc-
+                                                                             topus, Jellyfish, Lobster, Shrimp, Seahorse, Gecko,
+   AUT1 Response.                                                            Iguana, Parrot, Chameleon, Beaver, Ferret, Otter,
+                                                                             Walrus, Elk, Platypus, Meerkat, Flamingo, Marmot,
+         Place your feet in your hands to do a handstand; To                 Carp, Tuna, Barracuda, Vulture, Coral, Cricket, Grasshop-
+         get your hands dirty; Tie the shoes with laces that                 per, Falcon, Condor, Fly, Mosquito, Scarab, Taran-
+         play a sort of game by holding the laces in your                    tula, Scorpio, Snail, Snail, Frog, Toad, Salamander.
+         hand and rotating them; Glue many shoes together                    Time is up! I hope I have listed plenty!
+         sideways forming a sort of wheel for playing; Put
+         in your ears when it's cold you could use the heel            VF2 Prompt.
+         of some; You can attach a pigment and use them to
+         color; You could take all the laces perhaps to make                 Now, the category is "fruit and vegetables". You will
+         a necklace; Like bracelets.                                         have one minute.
+
+   AUT 2 Instruction.                                                  VF2 Response.
+
+         Now, the object is [fork]. You will have three min-                 Here is a list of fruits and vegetables that come to
+         utes.                                                               mind:
+                                                                             Apple, Pear, Orange, Lemon, Mandarin, Grapefruit,
+   AUT2 Response.                                                            Banana, Pineapple, Kiwi, Mango, Papaya, Coconut,
+                                                                             Fig, Grape, Persimmon, Pomegranate, Fishing, Apri-
+         Like a decorative object when the wind blows many                   cot, Cherry, Strawberry, Raspberry, Blackberry, Blue-
+         gold forks stick to it; To comb your hair; By tying                 berry, Watermelon, Melon, Prune, Plum, Date, Avo-
+         two forks together with a rubber band you create                    cado, Lychees, Currant, Pomegranate, Prickly Pear,
+         a sort of chopstick; To take things and turn them                   Cranberry, Medlar, Star Fruit, Passion Fruit, Guava,
+         around; In the garden with children you can use it                  Durian, Rambutan, Carrot, Potato, Onion, Garlic,
+         to move earth or to create a soil for planting things;              Tomato, Pepper, Zuchini, Eggplant, Cucumber, Let-
+         With clay it can be used to model to create figures;                tuce, Radish, Spinach, Chard, Cabbage, Cauliflower,
+         As a musical instrument; By attaching cotton and                    Broccoli, Black Cabbage, Cabbage, Cabbage, Fen-
+         placing fabrics you could create puppets or dolls;                  nel, Celery, Parsley, Basil, Rocket, Turnip, Beet, As-
+         When a branch becomes too crooked a garden can                      paragus, Mushrooms, Leek, Pumpkin, Green Bean,
+         be used to straighten it; To remove nails from walls;               Broad Bean, Pea, Lentil, Chickpeas, Bean, Soy, Horseradish,
+         To scrape off materials that can be scraped.                        Radish, Chili, Endive, Jerusalem Artichoke.
+                                                                             Time is up! I hope I have listed plenty!
+
+                                                                       Free Association Task (FA).
+Semantic Network and Idea Originality in Artificial Creativity         if we are cold or a cape if we are playing with a
+                                                                       child. Or, if it is old, we could cut it up and use it as
+   FA1 Prompt.                                                         rags. Your task is to come up with as many original
+                                                                       alternative uses for that object as possible. You will
+         Now I will present you a word, and I will ask you to          have three minutes. The object is "shoe".
+         tell me as many words as come to your mind that
+         are associated with the presented word. You will        AUT1 Response.
+         have one minute. For example, for the word Father,
+         you might say: Mother, Son, Family, etc. The word             Here are some alternative and original uses of a
+         is "building".                                                shoe:
+
+   FA1 Response.                                                         1. Plant pot - fill an old shoe with soil and plant
+                                                                             flowers or herbs.
+         Here is a list of words associated with "building":
+         Building, Skyscraper, Condominium, Apartment,                   2. Pen holder or pencil holder - perfect for an
+         Residence, Villa, Castle, Tower, Facade, Balcony,                   original and creative desk.
+         Terrace, Window, Door, Lobby, Entrance, Stairs,
+         Elevator, Courtyard, Columns, Ceiling, Flooring,                3. Doorstop - a heavy shoe can prevent doors
+         Roof, Attic, Basement, Cellar, Garage, Concierge,                   from slamming.
+         Luxury, Stable, Ancient, Modern, Historical, Monu-
+         ment, Royal Palace, Fortress, Town Hall, Parliament,            4. Improvised musical instrument - filled with
+         Office, Room, Living Room, Room, Stay, Kitchen,                     pebbles or rice, becomes a maracas.
+         Bath, Hallway, Library, Museum, Gallery, Inn, Hotel,
+         Reception, Decoration, Fresco, Sculpture, Stucco,               5. Phone holder - with the right angle, can hold
+         Stained Glass Window, Marble, Bow, Capital, Pil-                    a smartphone in a vertical position.
+         lar, Church, Basilica, Cathedral, Cathedral, House,
+         Abode, Quarter, Center, Metropolis, Street, Avenue,             6. Secret hiding place - perfect for storing small
+         Square, Square.                                                     valuables inside an old shoe.
+         Time is up!
+                                                                         7. Pet bowl - if cleaned well, can contain water
+   FA2 Prompt.                                                               or kibble for a cat or dog.
+
+         Now, the word is "notebook". You will have one                  8. Children's toy - with a little imagination it can
+         minute.                                                             become a toy car or a dollhouse.
+
+   FA2 Response.                                                         9. Artistic decoration - painted and hung on the
+                                                                             wall, can be a modern sculpture.
+         Here is a list of words associated with "notebook":
+         Paper, Cover, Sheets, Pages, Lines, Squares, Notes,             10. Mold for decorations - the sole can be used
+         Writing, Pencil, Quill, Eraser, Highlighter, Ink, Di-               to create designs on painted surfaces or with
+         ary, Agenda, Notebook, Notepad, Register, School,                   clay.
+         School, Student, Teacher, Assignments, Theme, Draw-
+         ing, Sketches, Graphs, Rings, Tapping, Glue, Label,             11. Insect trap - a perfect shelter for small insects,
+         Title, Summary, Index, Margin, Paragraph, Callig-                   which can then be released outside.
+         raphy, Notes, Corrections, Notes, Study, University,
+         Library, Stationary Store, Binding, Form, Exams,                12. Water collector - in case of emergency, it can
+         Text, Underline, Write, To Note, Schemes, Concept                   be used to collect rainwater.
+         Maps, Summary, Organization, Planner, Draft, Re-
+         vision, Archive, Teaching Material.                             13. Weight for training - two shoes filled with
+         Time is up!                                                         sand can be used for physical exercises.
+
+B.2.2 Alternate Uses Task (AUT).                                         14. Mini shield - to protect your hand in some
+                                                                             emergency situation.
+   AUT1 Prompt.
+                                                                         15. DIY stamp - the sole can be carved to create
+         Now I will present you with a word denoting an                      a stamp with special patterns.
+         object is written. The task consists of producing
+         original uses for that object. All objects have a com-          16. Dog toy - an old shoe can become the perfect
+         mon use. For example, what is the common use of a                   chew toy.
+         tablecloth? To put it on the table when we set it, in
+         order to avoid getting it dirty. But that is the com-           17. Floating boat - if it is plastic and light, can be
+         mon use; what we are interested in are the original                 used for floating experiments.
+         uses of the object, which I will tell you in a moment.
+         For instance, if we take the tablecloth off the table           18. Substitute for a hammer - in the absence of a
+         and put it on ourselves, it can become a blanket                    hammer, a stiff shoe can be used to nail some-
+                                                                             thing down.
+
+                                                                         19. Improvised bag - tying the laces together, can
+                                                                             carry small items.
+
+                                                                         20. Cold hand cover - if it's very cold, you can
+                                                                             put your hands inside to warm them.
+
+                                                                         21. Knee protection - two shoes tied over the
+                                                                             knees can serve as rudimentary knee pads.
+
+                                                                         22. Mask for a costume - with holes it can become
+                                                                             a helmet or a mask for a disguise.
+
+                                                                         23. Mousetrap - with bait inside, could attract
+                                                                             and trap small rodents.
+        24. Sculpture for an art installation - a set of                                                                                 Domanti et al.
+            shoes can be used for a work of art.
+                                                                 23. Ribbon curling tool - by passing a ribbon be-
+        25. Doll raft - a floating shoe can carry a small           tween the prongs, you can obtain a nice curl.
+            toy on the water.
+                                                                 24. Bookmark - a flat fork inserted between pages
+      Time is up! I hope I have found creative ideas!               can act as a bookmark.
+
+AUT2 Prompt.                                                     25. Improvised weapon - in extreme situations,
+                                                                    can be used for self-defense.
+      Now, the object is "fork". You will have three min-
+      utes".                                                     26. Chandelier decoration - several forks can cre-
+                                                                    ate lighting effects when hung.
+AUT 2 Response.
+                                                                 27. Easel for small paintings - folded in the right
+      Here are some alternative and original uses of a              way, can support small canvases.
+      fork:
+                                                                 28. Incense holder - perfect for inserting an in-
+        1. Phone holder - with the right fold, can hold a           cense stick and keeping it stable.
+            smartphone in place.
+                                                                 29. Children's toy - with a little imagination, can
+        2. Back scratcher - perfect for reaching difficult          become a character or a funny figure.
+            spots on the back.
+                                                                 30. Mini whisk - if folded, can be used to mix
+        3. Paperweight - a heavy fork can hold papers in            thick sauces.
+            place on the desk.
+                                                               Time is up! I hope I have found original ideas!
+        4. Photo holder - by bending the prongs, it can
+            be used to hold up a photograph.
+
+        5. Musical instrument - struck on a glass cup can
+            produce harmonious sounds.
+
+        6. Bag closure - inserted into an open bag, helps
+            keep it sealed.
+
+        7. Shoe brush - can be used to clean mud from
+            the soles.
+
+        8. Hard boiled egg holder - holds eggs in place
+            for easy cutting.
+
+        9. Mold for decorations - the prongs can leave
+            textures on clay or salt dough.
+
+        10. Improvised comb - useful for fixing hair in
+            an emergency.
+
+        11. Can opener - inserted under the lid of a can
+            can make opening easier.
+
+        12. Wall hook - fixed to the wall and folded, can
+            be used to hang keys or towels.
+
+        13. Gardening tool - perfect for digging small
+            furrows in the earth.
+
+        14. Place card at the table - inserted into a card-
+            board, can hold the names of the guests.
+
+        15. Mini rake - useful for leveling the soil in pots.
+        16. Hair accessory - inserted between the hair it
+
+            can hold up a bun.
+        17. Tea bag dripper - can help you squeeze the
+
+            tea bags without burning yourself.
+        18. Citrus peeler - the prongs can make it easier
+
+            to cut the peel.
+        19. Painting tool - great for creating texture on
+
+            paint.
+        20. Cake decorator - can be used to make designs
+
+            on icing or sugar paste.
+        21. Improvised skewer - perfect for skewering
+
+            grilled foods.
+        22. Ring holder - the prongs can hold rings and
+
+            small jewelry in place.
+

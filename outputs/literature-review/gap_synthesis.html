@@ -1,0 +1,825 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>Zotero 4개 컬렉션 68편 통합 리서치갭</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  :root{
+    --fg:#1a1a1a; --muted:#666; --bg:#fafaf7; --card:#fff;
+    --rule:#e2ddd0; --accent:#7a3b2e; --highlight:#fff3d6;
+    --mad:#2d5f8a;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--fg)}
+  body{
+    font-family:"Apple SD Gothic Neo","Pretendard","Malgun Gothic",-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;
+    font-size:16px; line-height:1.75; padding:48px 24px 96px;
+  }
+  main{max-width:820px;margin:0 auto}
+  h1{font-size:1.9rem;letter-spacing:-.01em;margin:0 0 .3em;line-height:1.3}
+  h2{font-size:1.35rem;margin:2.4em 0 .6em;padding-bottom:.3em;border-bottom:1px solid var(--rule)}
+  h3{font-size:1.08rem;margin:1.8em 0 .4em;color:var(--accent)}
+  h4{font-size:.98rem;margin:1.2em 0 .3em;color:var(--muted);font-weight:600}
+  p{margin:.6em 0}
+  ul,ol{padding-left:1.4em}
+  li{margin:.3em 0}
+  code,.tag{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.85em;background:#efeae0;padding:.05em .35em;border-radius:3px}
+  strong{color:var(--accent)}
+  blockquote{margin:1em 0;padding:.6em 1em;border-left:3px solid var(--accent);background:#fff;color:#333;font-style:normal}
+  .meta{color:var(--muted);font-size:.9rem;margin-bottom:2em}
+  .toc{background:var(--card);border:1px solid var(--rule);padding:14px 22px;border-radius:6px;margin:1.5em 0 2.5em}
+  .toc ol{margin:.3em 0;padding-left:1.5em}
+  .toc a{color:var(--fg);text-decoration:none;border-bottom:1px dotted #bbb}
+  .toc a:hover{color:var(--accent)}
+  .gap-card{background:var(--card);border:1px solid var(--rule);border-left:3px solid var(--accent);padding:14px 22px;margin:1.2em 0;border-radius:4px}
+  .gap-card h3{margin-top:.2em}
+  details{background:var(--card);border:1px solid var(--rule);border-radius:4px;padding:0 14px;margin:.6em 0}
+  details[open]{padding-bottom:10px}
+  summary{cursor:pointer;padding:10px 4px;font-weight:600;list-style:none;display:flex;align-items:center;gap:8px}
+  summary::before{content:"▸";color:var(--muted);transition:transform .15s}
+  details[open] summary::before{transform:rotate(90deg)}
+  summary .id{font-family:ui-monospace,monospace;font-size:.82rem;color:var(--muted);background:#efeae0;padding:1px 6px;border-radius:3px}
+  summary .id.mad{background:#dde7f2;color:var(--mad)}
+  summary .yr{color:var(--muted);font-size:.85rem;font-weight:400;margin-left:auto}
+  .paper-body{font-size:.95rem;color:#333;line-height:1.7}
+  .paper-body p{margin:.4em 0}
+  .paper-body .label{font-weight:600;color:#555}
+  .keyfind{background:var(--highlight);padding:.4em .8em;border-radius:3px;display:inline-block}
+  .new-badge{display:inline-block;background:var(--mad);color:#fff;font-size:.7rem;padding:1px 6px;border-radius:3px;margin-left:6px;vertical-align:middle}
+  table{border-collapse:collapse;width:100%;font-size:.93rem;margin:.8em 0}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--rule);vertical-align:top}
+  th{background:#efeae0;font-weight:600}
+  .note{font-size:.88rem;color:var(--muted);font-style:italic}
+  @media print{
+    body{background:#fff;padding:24px}
+    details{break-inside:avoid}
+    details summary::before{display:none}
+    details{border:none;padding:0}
+    details > *:not(summary){display:block !important}
+  }
+</style>
+</head>
+<body>
+<main>
+
+<h1>Zotero 4개 컬렉션 68편 통합 리서치갭</h1>
+<p class="meta">박성훈(디자인/HCI) 박/석 연구 · 멀티에이전트 LLM(AG2) — VR MetaHuman 확장 · within-subject 독립 vs 그룹 토론 · DV = CSI<br>
+컬렉션 출처: Multi-Agent Ideation (27편) + VR Ideation (9편) + VR Agent/Avatar (17편) + <strong>Multi-Agent Discussion (15편, 신규 추가)</strong> · 작성 2026-05-21 갱신</p>
+
+<div class="toc">
+<strong>목차</strong>
+<ol>
+<li><a href="#gaps">공통 갭 5개 (MAD 추가 반영)</a></li>
+<li><a href="#hypo">사용자 가설 평가 (7편 친척 비교)</a></li>
+<li><a href="#position">사용자 연구의 위치</a></li>
+<li><a href="#cite">인용 전략 메모</a></li>
+<li><a href="#col-ma">컬렉션 상세 — Multi-Agent Ideation (27편)</a></li>
+<li><a href="#col-vri">컬렉션 상세 — VR Ideation (9편)</a></li>
+<li><a href="#col-vra">컬렉션 상세 — VR Agent/Avatar (17편)</a></li>
+<li><a href="#col-mad">컬렉션 상세 — Multi-Agent Discussion (15편, 신규)</a></li>
+</ol>
+</div>
+
+<!-- ====================== GAPS ====================== -->
+<h2 id="gaps">1. 공통 갭 — 네 컬렉션을 가로질러 반복되는 5개 결락</h2>
+
+<div class="gap-card">
+<h3>갭 1. CSI 사용이 극히 드물고, 쓴 경우도 단일 LLM 도구 비교에 머무름</h3>
+<p>68편 중 CSI를 정량 비교의 종속변수로 명시 사용한 paper는 여전히 <strong>단 두 편</strong>.</p>
+<ul>
+<li><code>ma_27</code> IdeationWeb (CHI 2025) — IdeationWeb vs ChatGPT, 둘 다 단일 LLM 백엔드</li>
+<li><code>vri_07</code> VRCopilot (UIST 2024) — Manual vs Automatic vs Scaffolded AI, 단일 사용자 인테리어 layout</li>
+</ul>
+<p><strong>MAD 15편 추가 후에도 CSI 사용 = 여전히 0편 추가.</strong> mad_06(LLM Discussion)은 표준 창의성 테스트(AUT·Instances·Similarities·Scientific)를 LLM 출력에 적용했지만 사용자 측정이 아님. mad_07(VirSci)도 자동 평가(HD·CD·CI·ON) + human expert 평가지 CSI 아님. <span class="keyfind">표준 CSI로 잰 multi-agent ideation 사용자 연구는 4 컬렉션 통틀어 0편.</span></p>
+</div>
+
+<div class="gap-card">
+<h3>갭 2. 멀티 LLM 에이전트가 서로 인지하며 대화하는 구조를 사람이 관찰/참여하는 실험이 없다</h3>
+<ul>
+<li><strong>Multi-Agent Ideation 27편</strong>: inter-agent dialogue를 시스템 차원에서 도입한 것은 <code>ma_06</code>(PosterMate)과 <code>ma_08</code>(YES AND) 둘 뿐</li>
+<li><strong>VR Ideation 9편</strong>: 0편. <code>vri_05</code>(Grech)가 단일 AI moderator + 인간 그룹 컨셉만 제안</li>
+<li><strong>VR Agent/Avatar 17편</strong>: 0편. <code>vra_08</code>(Korkiakoski) NPC 두 명이지만 <strong>코드 레벨에서 서로 발화를 듣지 못하도록 분리</strong></li>
+<li><strong>Multi-Agent Discussion 15편 (신규)</strong>: 인터에이전트 dialogue를 명시적으로 도입한 시스템 paper 많음 — <code>mad_06</code>(LLM Discussion 3-phase + role-play), <code>mad_07</code>(VirSci 5-stage + invitation mechanism), <code>mad_08</code>(Business Idea Generation), <code>mad_13</code>(IDEO design thinking workshop), <code>mad_14</code>(Dual-diversity Review). <strong>하지만 모두 자동 평가 또는 expert rating — 사용자가 토론을 관찰/참여하는 실험은 0편</strong></li>
+</ul>
+<p>즉 MAD 추가로 "시스템 측면의 inter-agent dialogue 사례"는 풍부해졌으나 <strong>"사람이 그 토론을 경험하고 CSI로 측정"의 빈자리는 그대로</strong>다.</p>
+</div>
+
+<div class="gap-card">
+<h3>갭 3. 비교 패러다임 — MAD가 새 변종을 추가하지만 여전히 사용자 측이 빈약</h3>
+<table>
+<thead><tr><th>비교 패턴</th><th>해당 paper</th></tr></thead>
+<tbody>
+<tr><td>AI 있음 / 없음</td><td>ma_09, ma_16, ma_20, ma_25, vri_02, vri_07(Study1)</td></tr>
+<tr><td>단일 AI 도구 vs 또 다른 단일 AI 도구</td><td>ma_16, ma_26, ma_27, vri_07(Study2), vri_08</td></tr>
+<tr><td>단일 AI vs 멀티 AI (수 비교)</td><td>ma_01, ma_03, ma_10</td></tr>
+<tr><td>멀티 내부 구조 ablation (사용자 없음)</td><td>ma_05, ma_02(질적), <strong>mad_06(LLM Discussion), mad_07(VirSci team size/turns/freshness/diversity), mad_14(dual-diversity)</strong></td></tr>
+<tr><td>Single LLM vs Multi-agent dialogue (자동 평가)</td><td><strong>mad_06, mad_07, mad_12, mad_15</strong></td></tr>
+<tr><td><strong>멀티 내부 상호인지 유/무 × 사용자 × CSI</strong></td><td><strong>0편</strong></td></tr>
+</tbody>
+</table>
+<p>MAD 추가로 "멀티 내부 ablation" 카테고리가 풍부해짐 — 특히 <strong>mad_07 VirSci가 team size(최적 8), discussion turns(최적 5), team freshness(최적 50%), research diversity(25~75%)</strong> 4개 변수 ablation으로 가장 깊은 시스템 사이드 분석. 그러나 사용자가 빠짐.</p>
+</div>
+
+<div class="gap-card">
+<h3>갭 4. 측정과 시스템이 갈라져 있다 — MAD가 시스템 측을 더 깊게 만들지만 사용자 측은 그대로</h3>
+<ul>
+<li><strong>시스템 사이드 (자동 평가 / LLM-as-judge)</strong>: <code>ma_05</code>(Ueda 에이전트 수·다양성·dialogue depth·parallel critique) + <strong>MAD 신규</strong> — <code>mad_06</code>(role-play 효과 + 3-phase 효과 ablation), <code>mad_07</code>(team size·turns·freshness·diversity 4-D ablation), <code>mad_14</code>(dual-diversity review). 모두 자동 평가</li>
+<li><strong>측정 사이드 (인간 사용자 + 표준 척도)</strong>: <code>ma_27</code>(IdeationWeb CSI 5차원), <code>vri_07</code>(VRCopilot CSI). 비교 대상은 둘 다 단일 LLM 도구</li>
+</ul>
+<p>양쪽을 합쳐 "멀티에이전트 내부 구조 변형 + 사람 + CSI"로 본 연구는 <strong>MAD 추가 후에도 여전히 0편</strong>. <span class="keyfind">시스템 측이 더 정교해지면서 측정 측과의 갭이 오히려 벌어짐</span> — 박성훈 연구의 자리가 더 명확해진다.</p>
+</div>
+
+<div class="gap-card">
+<h3>갭 5. 인터에이전트 동학이 유저 경험으로 어떻게 전이되는지 측정 없음</h3>
+<ul>
+<li><code>ma_17</code>(Choi) — LLM 에이전트들 사이의 conformity·동조 메커니즘을 2,500여 시뮬레이션으로 확인. <strong>사람이 빠짐</strong></li>
+<li><code>ma_10</code>(Song) — 에이전트 수가 늘면 사회적 압력 ↑. <strong>ideation 아닌 사회 이슈 토론</strong>, CSI 안 잼</li>
+<li><code>ma_18</code>(Naik) + <strong>신규 <code>mad_10</code>(DIS 2025 Designing with Multi-Agent GenAI)</strong> — 사용자가 멀티에이전트를 "팀"으로 멘탈모델링하면서 loop·오류 전파·투명성을 어렵게 느낀다고 질적 인터뷰. <strong>정량 측정 없음</strong></li>
+<li><strong>신규 <code>mad_03</code>(Yan "Beyond Self-Talk" survey)</strong> — 제목 자체가 "self-talk 패러다임을 넘어야 한다"고 주장. communication-centric framework 제안하나 사용자 측 실증 없음</li>
+<li><strong>신규 <code>mad_02</code>(Lin EMNLP 2025 Creativity Survey)</strong> — <strong>"user study scarcity + 평가 표준 불일치"를 분야의 핵심 갭으로 명시</strong></li>
+</ul>
+<p>MAD 추가로 갭 5가 분야 내에서 인정되는 결락이라는 게 확인됨 — 박성훈 연구의 토론 조건에서 잠복할 conformity / loop / social pressure가 CSI에 어떻게 잡힐지를 같은 실험 안에서 분리·측정한 paper는 0편.</p>
+</div>
+
+<!-- ====================== HYPOTHESIS ====================== -->
+<h2 id="hypo">2. 사용자 가설 평가 — 7편 친척 비교</h2>
+<blockquote>
+선행은 대부분 "AI 있음 vs 없음" 또는 "단일 AI 비교"에 머문다. 에이전트 간 상호인지(mutual awareness) 구조 차이가 유저 CSI에 미치는 영향을 직접 다룬 연구는 없다.
+</blockquote>
+<p><strong>결론: 네 컬렉션 68편 안에서도 가설은 지지된다.</strong></p>
+<p>MAD 추가 후 가장 가까운 선행이 5편 → 7편으로 늘었다. 각각이 어디까지 갔고 어디서 멈췄는지를 보면 갭이 더 명확해진다.</p>
+
+<table>
+<thead><tr><th>#</th><th>Paper</th><th>도달 지점</th><th>멈춘 지점</th></tr></thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><strong>ma_01</strong> MultiColleagues<br><span class="note">Quan et al., CHI 2026</span></td>
+<td>single vs multi를 within-subject로 비교한 가장 가까운 친척 (N=20)</td>
+<td>비교 축이 "멀티 내부 상호인지 유/무"가 아닌 단일 vs 멀티. 측정이 CSI 아닌 12-item 자작 설문. 베이스라인이 ChatGPT 웹</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>ma_27</strong> IdeationWeb<br><span class="note">Shen et al., CHI 2025</span></td>
+<td>68편 중 CSI 5차원 정량 비교에 명시 사용한 유일 paper (N=40)</td>
+<td>비교 대상이 모두 단일 LLM 백엔드 도구. 멀티에이전트 구조 빠짐</td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>ma_05</strong> Ueda et al.<br><span class="note">SIGDIAL 2025</span></td>
+<td>멀티에이전트 내부 변수(에이전트 수·페르소나·depth·critique 수)를 ablation</td>
+<td><strong>사람 사용자 없음</strong>. LLM-as-judge 자동평가로만 novelty·feasibility</td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>vri_07</strong> VRCopilot<br><span class="note">Zhang et al., UIST 2024</span></td>
+<td>VR+AI 아이데이션에 CSI 정밀 적용 (Manual/Automatic/Scaffolded 3조건)</td>
+<td>단일 사용자 · 단일 AI(ATISS) · 인테리어 layout 한정</td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong>vri_05</strong> Grech et al.<br><span class="note">Sensors 2023</span></td>
+<td>VR + AI moderator로 그룹 ideation facilitation — 컨셉적으로 가장 가까움</td>
+<td>실증 부재. 단일 AI moderator + 인간 그룹이라 <strong>에이전트끼리의 토론</strong>은 다루지 않음</td>
+</tr>
+<tr class="new-row">
+<td>6 <span class="new-badge">NEW</span></td>
+<td><strong>mad_06</strong> LLM Discussion<br><span class="note">Lu et al., COLM 2024</span></td>
+<td><strong>3-phase framework (Initiation→Discussion→Convergence) + role-play (6 thinking hats / GPT-4 생성 페르소나).</strong> 4 표준 창의성 테스트(AUT·Instances·Similarities·Scientific). Originality 3.47→4.44(AUT). 인간 평가 align (Kendall τ=0.52). 최적 4 agents × 5 rounds</td>
+<td>저자가 직접 명시: <strong>"framework은 LLM-LLM interaction에만 적용, human-LLM collaboration은 future work"</strong>. 박성훈 연구가 정확히 이 future work</td>
+</tr>
+<tr class="new-row">
+<td>7 <span class="new-badge">NEW</span></td>
+<td><strong>mad_07</strong> VirSci<br><span class="note">Su et al., ACL 2025</span></td>
+<td><strong>5-stage workflow + Invitation Mechanism</strong>. 4-D ablation (team size=8, turns=5, freshness=50%, diversity=25-75%). Novelty +13.8%, Impact +44.1% vs single. Human expert rating Novelty 5.24 vs 4.78 baseline</td>
+<td>완전 자동 시스템. 사용자가 워크플로우에 끼지 않음. CSI 아닌 자작 metric(HD·CD·CI·ON) + expert rating</td>
+</tr>
+</tbody>
+</table>
+
+<p>일곱 paper의 교집합 — "동일한 멀티에이전트 시스템 내부에서 상호인지 유/무를 within-subject로 비교, 사람이 사용자로 들어가고, 종속변수로 표준 CSI를 사용, (선택적으로) VR 임바디먼트를 더함" — 은 여전히 비어 있다.</p>
+
+<p><span class="keyfind"><strong>MAD 추가의 의미</strong>: 시스템 사이드의 정교함이 한 단계 더 올라가서(mad_06의 phase 분리, mad_07의 4-D ablation), "이렇게까지 정교한 multi-agent dialogue 시스템이 있는데 정작 사용자 측 CSI 측정은 0편"이라는 비대칭이 더 부각된다.</span></p>
+
+<!-- ====================== POSITION ====================== -->
+<h2 id="position">3. 사용자 연구의 정확한 위치</h2>
+<p>박성훈의 within-subject "독립 생성 vs 에이전트 간 그룹 토론 × CSI" 디자인은 이제 일곱 paper의 갈라진 갈래를 한 실험에서 합치는 자리에 놓인다.</p>
+
+<p>구체적으로:</p>
+<ul>
+<li><code>ma_27</code>의 <strong>CSI 측정 정밀도</strong>를 가져오고</li>
+<li><code>ma_01</code>의 <strong>single vs multi within-subject 비교</strong> 축으로 옮기되, 비교 차원을 한 단계 더 좁혀</li>
+<li><code>mad_06</code>의 <strong>3-phase + role-play discussion framework</strong>을 그대로 채택하면서</li>
+<li><code>mad_07</code>이 ablation으로 입증한 최적 설정(에이전트 수 = 4~8, turns = 5)을 출발점으로</li>
+<li><strong>"같은 멀티에이전트 시스템 안에서 에이전트들이 서로의 발화를 인지하며 대화하는 조건 vs 각자 독립적으로 생성만 하는 조건"</strong> 으로 본다</li>
+</ul>
+
+<p>이는 <code>ma_05</code>·<code>mad_06</code>·<code>mad_07</code>이 시스템 사이드에서 들춘 멀티 내부 변수를 사람 측 경험으로 끌어 올리는 일이고, <code>ma_06</code>·<code>ma_08</code>·<code>mad_08</code>·<code>mad_13</code>이 디자인 차원에서만 도입했던 inter-agent dialogue를 평가 가능한 실험 변수로 만든다.</p>
+
+<p><code>ma_10</code>·<code>ma_17</code>·<code>ma_18</code>·<code>mad_03</code>(Yan)·<code>mad_10</code>(Designing with MAS)이 경고한 social pressure · conformity · loop · 투명성 문제는 토론 조건에서 잠복할 수 있는 부수 변수로 사후 분석에서 다룰 수 있다.</p>
+
+<p>VR로 확장될 경우(현재 <code>vr-extension</code> 브랜치) 사용자 연구는 <code>vri_05</code>의 컨셉 공백을 실증으로 메우고, <code>vri_07</code>의 측정 정밀도를 그룹 토론 영역으로 확장하며, <code>vra_13</code>이 AI 없이 사람 페어로만 다뤘던 VR 그룹 ideation에 멀티 LLM 에이전트를 도입하는 자리를 점한다. 추가로 <code>vri_04</code>(Lyu)가 명시적으로 future work로 지목한 <strong>"VR과 신기술 통합 (5번째 outline: Integration of technologies)"</strong>의 직접 실행 사례가 된다.</p>
+
+<blockquote>
+사용자 연구가 답하는 질문: <strong>"멀티에이전트 시스템에서 사용자가 느끼는 창의성 지원의 핵심 동인이 에이전트 수인가, 에이전트 간 상호인지인가, 아니면 임바디드 가시화인가"</strong> — 이 질문을 같은 사용자 안에서 분리해 묻는 실험은 68편 안에 없다.
+</blockquote>
+
+<!-- ====================== CITE STRATEGY ====================== -->
+<h2 id="cite">4. 인용 전략 메모 (이론적 배경 작성 시)</h2>
+<table>
+<thead><tr><th>주제</th><th>인용 후보</th></tr></thead>
+<tbody>
+<tr><td>CASA / 사회 인지 이론 토대</td><td><code>ma_11</code> Gambino, <code>ma_10</code> Song — 멀티에이전트가 사회적 그룹으로 인지된다는 이론·증거</td></tr>
+<tr><td>CSI 방법론 정당화</td><td><code>ma_27</code> IdeationWeb, <code>vri_07</code> VRCopilot + Cherry &amp; Latulipe 2014 원논문</td></tr>
+<tr><td>단일 vs 멀티 비교의 기존 결과</td><td><code>ma_01</code> MultiColleagues, <code>ma_03</code> panel size, <code>ma_04</code> PersonaFlow</td></tr>
+<tr><td>멀티 내부 구조의 시스템 사이드 ablation <span class="new-badge">UPDATED</span></td><td><code>ma_05</code> Ueda, <code>ma_06</code> PosterMate, <code>ma_08</code> YES AND, <strong><code>mad_06</code> LLM Discussion (3-phase + role-play), <code>mad_07</code> VirSci (4-D ablation), <code>mad_14</code> Dynamic Knowledge Exchange</strong></td></tr>
+<tr><td>Multi-agent discussion 분야 서베이 <span class="new-badge">NEW</span></td><td><strong><code>mad_02</code> Lin EMNLP 2025 (creativity), <code>mad_03</code> Yan (communication), <code>mad_01</code> Tran (5-D taxonomy), <code>mad_04</code> Chen (general), <code>mad_05</code> He (SE)</strong></td></tr>
+<tr><td>inter-agent 동학이 유저 경험에 끼칠 영향</td><td><code>ma_10</code> Song, <code>ma_17</code> Choi, <code>ma_18</code> Naik, <code>ma_23</code> Jakesch, <strong><code>mad_03</code> Yan "Beyond Self-Talk", <code>mad_10</code> DIS 2025</strong></td></tr>
+<tr><td>VR 임바디먼트의 효과</td><td><code>vri_07</code>, <code>vri_05</code>(컨셉), <code>vra_04</code> GenAI NPC, <code>vra_08</code> 2 NPC, <code>vra_13</code> VR 그룹 brainstorming</td></tr>
+<tr><td>VR + AI 통합 future work 처방 <span class="new-badge">NEW</span></td><td><strong><code>vri_04</code> Lyu 5-outline의 5번째 "Integration of technologies", <code>vra_11</code> Özkaya 멀티에이전트 brainstorming 한 줄 언급, <code>vra_12</code> Agentic AI tutor future work</strong></td></tr>
+<tr><td>자율성 / 소유권 경고</td><td><code>ma_19</code> Naqvi, <code>ma_22</code> Draxler ghostwriter, <code>ma_25</code> over-reliance</td></tr>
+</tbody>
+</table>
+<p>기여 포인트는 다섯 갭을 동시에 메우는 단일 실험이라는 점이며, 특히 <strong>갭 2</strong>(상호인지 유/무를 사람이 직접 경험)와 <strong>갭 4</strong>(시스템 변수와 사용자 측정의 합류)가 차별성의 핵심. <strong>MAD 추가로 갭 4가 더 분명해진다</strong> — mad_06·mad_07의 시스템 사이드 정교함이 사용자 측 측정 부재와 비대칭을 이룸.</p>
+
+<!-- ====================== COLLECTION DETAIL — MA ====================== -->
+<h2 id="col-ma">5. 컬렉션 상세 — Multi-Agent Ideation (27편)</h2>
+
+<details><summary><span class="id">ma_01</span> Towards AI as Colleagues — MultiColleagues <span class="yr">Quan et al., CHI 2026</span></summary>
+<div class="paper-body">
+<p><span class="label">RQ:</span> 단일 에이전트(ChatGPT GPT-4o) vs 다중 에이전트가 사용자의 사회적 현존감·결과물 지각·정교화에 어떻게 다른가</p>
+<p><span class="label">자극물:</span> MultiColleagues 시스템 — GPT-4o 백엔드의 다중 페르소나 에이전트. 베이스라인은 ChatGPT 웹 인터페이스</p>
+<p><span class="label">방법:</span> Within-subject N=20, 두 조건 카운터밸런스. 12-item 자작 설문(7-point Likert), Wilcoxon signed-rank. CSI 미사용</p>
+<p><span class="label">발견:</span> multi-agent가 사회적 현존감·quality/novelty 지각·elaboration에서 유의 우위(p<.05)</p>
+<p><span class="label">위치:</span> 가장 가까운 비교 디자인. 비교 축이 단일 vs 멀티이지 "멀티 내부 상호인지 유/무"가 아님</p>
+</div></details>
+
+<details><summary><span class="id">ma_02</span> Understanding Human–Multi-Agent Team Formation — CrafTeam <span class="yr">Lim et al., CHI 2026</span></summary>
+<div class="paper-body">
+<p><span class="label">자극물:</span> CrafTeam — 사용자가 에이전트 역할·관계를 직접 정의하는 technology probe</p>
+<p><span class="label">방법:</span> Exploratory N=12 디자인 실무자, 3단계 사이클 × 3회, 질적 인터뷰</p>
+<p><span class="label">발견:</span> 초기엔 자율 팀 시도 → inter-agent loop 비생산성 → 사람 직접 오케스트레이션으로 회귀</p>
+<p><span class="label">위치:</span> inter-agent loop·부담을 다룬 질적 인접 연구. CSI 미사용</p>
+</div></details>
+
+<details><summary><span class="id">ma_03</span> More Isn't Always Better <span class="yr">Tsuchiya & Baba, CHI 2026</span></summary>
+<div class="paper-body">
+<p><span class="label">자극물:</span> 3종 closed-task 의사결정 시나리오, AI 패널 크기·합의도·anthropomorphism 조작</p>
+<p><span class="label">방법:</span> 온라인 between-subject. DV: 정확도·의존도·conformity pressure. CSI 미사용</p>
+<p><span class="label">발견:</span> 작은 패널 > 단일 AI, 큰 패널은 추가 이득 없음. 합의 높을수록 over-reliance, 반대 한 명이 압력 깸</p>
+<p><span class="label">위치:</span> ideation 아닌 closed-task. AI들끼리 대화 없고 병렬 자문</p>
+</div></details>
+
+<details><summary><span class="id">ma_04</span> PersonaFlow <span class="yr">Liu et al., DIS 2025</span></summary>
+<div class="paper-body">
+<p><span class="label">자극물:</span> PersonaFlow — 그래프 기반 다중 도메인 전문가 페르소나 시스템 (병렬 자문, 페르소나 간 대화 없음)</p>
+<p><span class="label">방법:</span> N=21 controlled + N=10 open-ended. 자작 설문(creativity 지각·cognitive load·agency) + 인터뷰</p>
+<p><span class="label">발견:</span> 다중 페르소나가 관련성·창의성 지각 향상. 커스터마이즈 시 agency 상승, over-reliance 완화</p>
+<p><span class="label">위치:</span> 다양한 관점 효과는 검증. 에이전트 간 토론/상호인지는 미검증</p>
+</div></details>
+
+<details><summary><span class="id">ma_05</span> Multi-Agent LLM Dialogues for Research Ideation <span class="yr">Ueda et al., SIGDIAL 2025</span></summary>
+<div class="paper-body">
+<p><span class="label">자극물:</span> 멀티에이전트 LLM dialogue 시스템 (변수 조합 ablation용 프레임워크)</p>
+<p><span class="label">방법:</span> 순수 AI 측 ablation, <strong>사람 사용자 없음</strong>. LLM-as-judge로 novelty/feasibility. CSI 미사용</p>
+<p><span class="label">발견:</span> 에이전트 수·dialogue depth·persona 다양성 모두 다양성 증가. critic 다양성이 feasibility 증가</p>
+<p><span class="label">위치:</span> 사용자 연구 시스템 변수와 정확히 같은 축. 사람 측 경험 미관찰 → 시스템 사이드 근거로 인용</p>
+</div></details>
+
+<details><summary><span class="id">ma_06</span> PosterMate <span class="yr">Shin et al., UIST 2025</span></summary>
+<div class="paper-body">
+<p><span class="label">자극물:</span> PosterMate — 마케팅 brief에서 페르소나 생성 → 각자 피드백 → moderator 토론 유도 → 합의된 수정안</p>
+<p><span class="label">방법:</span> N=12 user study + N=100 controlled online. 자작 설문 + 인터뷰. CSI/TLX 미사용</p>
+<p><span class="label">발견:</span> 페르소나가 간과된 관점 포착, 토론이 페르소나 관점을 효과적으로 종합</p>
+<p><span class="label">위치:</span> 에이전트 간 "토론"을 명시적으로 도입한 드문 케이스. CSI 미사용 + 대비 실험 부재</p>
+</div></details>
+
+<details><summary><span class="id">ma_07</span> Design Activity Simulation <span class="yr">Yang et al., CUI 2025</span></summary>
+<div class="paper-body">
+<p><span class="label">자극물:</span> fully-autonomous multi-agent 디자인 시뮬레이션 (인간 디자인 사고 단계 통합 vs 미통합)</p>
+<p><span class="label">방법:</span> HCI 연구자 5명 jury + 전문가 7명 contextual inquiry. CSI 미사용</p>
+<p><span class="label">발견:</span> 인간 사고 기법 통합 시 추론 향상. 결과물 novelty 낮음, grounded·practical</p>
+<p><span class="label">위치:</span> agent 자율성·인간 사고 통합 다루지만 사용자 CSI 없음</p>
+</div></details>
+
+<details><summary><span class="id">ma_08</span> YES AND <span class="yr">Ghosh & Rintel, CHI EA 2025</span></summary>
+<div class="paper-body">
+<p><span class="label">자극물:</span> confidence-based turn-taking multi-agent 프레임워크 (디자인 제안)</p>
+<p><span class="label">방법:</span> Extended Abstract — 시스템·디자인 제안. <strong>정식 사용자 평가 없음</strong></p>
+<p><span class="label">위치:</span> 사용자 연구의 "에이전트 turn 인지 → 사용자 개입" 메커니즘과 디자인적으로 가장 가까움. 효과 검증은 사용자 연구가 최초</p>
+</div></details>
+
+<details><summary><span class="id">ma_09</span> AI-Augmented Brainwriting <span class="yr">Shaer et al., CHI 2024</span></summary>
+<div class="paper-body">
+<p><span class="label">자극물:</span> ChatGPT 단일 인스턴스를 그룹 brainwriting 세션에 통합</p>
+<p><span class="label">방법:</span> 학생 N=16 수업 맥락. DV: idea 수·다양성, expert rating + 일부 자작 설문. CSI 명시 미사용</p>
+<p><span class="label">발견:</span> LLM이 idea generation 외연 확장, evaluation 보조 가능</p>
+<p><span class="label">위치:</span> 그룹+AI 인접. multi-agent도 CSI도 아님</p>
+</div></details>
+
+<details><summary><span class="id">ma_10</span> Multi-Agents Are Social Groups <span class="yr">Song et al., CSCW 2025</span></summary>
+<div class="paper-body">
+<p><span class="label">자극물:</span> 사회적 이슈 토론, AI 에이전트 1/3/5명 조건</p>
+<p><span class="label">방법:</span> N=94 between-subject. DV: 의견 변화·사회적 압력 지각·normative pressure 설문. CSI 미사용</p>
+<p><span class="label">발견:</span> 다중 에이전트가 사회적 압력·의견 이동 키움. 3→5는 효과 정체, 폴라리제이션</p>
+<p><span class="label">위치:</span> "에이전트 수 증가가 유저 지각 변화" 결정적 증거. 토론 조건에 사회적 압력 잠복 가능 경고</p>
+</div></details>
+
+<details><summary><span class="id">ma_11</span> Building a Stronger CASA <span class="yr">Gambino, Fox & Ratan, HMC 2020</span></summary>
+<div class="paper-body">
+<p><span class="label">방법:</span> 이론·문헌 종합. 경험 연구 아님</p>
+<p><span class="label">위치:</span> 사용자가 multi-agent를 사회적으로 인지하는 메커니즘의 이론 토대</p>
+</div></details>
+
+<details><summary><span class="id">ma_12</span> LLM Avatars in VR Pilot <span class="yr">Maslych et al., arXiv 2025</span></summary>
+<div class="paper-body">
+<p><span class="label">자극물:</span> 로컬 LLM + ASR + TTS + 립싱크 파이프라인, 여러 VR 아바타</p>
+<p><span class="label">방법:</span> 파일럿 — 설계 인사이트 중심, 정식 평가 제한적</p>
+<p><span class="label">위치:</span> VR 멀티 아바타 시스템 레퍼런스. ideation/CSI와는 거리</p>
+</div></details>
+
+<details><summary><span class="id">ma_13</span> Privacy Assistants in VR <span class="yr">Freiberger et al., CHI EA 2026</span></summary>
+<div class="paper-body">
+<p><span class="label">자극물:</span> 프라이버시 시나리오에서 텍스트 챗 vs 임바디드 아바타 (두 modality 조건)</p>
+<p><span class="label">방법:</span> Within-subject N=21, 자작 설문 + 인터뷰. CSI 미사용</p>
+<p><span class="label">위치:</span> VR×LLM 인접. modality/embodiment 변수 단서</p>
+</div></details>
+
+<details><summary><span class="id">ma_14</span> ELLMA-T <span class="yr">Pan et al., DIS 2025</span></summary>
+<div class="paper-body">
+<p><span class="label">자극물:</span> VRChat 기반 임바디드 LLM 영어 튜터, 역할극 시나리오</p>
+<p><span class="label">방법:</span> N=12 학습자 반구조 인터뷰 + 세션. CEFR 기록. CSI 미사용</p>
+<p><span class="label">위치:</span> VR+LLM+사회적 학습 인접. ideation 아님</p>
+</div></details>
+
+<details><summary><span class="id">ma_15</span> Avatars and Environments for Meetings in Social VR <span class="yr">Osborne et al., arXiv 2025 (초록만)</span></summary>
+<div class="paper-body">
+<p><span class="label">자극물:</span> Mozilla Hubs 2×2 (환경×아바타 스타일)</p>
+<p><span class="label">방법:</span> 서베이 N=87 + lab N=40 페어. 인간 협업자, LLM 없음</p>
+<p><span class="label">위치:</span> VR 그룹 창의성 baseline. AI 부재로 사용자 연구와는 다름</p>
+</div></details>
+
+<details><summary><span class="id">ma_16</span> Human Creativity in the Age of LLMs <span class="yr">Kumar et al., CHI 2025</span></summary>
+<div class="paper-body">
+<p><span class="label">자극물:</span> divergent/convergent thinking 과제, LLM 도움 3 조건(없음/standard/coach)</p>
+<p><span class="label">방법:</span> 사전등록 대규모 N=1,100. DV: idea 양/품질 expert rating. CSI 미사용</p>
+<p><span class="label">발견:</span> LLM이 단기 boost. 그러나 unassisted phase에서 인간 창의성 저하 가능</p>
+<p><span class="label">위치:</span> "AI 있음 vs 없음 / 단일 AI 변형" 전형 — 사용자 가설이 지적하는 패턴</p>
+</div></details>
+
+<details><summary><span class="id">ma_17</span> Group Conformity in Multi-Agent Systems <span class="yr">Choi et al., ACL Findings 2025</span></summary>
+<div class="paper-body">
+<p><span class="label">자극물:</span> 다양한 토픽의 multi-agent 토론 시나리오 (LLM 에이전트만)</p>
+<p><span class="label">방법:</span> 시뮬레이션 ~2,500회. <strong>사람 없음</strong>. agent-agent 동학 분석</p>
+<p><span class="label">발견:</span> 중립 에이전트가 다수파/더 똑똑한 에이전트에 순응. 능력 차이 클수록 동조 강화</p>
+<p><span class="label">위치:</span> 에이전트 간 사회적 압력 메커니즘 증거. 사용자 연구 토론 조건 내부 동학 예측에 핵심</p>
+</div></details>
+
+<details><summary><span class="id">ma_18</span> Mental Models of Early Adopters of Multi-Agent Gen AI <span class="yr">Naik et al., arXiv 2025</span></summary>
+<div class="paper-body">
+<p><span class="label">자극물:</span> 참가자 본인의 실사용 multi-agent 도구 경험 (Microsoft 사내)</p>
+<p><span class="label">방법:</span> Microsoft 13명 반구조 인터뷰, 질적. 정량 측정 없음</p>
+<p><span class="label">발견:</span> multi-agent를 "팀"으로 개념화. loop·오류 전파·투명성 부족이 주요 문제</p>
+<p><span class="label">위치:</span> 토론 조건에서 사용자가 무엇을 어렵게 느낄지 단서</p>
+</div></details>
+
+<details><summary><span class="id">ma_19</span> Catalyst for Creativity or a Hollow Trend <span class="yr">Naqvi, He & Kaur, CHI 2025</span></summary>
+<div class="paper-body">
+<p><span class="label">자극물:</span> 참가자 본인이 사용한 GenAI 도구 + 본인 작업 아티팩트</p>
+<p><span class="label">방법:</span> 디자이너 N=28 아티팩트 기반 인터뷰. 질적</p>
+<p><span class="label">발견:</span> AI 도구는 효율은 올리지만 소유권 인식을 흐리게 함</p>
+<p><span class="label">위치:</span> 창의성·소유권 거시 담론. 사후 분석에 인용</p>
+</div></details>
+
+<details><summary><span class="id">ma_20</span> Exploring Creativity in Human-AI Co-Creation <span class="yr">Wang et al., Frontiers 2025</span></summary>
+<div class="paper-body">
+<p><span class="label">자극물:</span> HAI-CDP 워크플로우 vs 전통 워크플로우</p>
+<p><span class="label">방법:</span> 신참·숙련 비교 실험. 자체 창의성 평가 설문 (CSI 명시 미사용)</p>
+<p><span class="label">발견:</span> HAI-CDP가 전통 대비 우위. 신참은 발상(divergent), 숙련은 정교화(convergent)에서 도움</p>
+<p><span class="label">위치:</span> 경험 수준 조절변수 레퍼런스. multi-agent 아님</p>
+</div></details>
+
+<details><summary><span class="id">ma_21</span> AI-reframed Positive Summary in Peer Review <span class="yr">Yang et al., CHI 2025</span></summary>
+<div class="paper-body">
+<p><span class="label">방법:</span> 온라인 2×2 N=137. DV: autonomy/competence/fairness 자체 설문</p>
+<p><span class="label">위치:</span> ideation 아님, multi-agent 아님. 인접만</p>
+</div></details>
+
+<details><summary><span class="id">ma_22</span> The AI Ghostwriter Effect <span class="yr">Draxler et al., TOCHI 2024</span></summary>
+<div class="paper-body">
+<p><span class="label">방법:</span> 두 차례 실험 n1=30, n2=96. CSI 미사용</p>
+<p><span class="label">발견:</span> 사용자가 AI 생성물을 자기 것으로 인식 안 하면서도 외부 대상으로는 저자 선언 (ghostwriter effect)</p>
+<p><span class="label">위치:</span> 소유권/저자성 이론. 사후 분석 유용</p>
+</div></details>
+
+<details><summary><span class="id">ma_23</span> Co-Writing with Opinionated LLMs <span class="yr">Jakesch et al., CHI 2023</span></summary>
+<div class="paper-body">
+<p><span class="label">방법:</span> 대규모 N=1,506. 사전·사후 의견 측정. CSI 미사용</p>
+<p><span class="label">발견:</span> LLM의 latent persuasion 실증 — 사용자 의견이 LLM 입장으로 유의 이동, 자각 없음</p>
+<p><span class="label">위치:</span> 토론 조건에서 에이전트 합의 방향 동조 가능성 경고</p>
+</div></details>
+
+<details><summary><span class="id">ma_24</span> Sense of Agency Scale <span class="yr">Tapal et al., Front. Psychol. 2017</span></summary>
+<div class="paper-body">
+<p><span class="label">방법:</span> 심리측정 — 요인 분석, 신뢰도·타당도 검증</p>
+<p><span class="label">위치:</span> CSI 외 agency 보조 측정 시 인용할 표준 척도</p>
+</div></details>
+
+<details><summary><span class="id">ma_25</span> Trust and Reliance on AI <span class="yr">Klingbeil et al., CHB 2024</span></summary>
+<div class="paper-body">
+<p><span class="label">방법:</span> N=319 Prolific 행동 실험. 의사결정 행동 측정. CSI 미사용</p>
+<p><span class="label">발견:</span> 정확도 낮은 AI에도 사용자 의존 지속 — over-reliance 패턴</p>
+<p><span class="label">위치:</span> over-reliance 핵심 문헌. ideation 아님</p>
+</div></details>
+
+<details><summary><span class="id">ma_26</span> AIdeation <span class="yr">Wang et al., CHI 2025</span></summary>
+<div class="paper-body">
+<p><span class="label">자극물:</span> AIdeation — 컨셉 디자인 워크플로우 통합 AI 도구</p>
+<p><span class="label">방법:</span> Formative 12 + Summative 16 + Field 4 스튜디오. 자작 7-point Likert + 인터뷰. CSI 명시 안 됨</p>
+<p><span class="label">발견:</span> 창의성·효율·만족 유의 향상. 일부 스튜디오 상용 채택</p>
+<p><span class="label">위치:</span> 사용자 연구 가까운 친척. single-LLM, multi-agent 토론 구조 아님</p>
+</div></details>
+
+<details><summary><span class="id">ma_27</span> IdeationWeb <span class="yr">Shen et al., CHI 2025</span></summary>
+<div class="paper-body">
+<p><span class="label">자극물:</span> IdeationWeb (mind-map UI + LLM) vs ChatGPT (대화형 UI + LLM). 둘 다 단일 LLM</p>
+<p><span class="label">방법:</span> Within-subject N=40, 두 task 카운터밸런스. <strong>CSI 5차원 명시 사용</strong> + 자작 인터랙션 + 전문가 평가</p>
+<p><span class="label">발견:</span> IdeationWeb이 CSI 5차원 모두에서 유의 우위. 전문가 평가 quality도 우위</p>
+<p><span class="label">위치:</span> 27편 중 CSI 정량 비교 유일하게 사용. multi-agent 비교 아니지만 측정 방법론 직접 레퍼런스</p>
+</div></details>
+
+<!-- ====================== COLLECTION DETAIL — VRI ====================== -->
+<h2 id="col-vri">6. 컬렉션 상세 — VR Ideation (9편)</h2>
+
+<details><summary><span class="id">vri_01</span> VIVRA — Immersed in my Ideas <span class="yr">Xing et al., IUI Companion 2025</span></summary>
+<div class="paper-body">
+<p><span class="label">자극물:</span> 휴가 아이디어 등 3분 think-aloud. 3 조건: VIVRA(LLM 풍선) vs 벽 transcript vs 워드클라우드</p>
+<p><span class="label">방법:</span> Meta Quest 2. Exploratory N=29 + Within-subject N=10. NASA-TLX + SUS + 5점 Likert</p>
+<p><span class="label">발견:</span> VIVRA가 즐거움·annotation 유용성·아이디어 추적/확장에서 우위. 컨트롤러·시야 가림·인지 부담 호소</p>
+<p><span class="label">Limitation:</span> N=10 소표본, 단일 사용자 한정. multi-player VIVRA future work</p>
+</div></details>
+
+<details><summary><span class="id">vri_02</span> User Experience with VR in Team Prototyping/Brainstorming <span class="yr">Bauerová et al., IJHCI 2025</span></summary>
+<div class="paper-body">
+<p><span class="label">자극물:</span> (a) 프로토타이핑 VR vs 물리, (b) 브레인스토밍 VR vs 물리</p>
+<p><span class="label">방법:</span> Between-subject N=87. DV: 시간·콘텐츠 분석·enjoyment·NASA-TLX 차용. Mann-Whitney U</p>
+<p><span class="label">발견:</span> 프로토타이핑은 VR이 더 느림. 브레인스토밍은 VR이 더 빠르고 즐거움 높음</p>
+<p><span class="label">위치:</span> VR vs 물리. AI 없음. "VR이 브레인스토밍에 우호적" 결과가 환경 선택 정당화에 인용</p>
+</div></details>
+
+<details><summary><span class="id">vri_03</span> Virtual Brainstorming and Creativity — 리뷰 <span class="yr">Gong et al., ICED 2021</span></summary>
+<div class="paper-body">
+<p><span class="label">검색:</span> Scopus·WoS·EBSCO·IEEE·ACM 5 DB, "virtual reality" & "creativity" & "brainstorming"</p>
+<p><span class="label">기간:</span> 2013–2020 (검색일 2020-08)</p>
+<p><span class="label">N:</span> 15편 (초기 65 + 보충 2 → 포함기준 4개·제외기준 3개 적용)</p>
+<p><span class="label">분류:</span> 4 카테고리(avatar/environment/interface/application). Interface 단독 1편뿐</p>
+<p><span class="label">발견:</span> HMD 소수, 데스크탑/Second Life 다수. Creative avatar·social identity cue·priming이 창의성에 긍정. 측정도구 paper별로 다름(표준화 부재)</p>
+<p><span class="label">위치:</span> VR 브레인스토밍 분야 첫 systematic review. 측정 표준화 부재가 CSI 사용 정당화에 인용</p>
+</div></details>
+
+<details><summary><span class="id">vri_04</span> Design-thinking Skill Enhancement in VR — 리뷰 <span class="yr">Lyu et al., Frontiers VR 2023</span></summary>
+<div class="paper-body">
+<p><span class="label">검색:</span> Scopus(161) + WoS(55) + ACM(7) = 223 → PRISMA 4단계 → 54편 (검색일 2022-04-30)</p>
+<p><span class="label">분류:</span> <strong>Lubart(2005) 4분류 + Thornhill-Miller·Dupont(2016) VR 확장의 5-outline framework</strong></p>
+<ul style="font-size:.92rem">
+<li>① Self/Self-perception (2편) — Proteus 효과·ghost engineering·empathy mirror</li>
+<li>② Collaborations (9편) — CMC·CVE, VR이 협업 강화하나 F2F만큼은 아님</li>
+<li>③ Environmental conditions (17편 — 최다) — priming·openness·contextual cue</li>
+<li>④ Problem-solving process (13편) — design thinking 단계 게임화</li>
+<li>⑤ Integration of technologies (12편) — <strong>AI 통합 0편 — 명시적 future work</strong></li>
+</ul>
+<p><span class="label">단계 분포:</span> Prototyping 40편, Ideation 33편, Empathize/Define 최소</p>
+<p><span class="label">VR type:</span> HMD 23편 ≫ CAVE 3편. 2015 이후 immersive 우세</p>
+<p><span class="label">결론 future work 5가지:</span> ① art/humanities 관점, ② VR 인지 과정, ③ Empathize/Define 단계, ④ <strong>Metaverse + AI 통합</strong>, ⑤ 가상-현실 hybrid</p>
+<p><span class="label">위치:</span> 박성훈 연구가 Lyu의 5번째 outline(AI 통합)을 직접 실행. Discussion에 인용 핵심</p>
+</div></details>
+
+<details><summary><span class="id">vri_05</span> Industry 5.0 AI+VR Brainstorming Framework <span class="yr">Grech et al., Sensors 2023</span></summary>
+<div class="paper-body">
+<p><span class="label">자극물:</span> 프레임워크 컨셉 — "intelligent moderator" AI agent가 VR에서 토론 운영. 음성/감정/제스처 통합</p>
+<p><span class="label">방법:</span> <strong>실험 없음</strong>. SCOPUS 문헌 분석 + 프레임워크 제안</p>
+<p><span class="label">발견(개념):</span> AI 모더레이터가 사회불안·production blocking·social loafing 완화. Proteus 효과·익명성 강조</p>
+<p><span class="label">Limitation:</span> 실증 부재. <strong>단일 AI moderator + 인간 그룹 — 에이전트끼리 토론 다루지 않음</strong></p>
+<p><span class="label">위치:</span> 사용자 연구와 컨셉적으로 가장 가까운 한 편. 실증 + 멀티에이전트 토론 공백 채움</p>
+</div></details>
+
+<details><summary><span class="id">vri_06</span> VR design-build-test games for design cognition <span class="yr">Neroni et al., IJDCI 2021</span></summary>
+<div class="paper-body">
+<p><span class="label">자극물:</span> HTC Vive + Fantastic Contraption + 펜 sketch</p>
+<p><span class="label">방법:</span> 워크숍 2회 × 4명. 1명만 VR 조작. 정성 관찰. enjoyment 7점 척도</p>
+<p><span class="label">발견:</span> VR이 sketch가 못 잡는 fixation/iteration 행동 드러냄. enjoyment 평균 ~6/7</p>
+<p><span class="label">위치:</span> AI 없음. multi-user co-located VR future work — 사용자 연구 방향과 겹침</p>
+</div></details>
+
+<details><summary><span class="id">vri_07</span> VRCopilot <span class="yr">Zhang et al., UIST 2024</span></summary>
+<div class="paper-body">
+<p><span class="label">자극물:</span> 3D 인테리어 layout 과제. Study 1: AI 유/무 2조건. Study 2: Manual/Automatic/Scaffolded 3조건</p>
+<p><span class="label">방법:</span> Meta Quest. Study 1 N=14, Study 2 N=15 within-subject. <strong>DV: CSI</strong> + NASA-TLX + agency 자작 + 전문가 평가 + 인터뷰</p>
+<p><span class="label">발견:</span> Scaffolded(wireframe)가 agency·CSI 균형 최고. Automatic은 영감은 주나 agency 깎음</p>
+<p><span class="label">위치:</span> VR+AI에 CSI 쓴 거의 유일한 정밀 측정. 사용자 연구 CSI 사용 두 번째 레퍼런스. 단일 사용자·단일 AI 한정</p>
+</div></details>
+
+<details><summary><span class="id">vri_08</span> EchoLadder <span class="yr">Hou et al., UIST 2025</span></summary>
+<div class="paper-body">
+<p><span class="label">자극물:</span> VR scene 편집. EchoLadder(suggestion) vs baseline(즉시 적용)</p>
+<p><span class="label">방법:</span> Study 1 ablation N=18. Study 2 N=12 within-subject. DV: NASA-TLX + 7점 Likert + 인터뷰. <strong>CSI 미사용</strong></p>
+<p><span class="label">발견:</span> EchoLadder가 inspiration·control에서 호평. workflow가 top-down vs bottom-up 갈림. decision fatigue</p>
+<p><span class="label">위치:</span> "suggestion이 영감 + 과부하 동시 유발" 발견이 토론 조건 정보 과부하 예측에 참고</p>
+</div></details>
+
+<details><summary><span class="id">vri_09</span> How People Prompt GenAI for Interactive VR Scenes <span class="yr">Aghel Manesh et al., DIS 2024</span></summary>
+<div class="paper-body">
+<p><span class="label">자극물:</span> 32개 referent Wizard-of-Oz. In situ(VR HMD) vs Ex situ(데스크탑)</p>
+<p><span class="label">방법:</span> Between-subject N=22. 음성 prompt. DV: prompt 단어 수·구조 빈도 + 인터뷰</p>
+<p><span class="label">발견:</span> In situ는 단어 적고 self-centric/spatial deictic + 손짓. Ex situ는 길고 묘사적</p>
+<p><span class="label">위치:</span> VR 안에서 AI 지시 발화 패턴 자료. 토론 개입 발화 분석에 참고</p>
+</div></details>
+
+<!-- ====================== COLLECTION DETAIL — VRA ====================== -->
+<h2 id="col-vra">7. 컬렉션 상세 — VR Agent/Avatar (17편)</h2>
+
+<details><summary><span class="id">vra_01</span> Milo: LLM-based virtual human XR platform <span class="yr">Shoa & Friedman, Frontiers VR 2025</span></summary>
+<div class="paper-body">
+<p><span class="label">자극물:</span> Sushi with Einstein 패널 / ConVRSelf 자기대화 / 콘퍼런스 라이브</p>
+<p><span class="label">방법:</span> 시스템 + 사례. text 17 / VR 13 informal evaluation ("정식 결과 아님")</p>
+<p><span class="label">위치:</span> "멀티"는 1 에이전트 + 다수 인간. 에이전트 간 대화 다루지 않음</p>
+</div></details>
+
+<details><summary><span class="id">vra_02</span> Multiple Conversational Avatars in VR Pilot <span class="yr">Maslych et al., 2025</span></summary>
+<div class="paper-body">
+<p><span class="label">자극물:</span> 가상 마을, 점원 아바타 3명(호두 구매 시나리오). 로컬 LLM + ASR + TTS + 립싱크</p>
+<p><span class="label">방법:</span> 파일럿 N=8. 3 아바타 순차 만남. 리얼리즘·응답성 평정 + 헤드 게이즈</p>
+<p><span class="label">발견:</span> 상태 표시 선호. 리얼리즘 평균 4.38/7</p>
+<p><span class="label">위치:</span> 여러 아바타지만 각각 1:1, 아바타 간 상호작용 없음</p>
+</div></details>
+
+<details><summary><span class="id">vra_03</span> Voice2Action <span class="yr">Su, 2023</span></summary>
+<div class="paper-body">
+<p><span class="label">자극물:</span> 도시공학 VR 환경, 합성 명령 데이터셋</p>
+<p><span class="label">방법:</span> 시스템 논문. <strong>인간 사용자 연구 없음</strong></p>
+<p><span class="label">위치:</span> "캐릭터" 아닌 명령 실행기</p>
+</div></details>
+
+<details><summary><span class="id">vra_04</span> Dialogs with GenAI NPCs in VR Game <span class="yr">Zargham et al., IJHCI 2026</span></summary>
+<div class="paper-body">
+<p><span class="label">자극물:</span> VR 게임 시나리오, GenAI 음성 NPC. 캐나다 20·네덜란드 28 국제 비교</p>
+<p><span class="label">방법:</span> N=48. DV: PXI + 사회적 실재감 자작 + 인터뷰</p>
+<p><span class="label">발견:</span> 즉흥적 사회적 실재감. 응답 길이·발화 타이밍이 좌절 유발. 캐릭터 호감도 성별 편향</p>
+<p><span class="label">위치:</span> 참가자 1 ↔ NPC 다수 1:1. NPC끼리 토론 없음</p>
+</div></details>
+
+<details><summary><span class="id">vra_05</span> Mitigating Response Delays with LLM-powered IVAs <span class="yr">Maslych et al., 2025</span></summary>
+<div class="paper-body">
+<p><span class="label">자극물:</span> 9명 가상 에이전트 × 3 환경. filler 조건 5종</p>
+<p><span class="label">방법:</span> N=54, 18-order Latin square. DV: 사회적 실재감 PSQ 10문항. ART-ANOVA</p>
+<p><span class="label">발견:</span> 4초 이상 지연이 경험 질 저하. Natural filler가 64.8% 선호</p>
+<p><span class="label">위치:</span> 모든 측정 1:1. 지연 임계점(4초)이 사용자 연구 TTS·A2F 설계에 직접 참고</p>
+</div></details>
+
+<details><summary><span class="id">vra_06</span> Conversing with AI agents in VR — Alignment & Modality <span class="yr">Rueb & Sra, 2025</span></summary>
+<div class="paper-body">
+<p><span class="label">자극물:</span> 5분 VR 대화. 2×2 (congruent/incongruent × voice/text). 총기법 토픽</p>
+<p><span class="label">방법:</span> N=37. DV: SAM + Gullibility + Consensus + IBIS 논증</p>
+<p><span class="label">발견:</span> 불일치 조건이 편향 지각 상승. 정중 참여</p>
+<p><span class="label">위치:</span> 사람 1 ↔ AI 1 토론. 에이전트 간 토론 아님</p>
+</div></details>
+
+<details><summary><span class="id">vra_07</span> ELLMA-T (Pan et al.) <span class="yr">DIS 2025</span></summary>
+<div class="paper-body">
+<p><span class="label">자극물:</span> VRChat 기반 ELLMA-T 튜터 + CEFR 시나리오</p>
+<p><span class="label">방법:</span> N=12 학습자. 반구조 인터뷰 + 역할극</p>
+<p><span class="label">발견:</span> 임바디드 환경이 상황적 학습·정서 지지 강화</p>
+<p><span class="label">위치:</span> 사람 1 ↔ 튜터 1. ideation/CSI 아님</p>
+</div></details>
+
+<details><summary><span class="id">vra_08</span> AI-Powered NPCs' Realism in VR <span class="yr">Korkiakoski et al., 2025</span></summary>
+<div class="paper-body">
+<p><span class="label">자극물:</span> VR 심문 시뮬레이터, NPC 2명 (용의자 + 파트너). <strong>두 NPC가 서로 발화를 듣지 못하도록 코드 분리(line 254)</strong></p>
+<p><span class="label">방법:</span> N=18. DV: SUS + GEQ 사회적 실재감 + Virtual Agent Believability + 사이클 지연</p>
+<p><span class="label">발견:</span> SUS 79.44, 신뢰감 6.67/10, 평균 지연 7초</p>
+<p><span class="label">위치:</span> 에이전트 "두 명 공존"의 가장 가까운 사례지만 사람을 매개로만 연결, 진짜 에이전트 간 대화 아님</p>
+</div></details>
+
+<details><summary><span class="id">vra_09</span> User Acceptance toward LLM Agents in Immersive XR <span class="yr">Bozkir & Kasneci, 2025</span></summary>
+<div class="paper-body">
+<p><span class="label">자극물:</span> 시나리오 기반 — XR(VR/AR) × 모달리티(음성/텍스트) × 데이터 위치(로컬/하이브리드/클라우드)</p>
+<p><span class="label">방법:</span> Prolific N=1,036, 2×2×3 between. <strong>실제 상호작용 없음 — 설문</strong>. UTAUT2 기반</p>
+<p><span class="label">발견:</span> 수용도 대체로 높음. 위치 데이터 우려 가장 큼. XR 안경 보유자 수용도 오히려 낮음</p>
+<p><span class="label">위치:</span> 시나리오 설문, 에이전트 간 상호작용 변수 없음</p>
+</div></details>
+
+<details><summary><span class="id">vra_10</span> Integrating Personality into Digital Humans — 리뷰 <span class="yr">Brito et al., 2025</span></summary>
+<div class="paper-body">
+<p><span class="label">방법:</span> 문헌 리뷰. 사용자 연구 아님</p>
+<p><span class="label">분류:</span> (1) Personality 부여 방법 — zero/few-shot, fine-tuning, (2) 평가 — BFI/Likert/LLM-as-judge, (3) 출력 modality — 텍스트/표정·제스처</p>
+<p><span class="label">발견:</span> BFI/Likert/LLM-as-judge 혼재. 멀티모달 출력 평가 표준 부재</p>
+<p><span class="label">위치:</span> 단일 에이전트 personality 주제. 멀티 토론 거의 미다룸. 에이전트 페르소나 설계 시 참고</p>
+</div></details>
+
+<details><summary><span class="id">vra_11</span> How LLMs are Shaping the Future of VR — 리뷰 <span class="yr">Özkaya et al., 2025</span></summary>
+<div class="paper-body">
+<p><span class="label">검색:</span> 학술 DB(IEEE/ACM/Scopus) + 산업 keynote/whitepaper</p>
+<p><span class="label">기간:</span> 2018–2025 (8년)</p>
+<p><span class="label">N:</span> 62편</p>
+<p><span class="label">분류:</span> NPC 적응성 / 내러티브 / 접근성 / 게임마스터링 / 멀티에이전트 조정(소수)</p>
+<p><span class="label">발견:</span> LLM이 NPC·내러티브·접근성에서 유망. 실시간 성능·메모리·일관성·<strong>다중에이전트 조정 자원 부담 큼</strong>. "Lin et al. VR brainstorming" 한 줄 인용</p>
+<p><span class="label">위치:</span> <strong>본 컬렉션에서 "멀티에이전트 brainstorming in VR" 직접 언급한 거의 유일한 항목</strong>. 멀티에이전트 조정 future work 명시</p>
+</div></details>
+
+<details><summary><span class="id">vra_12</span> Agentic AI-Enhanced VR for Adaptive Learning <span class="yr">Kishor et al., 2025</span></summary>
+<div class="paper-body">
+<p><span class="label">자극물:</span> Agentic-VR vs 정적 VR (3개 학습 모듈, RL 기반 적응)</p>
+<p><span class="label">방법:</span> 파일럿 N=10. HTC Vive Pro 2. DV: NASA-TLX + 학습 보존·개인화율</p>
+<p><span class="label">발견:</span> 학습 보존 +35.7%, 인지 과부하 -42.1%, 92.3% 시나리오 자동 개인화</p>
+<p><span class="label">위치:</span> <strong>"멀티에이전트 협업 교실"이 명시적 future work</strong> — 본인도 못 했다는 자기 진단</p>
+</div></details>
+
+<details><summary><span class="id">vra_13</span> Avatars and Environments in Social VR — Group Creativity <span class="yr">Osborne et al., 2025</span></summary>
+<div class="paper-body">
+<p><span class="label">자극물:</span> Study 1: 45 아바타 × 21 환경. Study 2: 아바타(배정/자기선택) × 환경(business/creative) 2×2. 10분 brainstorming</p>
+<p><span class="label">방법:</span> Study 1 N=87, Study 2 N=40 페어(20쌍). DV: 발화 분석 + 자작 Creative Performance + 인터뷰. <strong>CSI 미사용</strong></p>
+<p><span class="label">발견:</span> 자기선택 아바타 + 풍부한 환경에서 연결감·창의 시너지 호평</p>
+<p><span class="label">위치:</span> <strong>본 컬렉션에서 사용자 연구와 가장 가까운 사람 페어 ideation</strong>. AI 에이전트 없음</p>
+</div></details>
+
+<details><summary><span class="id">vra_14</span> Persona and Task in Social Interactions with LLM-ECA <span class="yr">Kroczek et al., 2024 (초록만)</span></summary>
+<div class="paper-body">
+<p><span class="label">자극물:</span> VR 단일 가상 에이전트 (외향/내향) × 3 과제(스몰토크/지식/설득)</p>
+<p><span class="label">방법:</span> N=46. 평정 + 발화량/턴 수 + 도움 요청</p>
+<p><span class="label">발견:</span> 외향형이 더 긍정·몰입·현실적 평가</p>
+<p><span class="label">위치:</span> 단일 에이전트 1:1. 페르소나 효과 → 에이전트 캐릭터 설계 참고</p>
+</div></details>
+
+<details><summary><span class="id">vra_15</span> Text-Only vs VR-Embodied Agents for Skills Training <span class="yr">Yoo et al., CSCW Companion 2025 (초록만)</span></summary>
+<div class="paper-body">
+<p><span class="label">위치:</span> 제목 기준 텍스트 vs VR 단일 에이전트 비교 구조</p>
+</div></details>
+
+<details><summary><span class="id">vra_16</span> Building LLM-based AI Agents in Social VR <span class="yr">Wan et al., CHI 2024</span></summary>
+<div class="paper-body">
+<p><span class="label">자극물:</span> VRChat 내 LLM NPC, 검색·기억 파라미터 grid (m·n)</p>
+<p><span class="label">방법:</span> LLM-judge + Human Evaluation 정렬</p>
+<p><span class="label">발견:</span> m=3, n=5 최적. LLM-judge와 인간 평가 정렬</p>
+<p><span class="label">위치:</span> 에이전트 1 ↔ 플레이어 다수 1:N. 에이전트 간 토론 아님</p>
+</div></details>
+
+<details><summary><span class="id">vra_17</span> LLM Agents for Spatial Interactions in VR Role-Play <span class="yr">Li et al., IEEE VR 2025 (초록만)</span></summary>
+<div class="paper-body">
+<p><span class="label">위치:</span> 제목 기준 단일 에이전트 + 공간 인지가 핵심</p>
+</div></details>
+
+<!-- ====================== COLLECTION DETAIL — MAD (NEW) ====================== -->
+<h2 id="col-mad">8. 컬렉션 상세 — Multi-Agent Discussion (15편, 신규) <span class="new-badge">NEW</span></h2>
+
+<p class="note">2024-2026 multi-agent <strong>discussion</strong>(debate가 아닌 collaborative 협의) 관련 신규 컬렉션. 서베이 5편 + 시스템/실증 10편. Zotero <code>Multi-Agent Discussion</code> 컬렉션(cid=183)에 DOI 포함하여 추가 완료.</p>
+
+<details><summary><span class="id mad">mad_01</span> Multi-Agent Collaboration Mechanisms: A Survey of LLMs <span class="yr">Tran et al., 2025-01 (arxiv 2501.06322)</span></summary>
+<div class="paper-body">
+<p><span class="label">저자:</span> Khanh-Tung Tran 외 5인 (UCC, Trinity College Dublin)</p>
+<p><span class="label">RQ:</span> LLM 기반 multi-agent collaboration mechanism을 어떻게 체계적으로 분류·이해할 수 있는가</p>
+<p><span class="label">분류 (5-D taxonomy — 핵심 기여):</span> Actors / Interaction types(cooperation·competition·coopetition) / Organizational structures(peer-to-peer·centralized·distributed) / Strategies(role-based·model-based) / Coordination protocols</p>
+<p><span class="label">적용 도메인:</span> 네트워킹·산업 자동화·QA·사회적 컨텍스트</p>
+<p><span class="label">Future work:</span> "artificial collective intelligence" 도달의 challenge — 평가 표준화·통합 벤치마크·확장성</p>
+<p><span class="label">위치:</span> 사용자 연구 토론 조건을 "cooperation + peer-to-peer + role-based + mutual-awareness protocol"로 매핑 가능한 분류 어휘 제공</p>
+</div></details>
+
+<details><summary><span class="id mad">mad_02</span> Creativity in LLM-based Multi-Agent Systems: A Survey ⭐ <span class="yr">Lin et al., EMNLP 2025 Main (arxiv 2505.21116)</span></summary>
+<div class="paper-body">
+<p><span class="label">저자:</span> Yi-Cheng Lin 외 7인 (NTU, Hung-yi Lee 그룹)</p>
+<p><span class="label">RQ:</span> LLM 기반 MAS가 creative output을 어떻게 생성하는가 — 인간-AI 공동 창의의 분류와 갭</p>
+<p><span class="label">분류:</span> (1) Agent proactivity(reactive vs proactive), (2) Persona design(다양성·특화), (3) Generation methods(divergent exploration·iterative refinement·collaborative synthesis), (4) Evaluation(automatic vs human vs LLM-as-judge)</p>
+<p><span class="label">핵심 발견:</span> Divergent exploration이 가장 흔한 전략. Iterative refinement가 quality 향상에 기여. <strong>인간 사용자 user study가 매우 드물고, LLM-as-judge 또는 자동평가에 편중</strong></p>
+<p><span class="label">명시 갭 4가지:</span> ① 평가 표준 불일치, ② bias mitigation 부족, ③ coordination conflict, ④ unified benchmark 부재</p>
+<p><span class="label">위치:</span> <strong>박성훈 연구 인용 핵심.</strong> "Lin et al. EMNLP 2025 identified user study scarcity as a key gap; our work directly addresses this by..." 한 단락이 자연스러움</p>
+</div></details>
+
+<details><summary><span class="id mad">mad_03</span> Beyond Self-Talk: A Communication-Centric Survey ⭐ <span class="yr">Yan et al., 2025-02 (arxiv 2502.14321)</span></summary>
+<div class="paper-body">
+<p><span class="label">저자:</span> Bingyu Yan 외 8인 (Beihang University 등)</p>
+<p><span class="label">RQ:</span> LLM-MAS를 communication 관점에서 어떻게 체계화할 수 있는가</p>
+<p><span class="label">분류 (2-layer framework):</span></p>
+<ul style="font-size:.93rem">
+<li><strong>System-level</strong>: Architecture(flat/hierarchical/team/society/hybrid) + Goals(cooperation/competition/mixed) + Protocols(MCP/A2A/ANP)</li>
+<li><strong>Internal</strong>: Strategies(one-by-one/simultaneous/summarizer) + Paradigms(message-passing/speech-acts/blackboard) + Objects(self/other-agent/environment/human) + Content(explicit/implicit)</li>
+</ul>
+<p><span class="label">분석 corpus:</span> 68+ 시스템</p>
+<p><span class="label">핵심 발견:</span> 지금까지 연구가 "self-talk" 패러다임에 머물고 진짜 inter-agent dialogue 부재. 프로토콜 redundancy(MCP·A2A·ANP·variants 6+) 문제</p>
+<p><span class="label">위치:</span> <strong>제목 "Beyond Self-Talk" 자체가 사용자 연구의 핵심 조작(독립 vs 상호인지)을 정확히 짚는다.</strong> 박성훈 연구는 이 리뷰가 "필요하다"고 한 inter-agent communication의 사용자 측 효과를 실증</p>
+</div></details>
+
+<details><summary><span class="id mad">mad_04</span> A Survey on LLM-based MAS: Recent Advances <span class="yr">Chen et al., 2024-12 (arxiv 2412.17481)</span></summary>
+<div class="paper-body">
+<p><span class="label">저자:</span> Shuaihang Chen 외 4인 (HIT, Harbin Institute of Technology)</p>
+<p><span class="label">분류:</span> 3 application 영역 — (1) 복잡한 task 해결, (2) 특정 시나리오 시뮬레이션, (3) generative agent 평가</p>
+<p><span class="label">핵심 발견:</span> LLM-MAS가 multi-step reasoning·multi-tool use에서 single-LLM보다 우위. 도메인 간 비교가 어렵고 표준 evaluation 미정</p>
+<p><span class="label">Future work:</span> 표준화된 평가, 인간-에이전트 hybrid 시나리오, 안전</p>
+<p><span class="label">위치:</span> "특정 시나리오 시뮬레이션"의 한 사례로 디자인 ideation을 위치 짓는 데 인용 가능</p>
+</div></details>
+
+<details><summary><span class="id mad">mad_05</span> LLM-Based MAS for Software Engineering: Literature Review <span class="yr">He, Treude & Lo, TOSEM 2030 SI (arxiv 2404.04834)</span></summary>
+<div class="paper-body">
+<p><span class="label">저자:</span> Junda He, Christoph Treude, David Lo (SMU)</p>
+<p><span class="label">방법:</span> 체계적 문헌 검토(SLR) + case study 결합 — IEEE Xplore, ACM DL, Scopus, arXiv</p>
+<p><span class="label">분류:</span> SE 단계(요구분석·설계·구현·테스트·유지보수) × LMA 역할(planner·coder·reviewer·tester) × 협력 패턴</p>
+<p><span class="label">발견:</span> 코드 생성·디버깅·테스트는 LMA 잘 적용. <strong>요구분석·설계 같은 추상 단계는 미답</strong></p>
+<p><span class="label">제안:</span> "Software Engineering 2.0" vision</p>
+<p><span class="label">위치:</span> SE 도메인. <strong>리뷰 방법론(SLR + case study 결합)</strong>이 사용자 연구 introduction에서 "선행 리뷰의 다양한 접근" 인용 사례</p>
+</div></details>
+
+<details><summary><span class="id mad">mad_06</span> LLM Discussion: Enhancing Creativity via Discussion + Role-Play ⭐ <span class="yr">Lu et al., COLM 2024 (arxiv 2405.06373)</span></summary>
+<div class="paper-body">
+<p><span class="label">저자:</span> Li-Chun Lu 외 5인 (NTU EE, Hung-yi Lee + Shao-Hua Sun)</p>
+<p><span class="label">RQ:</span> LLM 멀티에이전트가 collaborative discussion으로 창의성을 끌어올릴 수 있나? (debate가 아닌 build-on)</p>
+<p><span class="label">자극물:</span> Three-phase framework (Initiation → Discussion → Convergence) + Role-Play (Visionary Millionaire/Futurist/Environmentalist 등 GPT-4 자동 생성 페르소나 + Six Thinking Hats)</p>
+<p><span class="label">방법:</span> 4 표준 창의성 테스트(AUT·Instances·Similarities·Scientific Creativity) + TTCT 4 metric(Originality·Elaboration·Fluency·Flexibility). LLM 평가 + 인간 평가(N=42 annotator, 1,406 응답). Optimal: 4 agents × 5 rounds</p>
+<p><span class="label">발견:</span> Originality AUT 3.47→4.44, Scientific 3.18→3.95 (1σ 이상 우위). 인간 평가 align (Kendall τ=0.52). <strong>"Building on those ideas..." 같은 collaborative tone 발견 — debate와 다른 dynamics</strong></p>
+<p><span class="label">한계 (저자 명시):</span> <strong>"framework은 LLM-LLM interaction에만 적용, human-LLM collaboration은 future work"</strong></p>
+<p><span class="label">위치:</span> <strong>박성훈 연구가 정확히 이 future work을 실행.</strong> 시스템 사이드 정당화 + role-play 페르소나 디자인 직접 참고</p>
+</div></details>
+
+<details><summary><span class="id mad">mad_07</span> Many Heads Are Better Than One: VirSci ⭐ <span class="yr">Su et al., ACL 2025 Main (arxiv 2410.09403)</span></summary>
+<div class="paper-body">
+<p><span class="label">저자:</span> Haoyang Su 외 10인 (상하이 AI Lab 등)</p>
+<p><span class="label">자극물:</span> Virtual Scientists (VirSci) — 5-stage workflow: (1) Collaborator Selection, (2) Topic Discussion, (3) Idea Generation, (4) Novelty Assessment, (5) Abstract Generation. <strong>Invitation Mechanism</strong>으로 외부 전문가 임시 자문 가능</p>
+<p><span class="label">데이터셋:</span> AMiner CS (156 저자, 178K 논문) + Open Academic Graph (3,169 저자, 201K 논문)</p>
+<p><span class="label">평가 metric:</span> Historical Dissimilarity(HD), Contemporary Dissimilarity(CD), Contemporary Impact(CI), Overall Novelty(ON = HD×CI/CD). 인간 expert 검증 Pearson 0.52</p>
+<p><span class="label">Ablation (4-D):</span> Team size <strong>8 optimal</strong>, Discussion turns <strong>5 optimal</strong>, Team freshness <strong>50% optimal</strong>, Research diversity <strong>25-50% (소팀) / 50-75% (대팀) optimal</strong></p>
+<p><span class="label">발견:</span> Single 대비 Overall Novelty +13.8%, Impact +44.1%. Human expert Novelty 5.24 vs 4.78 baseline</p>
+<p><span class="label">한계:</span> 완전 자동 시스템, 사용자 없음. LLM bias 상속, hallucination risk, 오용 가능성</p>
+<p><span class="label">위치:</span> 가장 정교한 multi-agent ideation 시스템. ablation 결과(team=8, turns=5)가 박성훈 시스템 디자인 출발점</p>
+</div></details>
+
+<details><summary><span class="id mad">mad_08</span> A Business Idea Generation Framework Based on Creative Multi-Agent Discussions <span class="yr">AgentScen Workshop 2025</span></summary>
+<div class="paper-body">
+<p><span class="label">자극물:</span> 다양한 페르소나(시장분석가·투자자·디자이너·엔지니어) 에이전트가 비즈니스 컨셉 iterative 토론</p>
+<p><span class="label">방법:</span> 워크숍 페이퍼, 시스템 시연 중심</p>
+<p><span class="label">위치:</span> <strong>제목에 "Multi-Agent Discussions" 직접 포함</strong>. 컬렉션 이름과 정확히 매칭. related work의 도메인 nav 한 줄에 인용</p>
+</div></details>
+
+<details><summary><span class="id mad">mad_09</span> MultiAgentESC: Multi-Agent Collaboration for Emotional Support Conversation <span class="yr">EMNLP 2025 Main</span></summary>
+<div class="paper-body">
+<p><span class="label">자극물:</span> 정서 지원 대화 — 공감자/분석가/조언자 에이전트가 collaborative response 생성</p>
+<p><span class="label">방법:</span> EMNLP 2025 main proceedings. 도메인 = emotional support conversation</p>
+<p><span class="label">위치:</span> ideation 아닌 ESC 도메인. multi-agent collaborative response가 single LLM보다 안정적이라는 측면에서 인접 증거</p>
+</div></details>
+
+<details><summary><span class="id mad">mad_10</span> Designing with Multi-Agent Generative AI: Industry Early Adopters ⭐ <span class="yr">DIS 2025</span></summary>
+<div class="paper-body">
+<p><span class="label">자극물:</span> 디자인 산업계 early adopter가 실사용한 multi-agent generative AI</p>
+<p><span class="label">방법:</span> 질적 인터뷰. ma_18(Naik)의 디자인 산업계 버전</p>
+<p><span class="label">발견:</span> multi-agent를 "팀"으로 멘탈모델링. inter-agent loop + 투명성 부족 호소</p>
+<p><span class="label">위치:</span> <strong>HCI 인접 paper로 가장 가까움.</strong> ecological validity 사례. 박성훈 결과 해석 보강에 인용. PDF 본문 받아서 더 깊이 봐야 함</p>
+</div></details>
+
+<details><summary><span class="id mad">mad_11</span> AgentCoord: Visually exploring coordination strategy <span class="yr">Computers & Graphics 2025</span></summary>
+<div class="paper-body">
+<p><span class="label">자극물:</span> 멀티에이전트 LLM의 coordination 전략 visual analytics 도구</p>
+<p><span class="label">방법:</span> 시스템 + 시각화 디자인</p>
+<p><span class="label">위치:</span> multi-agent coordination이 복잡해서 시각화 필요 — ma_18·mad_10이 지적한 투명성 문제와 호응. VR 확장 future work에서 에이전트 발화 흐름 시각화 참고</p>
+</div></details>
+
+<details><summary><span class="id mad">mad_12</span> Deep Ideation: LLM Agents on Scientific Concept Network <span class="yr">2025-11 (arxiv 2511.02238)</span></summary>
+<div class="paper-body">
+<p><span class="label">자극물:</span> 과학 개념 네트워크(scientific concept graph) 위에서 multi-agent가 grounded ideation</p>
+<p><span class="label">방법:</span> 시스템 paper. agent들이 그래프의 서로 다른 영역을 동시 탐색하면서 합침</p>
+<p><span class="label">위치:</span> "concept network grounding" 발상이 디자인 ideation에도 옮길 만한 패턴. introduction의 multi-agent 외부 지식 grounding 인용</p>
+</div></details>
+
+<details><summary><span class="id mad">mad_13</span> Creative as IDEO experts: LLM-agent design thinking workshop ⭐ <span class="yr">Liu, ICCC 2025</span></summary>
+<div class="paper-body">
+<p><span class="label">자극물:</span> IDEO shopping cart 전설적 design thinking case를 benchmark로</p>
+<p><span class="label">방법:</span> Empathize → Define → Ideate → Prototype 단계마다 specialized agent. 협업해서 design 산출물 생성</p>
+<p><span class="label">위치:</span> <strong>박성훈 도메인과 정면 일치 — design thinking을 LLM 멀티에이전트로 시뮬레이션.</strong> 시스템 시연 중심이고 사용자 측 CSI는 없음 → "Liu 2025가 IDEO 워크숍을 multi-agent로 시뮬레이션했지만 사용자 참여 시 경험은 평가하지 않았다 → 본 연구가 그 자리"</p>
+</div></details>
+
+<details><summary><span class="id mad">mad_14</span> Dynamic Knowledge Exchange + Dual-diversity Review <span class="yr">2025-06 (arxiv 2506.18348)</span></summary>
+<div class="paper-body">
+<p><span class="label">자극물:</span> Multi-Agent Research Team — Dynamic Knowledge Exchange + Dual-diversity Review 메커니즘</p>
+<p><span class="label">방법:</span> ma_05(Ueda)의 parallel critique 변수 ablation과 결이 비슷. 자동 평가</p>
+<p><span class="label">위치:</span> 토론 조건에 critique-revision loop 넣는다면 시스템 설계 근거로 인용</p>
+</div></details>
+
+<details><summary><span class="id mad">mad_15</span> LLM Harmony: Multi-Agent Communication for Problem Solving <span class="yr">2024-01 (arxiv 2401.01312)</span></summary>
+<div class="paper-body">
+<p><span class="label">자극물:</span> 에이전트들이 sequential하게 응답 → 다른 에이전트가 받아서 발전 ("harmony" metaphor)</p>
+<p><span class="label">방법:</span> Reasoning benchmark 위주 평가</p>
+<p><span class="label">위치:</span> 컬렉션의 "early multi-agent communication 작업" 사례. timeline 증거 (multi-agent discussion 분야 2024년 초~중반부터 본격 부상)</p>
+</div></details>
+
+<h4>Multi-Agent Discussion 전체 종합</h4>
+<table>
+<thead><tr><th>축</th><th>분포</th></tr></thead>
+<tbody>
+<tr><td>유형</td><td>서베이/리뷰 5편 (mad_01·02·03·04·05) + 시스템/실증 10편 (mad_06~15)</td></tr>
+<tr><td>도메인</td><td>일반 MAS (mad_01·02·03·04) / SE (mad_05) / 창의성 (mad_06) / 과학 ideation (mad_07·12·14) / 비즈니스 ideation (mad_08) / 정서 지원 (mad_09) / 디자인 HCI (mad_10·13) / 시각화 (mad_11) / problem solving (mad_15)</td></tr>
+<tr><td>측정 방법</td><td><strong>표준 창의성 테스트 사용:</strong> mad_06만 (AUT·Instances·Similarities·Scientific + TTCT). <strong>인간 평가 포함:</strong> mad_06·07·10. <strong>CSI:</strong> 0편</td></tr>
+<tr><td>박성훈 연구 friends</td><td>⭐ mad_02(Lin EMNLP — 갭 진단) · mad_03(Yan — Beyond Self-Talk 슬로건) · mad_06(Lu COLM — 3-phase + role-play, 직접 시스템 참고) · mad_10(DIS 2025 — HCI 인접) · mad_13(IDEO design thinking)</td></tr>
+</tbody>
+</table>
+
+<p class="note">생성: 2026-05-21 갱신 · 출처 파일: <code>.omc/gap_SYNTHESIS.md</code>, <code>.omc/gap_Multi-Agent_Ideation.md</code>, <code>.omc/gap_VR_Ideation.md</code>, <code>.omc/gap_VR_Agent_Avatar.md</code>, <code>.omc/mad_papers.json</code>, <code>.omc/text_mad/*.txt</code> · Zotero 컬렉션: Multi-Agent Discussion(183)에 15편 추가 완료</p>
+
+</main>
+</body>
+</html>

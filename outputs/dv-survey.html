@@ -1,0 +1,1271 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>인간 팀 아이데이션·회의·논의 정량 DV — SCI/SSCI 34 논문</title>
+<style>
+  :root {
+    --bg: #fafaf9;
+    --surface: #ffffff;
+    --border: #e7e5e4;
+    --text: #1c1917;
+    --muted: #57534e;
+    --g1: #6d28d9; --g1-bg: #ede9fe;
+    --g2: #0e7490; --g2-bg: #ecfeff;
+    --g3: #c2410c; --g3-bg: #ffedd5;
+    --g4: #16a34a; --g4-bg: #f0fdf4;
+    --g5: #be185d; --g5-bg: #fdf2f8;
+    --g6: #0891b2; --g6-bg: #cffafe;
+    --g7: #ca8a04; --g7-bg: #fefce8;
+    --g8: #db2777; --g8-bg: #fce7f3;
+    --g9: #4f46e5; --g9-bg: #eef2ff;
+    --g10: #65a30d; --g10-bg: #ecfccb;
+    --g11: #7c2d12; --g11-bg: #fed7aa;
+    --combo: #1c1917;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    padding: 48px 24px;
+    font-size: 18px;
+  }
+  .container { max-width: 1280px; margin: 0 auto; }
+  .doc-tag {
+    font-size: 14px;
+    color: var(--muted);
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  h1 {
+    font-size: 36px;
+    letter-spacing: -0.02em;
+    line-height: 1.25;
+    margin-bottom: 14px;
+  }
+  .lede {
+    font-size: 18px;
+    color: var(--muted);
+    margin-bottom: 30px;
+    line-height: 1.7;
+    max-width: 1000px;
+  }
+  .lede strong { color: var(--text); }
+
+  .source-note {
+    background: var(--g3-bg);
+    border-left: 5px solid var(--g3);
+    border-radius: 10px;
+    padding: 18px 22px;
+    margin-bottom: 36px;
+    font-size: 16px;
+    line-height: 1.7;
+  }
+  .source-note strong { color: var(--g3); }
+  .source-note .filter {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed #f0b370;
+    font-size: 14px;
+    color: var(--muted);
+  }
+
+  h2.sec {
+    font-size: 24px;
+    margin: 44px 0 14px;
+    letter-spacing: -0.01em;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  h2.sec .tag {
+    font-size: 13px;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 100px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+  }
+  .sec-sub {
+    font-size: 15px;
+    color: var(--muted);
+    margin-bottom: 16px;
+    margin-top: -4px;
+  }
+
+  /* paper table */
+  .papers-table {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    margin-bottom: 24px;
+  }
+  .pr {
+    display: grid;
+    grid-template-columns: 60px 290px 1fr 1fr;
+    border-bottom: 1px solid var(--border);
+    align-items: stretch;
+  }
+  .pr:last-child { border-bottom: none; }
+  .pr.head {
+    background: var(--bg);
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    font-weight: 700;
+  }
+  .pr.head > div {
+    padding: 14px 16px;
+    border-right: 1px solid var(--border);
+  }
+  .pr.head > div:last-child { border-right: none; }
+  .pr > div {
+    padding: 16px;
+    border-right: 1px solid var(--border);
+    font-size: 15px;
+    line-height: 1.65;
+  }
+  .pr > div:last-child { border-right: none; }
+  .pr .idx {
+    text-align: center;
+    align-self: center;
+    font-weight: 700;
+    color: var(--muted);
+    font-size: 16px;
+  }
+  .pr .cite {
+    font-weight: 700;
+    font-size: 15px;
+  }
+  .pr .cite .yr { color: var(--muted); font-weight: 500; }
+  .pr .cite .venue {
+    display: block;
+    margin-top: 6px;
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 500;
+    font-style: italic;
+  }
+  .pr .cite .link {
+    display: block;
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--g2);
+    font-weight: 500;
+    word-break: break-all;
+  }
+  .pr .ctx { font-size: 15px; }
+  .pr .dv {
+    font-size: 14.5px;
+  }
+  .pr .dv ul {
+    padding-left: 16px;
+  }
+  .pr .dv li {
+    padding: 1px 0;
+  }
+  .pr .dv .label {
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 6px;
+    display: block;
+  }
+  .pr .dv .special {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--border);
+    font-size: 13px;
+    color: var(--muted);
+    font-style: italic;
+  }
+  .pr .dv .special strong { color: var(--text); font-style: normal; }
+
+  /* combo final */
+  .combo {
+    background: var(--surface);
+    border: 2px solid var(--text);
+    border-radius: 16px;
+    overflow: hidden;
+    margin-top: 40px;
+  }
+  .combo .head {
+    background: var(--text);
+    color: white;
+    padding: 18px 22px;
+  }
+  .combo h2 {
+    font-size: 22px;
+    margin-bottom: 4px;
+  }
+  .combo .head-sub {
+    font-size: 14px;
+    opacity: 0.85;
+  }
+  .combo-row {
+    display: grid;
+    grid-template-columns: 200px 1fr 1fr;
+    border-bottom: 1px solid var(--border);
+    align-items: stretch;
+  }
+  .combo-row:last-child { border-bottom: none; }
+  .combo-row.head-r {
+    background: var(--bg);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    font-weight: 700;
+  }
+  .combo-row.head-r > div {
+    padding: 12px 16px;
+    border-right: 1px solid var(--border);
+  }
+  .combo-row.head-r > div:last-child { border-right: none; }
+  .combo-row > div {
+    padding: 16px 18px;
+    border-right: 1px solid var(--border);
+    font-size: 15px;
+    line-height: 1.65;
+  }
+  .combo-row > div:last-child { border-right: none; }
+  .combo-row .purpose {
+    font-weight: 800;
+    background: var(--bg);
+    font-size: 16px;
+    color: var(--text);
+  }
+  .combo-row .dvs ul {
+    padding-left: 18px;
+  }
+  .combo-row .dvs li {
+    padding: 2px 0;
+  }
+  .combo-row .papers {
+    color: var(--muted);
+    font-style: italic;
+  }
+
+  @media (max-width: 1100px) {
+    .pr { grid-template-columns: 1fr; }
+    .pr > div { border-right: none; border-bottom: 1px solid var(--border); }
+    .combo-row { grid-template-columns: 1fr; }
+    .combo-row > div { border-right: none; border-bottom: 1px solid var(--border); }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="doc-tag">DV 서베이 v3 · 외부 PDF 기반 재구성</div>
+<h1>인간 팀 아이데이션·회의·논의 정량 종속변수 — SCI/SSCI 34 논문</h1>
+
+<div class="source-note">
+  <strong>출처</strong>: 사용자 제공 PDF (sci_team_ideation_dv_table_context_revised.pdf). 내 이전 매트릭스가 TWQ family에서 벗어나지 못해 brainstorming · meeting science · hidden profile · 구조 비교 등 핵심 분야 통째로 빠뜨렸으므로, 이 PDF의 34 논문을 베이스로 재구성.
+  <div class="filter">
+    <strong>필터 조건</strong>: SCI/SSCI/SCIE급 저널만 (CHI/CSCW/arXiv/학술대회 제외). debate/argumentation 중심 연구 제외. 한국 연구 현장 관행대로 SCIE/SSCI까지 포함. 저널 등재는 제출 시 WoS/JCR 재확인 필요.
+  </div>
+</div>
+
+<p class="lede">
+  본 문서는 34 논문을 11 주제 그룹으로 정리하고, 마지막에 PDF 원본의 <strong>6 목적별 추천 DV 콤보 표</strong>를 그대로 살린다. 각 논문 행: 인용 정보, 연구 맥락, 측정한 정량 DV 목록, 특이 변수.
+</p>
+
+<!-- A. 브레인스토밍 productivity loss 고전 -->
+<h2 class="sec"><span class="tag" style="background:var(--g1);">A · 브레인스토밍 productivity loss 고전</span></h2>
+<p class="sec-sub">명목 vs 실제 그룹 비교, productivity loss 원인 규명 — 1-2 논문</p>
+
+<div class="papers-table">
+  <div class="pr head">
+    <div>#</div>
+    <div>저자 · 저널</div>
+    <div>연구 맥락</div>
+    <div>측정 DV</div>
+  </div>
+
+  <div class="pr">
+    <div class="idx">1</div>
+    <div class="cite">Diehl &amp; Stroebe <span class="yr">(1987)</span><span class="venue">J Personality &amp; Social Psych · SSCI</span><span class="link">10.1037/0022-3514.53.3.497</span></div>
+    <div class="ctx">명목집단 vs 실제 브레인스토밍 그룹 비교. 단순 산출량 차이가 아니라 production blocking · evaluation apprehension · free riding 분리 검증.</div>
+    <div class="dv"><span class="label">DV</span>
+      <ul>
+        <li>아이디어 수</li>
+        <li>명목집단 대비 실제집단 산출량</li>
+        <li>productivity loss</li>
+        <li>production blocking 조건별 성과</li>
+        <li>evaluation apprehension 조건별 성과</li>
+        <li>free riding 조건별 성과</li>
+      </ul>
+      <div class="special"><strong>특이 변수</strong>: production blocking, evaluation apprehension, productivity loss</div>
+    </div>
+  </div>
+
+  <div class="pr">
+    <div class="idx">3</div>
+    <div class="cite">Camacho &amp; Paulus <span class="yr">(1995)</span><span class="venue">J Personality &amp; Social Psych · SSCI</span><span class="link">10.1037/0022-3514.68.6.1071</span></div>
+    <div class="ctx">사회불안 성향이 개인·집단 브레인스토밍 성과에 미치는 영향. 발화 심리 부담이 개인 특성에 따라 산출량 낮추는지 검증.</div>
+    <div class="dv"><span class="label">DV</span>
+      <ul>
+        <li>아이디어 수</li>
+        <li>개인 BS 성과 / 집단 BS 성과</li>
+        <li>사회불안 수준별 성과 차이</li>
+        <li>evaluation apprehension 관련 차이</li>
+      </ul>
+      <div class="special"><strong>특이 변수</strong>: social anxiousness, evaluation apprehension</div>
+    </div>
+  </div>
+</div>
+
+<!-- B. CMC/Electronic Brainstorming -->
+<h2 class="sec"><span class="tag" style="background:var(--g2);">B · CMC / Electronic Brainstorming</span></h2>
+<p class="sec-sub">컴퓨터 매개 BS — 익명성·그룹 크기·구조화 효과 — 8 논문</p>
+
+<div class="papers-table">
+  <div class="pr head">
+    <div>#</div>
+    <div>저자 · 저널</div>
+    <div>연구 맥락</div>
+    <div>측정 DV</div>
+  </div>
+
+  <div class="pr">
+    <div class="idx">4</div>
+    <div class="cite">Connolly, Jessup &amp; Valacich <span class="yr">(1990)</span><span class="venue">Management Science · SCIE/SSCI</span><span class="link">10.1287/mnsc.36.6.689</span></div>
+    <div class="ctx">CMC 집단 아이디어 생성에서 익명성과 평가 톤(긍정/비판)의 효과.</div>
+    <div class="dv"><span class="label">DV</span>
+      <ul>
+        <li>아이디어 수</li>
+        <li>아이디어 품질</li>
+        <li>익명/비익명 조건별 성과</li>
+        <li>긍정/비판적 평가 톤 조건별 성과</li>
+      </ul>
+      <div class="special"><strong>특이 변수</strong>: anonymity effect, evaluative tone</div>
+    </div>
+  </div>
+
+  <div class="pr">
+    <div class="idx">5</div>
+    <div class="cite">Gallupe, Dennis, Cooper, Valacich, Bastianutti &amp; Nunamaker <span class="yr">(1992)</span><span class="venue">Academy of Management Journal · SSCI</span><span class="link">jstor.org/stable/256377</span></div>
+    <div class="ctx">전자 BS × 집단 크기. 대규모 그룹의 production blocking을 전자 입력 구조가 얼마나 줄이는지.</div>
+    <div class="dv"><span class="label">DV</span>
+      <ul>
+        <li>아이디어 수</li>
+        <li>집단 크기별 생산성</li>
+        <li>verbal BS 성과 vs electronic BS 성과</li>
+        <li>만족도</li>
+      </ul>
+      <div class="special"><strong>특이 변수</strong>: group size × EBS, electronic brainstorming productivity</div>
+    </div>
+  </div>
+
+  <div class="pr">
+    <div class="idx">6</div>
+    <div class="cite">Valacich, Dennis &amp; Nunamaker <span class="yr">(1992)</span><span class="venue">Small Group Research · SSCI</span><span class="link">10.1177/1046496492231004</span></div>
+    <div class="ctx">CMC 아이디어 생성에서 집단 크기 × 익명성. 인원 증가의 상호작용 손실과 익명성의 평가 불안 완화 효과.</div>
+    <div class="dv"><span class="label">DV</span>
+      <ul>
+        <li>아이디어 수</li>
+        <li>집단 크기별 성과</li>
+        <li>익명/비익명 조건별 성과</li>
+      </ul>
+      <div class="special"><strong>특이 변수</strong>: group size, anonymity, CMC idea generation</div>
+    </div>
+  </div>
+
+  <div class="pr">
+    <div class="idx">7</div>
+    <div class="cite">Dennis &amp; Valacich <span class="yr">(1993)</span><span class="venue">J Applied Psychology · SSCI</span><span class="link">10.1037/0021-9010.78.4.531</span></div>
+    <div class="ctx">컴퓨터 BS에서 인원 증가·매체 구조 효과. "사람이 많을수록 좋은가" 병렬 입력 환경에서 재검증.</div>
+    <div class="dv"><span class="label">DV</span>
+      <ul>
+        <li>아이디어 수</li>
+        <li>CMC 집단 성과</li>
+        <li>집단 크기별 생산성</li>
+        <li>nominal/verbal group 대비 성과</li>
+      </ul>
+      <div class="special"><strong>특이 변수</strong>: CMC group productivity, more-heads effect</div>
+    </div>
+  </div>
+
+  <div class="pr">
+    <div class="idx">8</div>
+    <div class="cite">Dennis, Valacich, Connolly &amp; Wynne <span class="yr">(1996)</span><span class="venue">Information Systems Research · SCIE/SSCI</span><span class="link">10.1287/isre.7.2.268</span></div>
+    <div class="ctx">전자 BS에서 과정 구조화 효과. 자유 발화 vs 시스템 절차 구조화 비교.</div>
+    <div class="dv"><span class="label">DV</span>
+      <ul>
+        <li>아이디어 수 / 품질</li>
+        <li>구조화/비구조화 조건별 성과</li>
+        <li>process support 효과</li>
+      </ul>
+      <div class="special"><strong>특이 변수</strong>: process structuring, structured EBS</div>
+    </div>
+  </div>
+
+  <div class="pr">
+    <div class="idx">9</div>
+    <div class="cite">Dennis, Valacich, Carte, Garfield, Haley &amp; Aronson <span class="yr">(1997)</span><span class="venue">Information Systems Research · SCIE/SSCI</span><span class="link">10.1287/isre.8.2.203</span></div>
+    <div class="ctx">단일 대화창 vs 다중 대화창 EBS. 병렬 주제 흐름이 novel 아이디어·고품질 아이디어 늘리는지.</div>
+    <div class="dv"><span class="label">DV</span>
+      <ul>
+        <li>아이디어 수 / 고품질 아이디어 수 / novel 아이디어 수</li>
+        <li>단일 dialogue vs multiple dialogues 성과</li>
+      </ul>
+      <div class="special"><strong>특이 변수</strong>: multiple dialogues, novel ideas, high-quality ideas</div>
+    </div>
+  </div>
+
+  <div class="pr">
+    <div class="idx">10</div>
+    <div class="cite">Cooper, Gallupe, Pollard &amp; Cadsby <span class="yr">(1998)</span><span class="venue">Small Group Research · SSCI</span><span class="link">10.1177/1046496498292001</span></div>
+    <div class="ctx">익명 전자 BS의 해방 효과. 익명성이 controversial idea 산출까지 늘리는지.</div>
+    <div class="dv"><span class="label">DV</span>
+      <ul>
+        <li>아이디어 수 / controversial ideas 수</li>
+        <li>익명/비익명 전자집단 성과</li>
+        <li>verbal/nominal group 성과</li>
+      </ul>
+      <div class="special"><strong>특이 변수</strong>: controversial ideas, anonymous EBS</div>
+    </div>
+  </div>
+
+  <div class="pr">
+    <div class="idx">13</div>
+    <div class="cite">Barki &amp; Pinsonneault <span class="yr">(2001)</span><span class="venue">Small Group Research · SSCI</span><span class="link">10.1177/104649640103200203</span></div>
+    <div class="ctx">소규모 집단 BS에서 전자 방식 + 익명성이 아이디어 품질에 미치는 효과. 수가 아닌 평가자 품질 차이.</div>
+    <div class="dv"><span class="label">DV</span>
+      <ul>
+        <li>아이디어 수 / 아이디어 품질</li>
+        <li>nominal/verbal group 성과</li>
+        <li>EBS-anonymous / non-anonymous 조건별</li>
+      </ul>
+      <div class="special"><strong>특이 변수</strong>: idea quality direct rating</div>
+    </div>
+  </div>
+</div>
+
+<!-- C. 인지 자극 · 간섭 · 고착 -->
+<h2 class="sec"><span class="tag" style="background:var(--g3);">C · 인지 자극 · 간섭 · 고착</span></h2>
+<p class="sec-sub">타인 아이디어 노출의 효과 — 자극 vs 간섭 vs 고착 — 5 논문</p>
+
+<div class="papers-table">
+  <div class="pr head">
+    <div>#</div>
+    <div>저자 · 저널</div>
+    <div>연구 맥락</div>
+    <div>측정 DV</div>
+  </div>
+
+  <div class="pr">
+    <div class="idx">11</div>
+    <div class="cite">Paulus &amp; Yang <span class="yr">(2000)</span><span class="venue">OBHDP · SSCI</span><span class="link">10.1006/obhd.2000.2888</span></div>
+    <div class="ctx">집단 내 아이디어 교환의 즉각·지연 효과. discussion이 나중 혼자 생성에도 인지 자극으로 이어지는지.</div>
+    <div class="dv"><span class="label">DV</span>
+      <ul>
+        <li>아이디어 수</li>
+        <li>아이디어 교환 조건별 생성량</li>
+        <li>individual-to-group / group-to-individual 성과</li>
+        <li>delayed idea generation 효과</li>
+      </ul>
+      <div class="special"><strong>특이 변수</strong>: delayed idea generation, cognitive stimulation</div>
+    </div>
+  </div>
+
+  <div class="pr">
+    <div class="idx">12</div>
+    <div class="cite">Dugosh, Paulus, Roland &amp; Yang <span class="yr">(2000)</span><span class="venue">J Personality &amp; Social Psych · SSCI</span><span class="link">10.1037/0022-3514.79.5.722</span></div>
+    <div class="ctx">타인 아이디어 노출이 자극인지 모방인지. 회상량과 생성량 함께 측정.</div>
+    <div class="dv"><span class="label">DV</span>
+      <ul>
+        <li>아이디어 수 / unique ideas</li>
+        <li>adjusted/equivalent number of ideas</li>
+        <li>타인 아이디어 회상량</li>
+        <li>idea exposure 조건별 성과</li>
+      </ul>
+      <div class="special"><strong>특이 변수</strong>: cognitive stimulation, idea recall, idea exposure</div>
+    </div>
+  </div>
+
+  <div class="pr">
+    <div class="idx">14</div>
+    <div class="cite">Nijstad, Stroebe &amp; Lodewijkx <span class="yr">(2002)</span><span class="venue">J Experimental Social Psych · SSCI</span><span class="link">10.1016/S0022-1031(02)00500-0</span></div>
+    <div class="ctx">타인 아이디어 노출이 자극인지 간섭인지 분리. semantic category 열림 vs 사고 흐름 방해.</div>
+    <div class="dv"><span class="label">DV</span>
+      <ul>
+        <li>아이디어 수</li>
+        <li>semantic category별 아이디어 수</li>
+        <li>노출 조건별 성과</li>
+        <li>cognitive stimulation / cognitive interference</li>
+      </ul>
+      <div class="special"><strong>특이 변수</strong>: cognitive interference, semantic category use</div>
+    </div>
+  </div>
+
+  <div class="pr">
+    <div class="idx">17</div>
+    <div class="cite">Reinig, Briggs &amp; Nunamaker <span class="yr">(2007/2008)</span><span class="venue">Group Decision &amp; Negotiation · SSCI</span><span class="link">10.1007/s10726-008-9105-2</span></div>
+    <div class="ctx">아이디어 양과 질의 관계. 시간 흐름에 따라 품질 수익이 감소하는지.</div>
+    <div class="dv"><span class="label">DV</span>
+      <ul>
+        <li>아이디어 수 / 아이디어 품질</li>
+        <li>시간 흐름에 따른 quality change</li>
+        <li>quantity-quality relationship</li>
+      </ul>
+      <div class="special"><strong>특이 변수</strong>: diminishing returns, quantity-quality</div>
+    </div>
+  </div>
+
+  <div class="pr">
+    <div class="idx">22</div>
+    <div class="cite">Kohn &amp; Smith <span class="yr">(2011)</span><span class="venue">Applied Cognitive Psychology · SSCI</span><span class="link">10.1002/acp.1699</span></div>
+    <div class="ctx">타인 아이디어가 collaborative fixation · 다양성 감소 만드는지. 탐색 영역 좁힘 측정.</div>
+    <div class="dv"><span class="label">DV</span>
+      <ul>
+        <li>아이디어 수 / 다양성 (variety) / novelty</li>
+        <li>explored domains 수</li>
+        <li>타인 아이디어와의 유사도 / conforming ideas</li>
+        <li>시간 흐름 quantity/variety/novelty 변화</li>
+      </ul>
+      <div class="special"><strong>특이 변수</strong>: collaborative fixation, explored domains, conforming ideas</div>
+    </div>
+  </div>
+</div>
+
+<!-- D. 생성-선택, 훈련, 시퀀스 -->
+<h2 class="sec"><span class="tag" style="background:var(--g4);">D · 생성-선택 분리 · 훈련 · 시퀀스</span></h2>
+<p class="sec-sub">아이디어 생성과 선택 분리, 훈련/순서 효과 — 3 논문</p>
+
+<div class="papers-table">
+  <div class="pr head">
+    <div>#</div>
+    <div>저자 · 저널</div>
+    <div>연구 맥락</div>
+    <div>측정 DV</div>
+  </div>
+
+  <div class="pr">
+    <div class="idx">15</div>
+    <div class="cite">Rietzschel, Nijstad &amp; Stroebe <span class="yr">(2006)</span><span class="venue">J Experimental Social Psych · SSCI</span><span class="link">10.1016/j.jesp.2005.04.005</span></div>
+    <div class="ctx">생성과 선택을 분리해 실제 vs 명목 그룹 비교. 많이 만드는 능력 ≠ 좋은 거 고르는 능력.</div>
+    <div class="dv"><span class="label">DV</span>
+      <ul>
+        <li>아이디어 수 / 독창성 / 실현가능성</li>
+        <li><strong>선택된 아이디어 품질</strong></li>
+        <li>아이디어 선택 정확도</li>
+        <li>generation-selection 분리 효과</li>
+      </ul>
+      <div class="special"><strong>특이 변수</strong>: selected idea quality, idea selection accuracy</div>
+    </div>
+  </div>
+
+  <div class="pr">
+    <div class="idx">16</div>
+    <div class="cite">Baruah &amp; Paulus <span class="yr">(2008)</span><span class="venue">Small Group Research · SSCI</span><span class="link">10.1177/1046496408315599</span></div>
+    <div class="ctx">BS 훈련 + 개인/집단 수행 순서 효과. alone-to-group vs group-to-alone.</div>
+    <div class="dv"><span class="label">DV</span>
+      <ul>
+        <li>아이디어 수 / 아이디어 품질</li>
+        <li>훈련 조건별 성과</li>
+        <li>alone-to-group / group-to-alone 순서 효과</li>
+      </ul>
+      <div class="special"><strong>특이 변수</strong>: training effect, sequence effect</div>
+    </div>
+  </div>
+
+  <div class="pr">
+    <div class="idx">27</div>
+    <div class="cite">Korde &amp; Paulus <span class="yr">(2017)</span><span class="venue">J Experimental Social Psych · SSCI</span><span class="link">10.1016/j.jesp.2016.11.002</span></div>
+    <div class="ctx">개인-집단 번갈아 수행 하이브리드 BS. 독립 사고 + 집단 자극 조합이 synergy 만드는지.</div>
+    <div class="dv"><span class="label">DV</span>
+      <ul>
+        <li>아이디어 수</li>
+        <li>individual / group / hybrid 조건 성과</li>
+        <li>synergy 효과</li>
+        <li>세션 순서별 성과 변화</li>
+      </ul>
+      <div class="special"><strong>특이 변수</strong>: alternating individual-group ideation, synergy</div>
+    </div>
+  </div>
+</div>
+
+<!-- E. 구조 비교 직격 -->
+<h2 class="sec"><span class="tag" style="background:var(--g5);">E · 구조 비교 직격 — 본 연구 RQ와 직결</span></h2>
+<p class="sec-sub">집단 구조 (hybrid vs group, convergence, scaffolds) 직접 비교 — 3 논문</p>
+
+<div class="papers-table">
+  <div class="pr head">
+    <div>#</div>
+    <div>저자 · 저널</div>
+    <div>연구 맥락</div>
+    <div>측정 DV</div>
+  </div>
+
+  <div class="pr">
+    <div class="idx">20</div>
+    <div class="cite">★ Girotra, Terwiesch &amp; Ulrich <span class="yr">(2010)</span><span class="venue">Management Science · SCIE/SSCI</span><span class="link">10.1287/mnsc.1090.1144</span></div>
+    <div class="ctx">★ 팀 BS vs 하이브리드 구조 비교. 평균이 아닌 <strong>best idea quality</strong>를 핵심 결과로. 본 연구 수직/수평 구조 비교 RQ와 가장 직접 닮음.</div>
+    <div class="dv"><span class="label">DV</span>
+      <ul>
+        <li>아이디어 수 / 평균 아이디어 품질</li>
+        <li>★ <strong>best idea quality</strong></li>
+        <li>상위 아이디어 품질 / 아이디어 선택 성과</li>
+        <li>build-up 정도</li>
+        <li>group vs hybrid process 차이</li>
+      </ul>
+      <div class="special"><strong>특이 변수</strong>: best idea quality, top idea quality</div>
+    </div>
+  </div>
+
+  <div class="pr">
+    <div class="idx">28</div>
+    <div class="cite">Seeber, de Vreede, Maier &amp; Weber <span class="yr">(2017)</span><span class="venue">J Management Information Systems · SSCI/SCIE</span><span class="link">10.1080/07421222.2017.1393303</span></div>
+    <div class="ctx">발산 이후 팀 수렴 과정 분석. 어떤 주의 유도/토의 촉진이 구체적·유용한 수렴 결과를 만드는지.</div>
+    <div class="dv"><span class="label">DV</span>
+      <ul>
+        <li>convergence quality</li>
+        <li>선택된 아이디어의 useful level of detail</li>
+        <li>attention guidance 효과</li>
+        <li>discussion encouragement 효과</li>
+        <li>knowledge combination 정도</li>
+        <li>shared understanding</li>
+      </ul>
+      <div class="special"><strong>특이 변수</strong>: convergence quality, useful level of detail, shared understanding</div>
+    </div>
+  </div>
+
+  <div class="pr">
+    <div class="idx">34</div>
+    <div class="cite">Farrokhnia et al. <span class="yr">(2025)</span><span class="venue">Computers &amp; Education · SCIE/SSCI</span><span class="link">10.1016/j.compedu.2024.105229</span></div>
+    <div class="ctx">하이브리드 BS에서 prompt + cognitive group awareness scaffold 효과. 개인-집단-개인 단계별 시스템 지원이 originality·flexibility·최종 품질 바꾸는지.</div>
+    <div class="dv"><span class="label">DV</span>
+      <ul>
+        <li>idea quality / originality / flexibility</li>
+        <li>cognitive group awareness 효과</li>
+        <li>prompt scaffold 효과</li>
+        <li>group BS phase 성과 / final individual phase 성과</li>
+        <li>flexibility의 매개효과</li>
+      </ul>
+      <div class="special"><strong>특이 변수</strong>: cognitive group awareness, prompt scaffold</div>
+    </div>
+  </div>
+</div>
+
+<!-- F. 다양성 · 창의 · 공유 리더십 -->
+<h2 class="sec"><span class="tag" style="background:var(--g6);">F · 다양성 · 창의 · 공유 리더십</span></h2>
+<p class="sec-sub">팀 다양성이 창의성으로 이어지는 매개 — 2 논문</p>
+
+<div class="papers-table">
+  <div class="pr head">
+    <div>#</div>
+    <div>저자 · 저널</div>
+    <div>연구 맥락</div>
+    <div>측정 DV</div>
+  </div>
+
+  <div class="pr">
+    <div class="idx">24</div>
+    <div class="cite">Hoever, van Knippenberg, van Ginkel &amp; Barkema <span class="yr">(2012)</span><span class="venue">J Applied Psychology · SSCI</span><span class="link">10.1037/a0029159</span></div>
+    <div class="ctx">팀 다양성이 창의성으로 이어지는 조건. perspective taking + information elaboration이 매개.</div>
+    <div class="dv"><span class="label">DV</span>
+      <ul>
+        <li>team creativity / team creative performance</li>
+        <li><strong>information elaboration</strong></li>
+        <li>perspective taking</li>
+        <li>diversity effect</li>
+        <li>reframing</li>
+      </ul>
+      <div class="special"><strong>특이 변수</strong>: information elaboration, reframing, perspective taking</div>
+    </div>
+  </div>
+
+  <div class="pr">
+    <div class="idx">32</div>
+    <div class="cite">Wu, Zhang, Song &amp; Zhu <span class="yr">(2024)</span><span class="venue">J Applied Psychology · SSCI</span><span class="link">10.1037/apl0001181</span></div>
+    <div class="ctx">★ 공유 리더십과 팀 창의성 사이 매개·조절 경로. 리더십 분산일 때 과업갈등·정보정교화·지위갈등 효과.</div>
+    <div class="dv"><span class="label">DV</span>
+      <ul>
+        <li>team creativity</li>
+        <li>information elaboration</li>
+        <li>task conflict / status conflict</li>
+        <li>shared leadership concentration</li>
+      </ul>
+      <div class="special"><strong>특이 변수</strong>: status conflict, information elaboration, shared leadership concentration</div>
+    </div>
+  </div>
+</div>
+
+<!-- G. Hidden profile / 정보 공유 -->
+<h2 class="sec"><span class="tag" style="background:var(--g7);">G · Hidden Profile · 정보 공유</span></h2>
+<p class="sec-sub">집단 논의가 unshared 정보를 통합하는가 — 3 논문</p>
+
+<div class="papers-table">
+  <div class="pr head">
+    <div>#</div>
+    <div>저자 · 저널</div>
+    <div>연구 맥락</div>
+    <div>측정 DV</div>
+  </div>
+
+  <div class="pr">
+    <div class="idx">2</div>
+    <div class="cite">Stasser &amp; Titus <span class="yr">(1985)</span><span class="venue">J Personality &amp; Social Psych · SSCI</span><span class="link">10.1037/0022-3514.48.6.1467</span></div>
+    <div class="ctx">★ hidden profile 고전. 비공유 정보가 실제 공유되고 결정에 반영되는지. 정보 언급량 + 결정 품질 함께 측정.</div>
+    <div class="dv"><span class="label">DV</span>
+      <ul>
+        <li>공유 정보 언급량 / 비공유 정보 언급량</li>
+        <li>집단 결정 품질</li>
+        <li>biased information sampling</li>
+        <li>토의 전 개인 선호 vs 토의 후 집단 결정 변화</li>
+      </ul>
+      <div class="special"><strong>특이 변수</strong>: unshared information pooling, shared information bias, decision quality</div>
+    </div>
+  </div>
+
+  <div class="pr">
+    <div class="idx">18</div>
+    <div class="cite">Mesmer-Magnus &amp; DeChurch <span class="yr">(2009)</span><span class="venue">J Applied Psychology · SSCI</span><span class="link">10.1037/a0013773</span></div>
+    <div class="ctx">팀 정보공유 ↔ 팀 성과 메타분석. 단순 양이 아니라 unique 정보·개방성·지식 통합과의 관계.</div>
+    <div class="dv"><span class="label">DV</span>
+      <ul>
+        <li>team performance</li>
+        <li>information sharing</li>
+        <li>unique information sharing</li>
+        <li>openness of information sharing</li>
+        <li>cohesion / decision satisfaction / knowledge integration</li>
+      </ul>
+      <div class="special"><strong>특이 변수</strong>: unique information sharing, knowledge integration</div>
+    </div>
+  </div>
+
+  <div class="pr">
+    <div class="idx">26</div>
+    <div class="cite">Lu, Yuan &amp; McLeod <span class="yr">(2012)</span><span class="venue">Personality &amp; Social Psych Review · SSCI</span><span class="link">10.1177/1088868311417243</span></div>
+    <div class="ctx">hidden profile 25년 메타. 언제 공유 정보 편향을 극복하고 숨겨진 최적 대안을 찾는지 조절요인.</div>
+    <div class="dv"><span class="label">DV</span>
+      <ul>
+        <li>group decision quality</li>
+        <li>common information mention / unique information mention</li>
+        <li>hidden profile solution rate</li>
+        <li>information sampling bias / information load</li>
+      </ul>
+      <div class="special"><strong>특이 변수</strong>: hidden profile solution rate, unique information pooling</div>
+    </div>
+  </div>
+</div>
+
+<!-- H. Collective Intelligence -->
+<h2 class="sec"><span class="tag" style="background:var(--g8);">H · Collective Intelligence</span></h2>
+<p class="sec-sub">팀 단위 일반 인지 능력 — 1 논문 (Science급)</p>
+
+<div class="papers-table">
+  <div class="pr head">
+    <div>#</div>
+    <div>저자 · 저널</div>
+    <div>연구 맥락</div>
+    <div>측정 DV</div>
+  </div>
+
+  <div class="pr">
+    <div class="idx">21</div>
+    <div class="cite">★ Woolley, Chabris, Pentland, Hashmi &amp; Malone <span class="yr">(2010)</span><span class="venue">Science · SCIE</span><span class="link">10.1126/science.1193147</span></div>
+    <div class="ctx">★ 여러 과제 수행에서 공통 집단지능 요인. 개인 IQ 합 아닌 사회적 민감성·대화 차례 균등성이 집단 성과와 관련.</div>
+    <div class="dv"><span class="label">DV</span>
+      <ul>
+        <li>collective intelligence factor (c)</li>
+        <li>group task performance</li>
+        <li>social sensitivity</li>
+        <li><strong>conversational turn-taking equality</strong></li>
+        <li>group cohesion / motivation</li>
+        <li>individual intelligence 평균/최댓값</li>
+      </ul>
+      <div class="special"><strong>특이 변수</strong>: turn-taking equality, social sensitivity, collective intelligence</div>
+    </div>
+  </div>
+</div>
+
+<!-- I. Meeting Science -->
+<h2 class="sec"><span class="tag" style="background:var(--g9);">I · Meeting Science — 회의 효과성·품질·행동 코딩</span></h2>
+<p class="sec-sub">실제 팀 회의 분석 — 3 논문</p>
+
+<div class="papers-table">
+  <div class="pr head">
+    <div>#</div>
+    <div>저자 · 저널</div>
+    <div>연구 맥락</div>
+    <div>측정 DV</div>
+  </div>
+
+  <div class="pr">
+    <div class="idx">19</div>
+    <div class="cite">Leach, Rogelberg, Warr &amp; Burnfield <span class="yr">(2009)</span><span class="venue">J Business &amp; Psychology · SSCI</span><span class="link">10.1007/s10869-009-9092-6</span></div>
+    <div class="ctx">회의 설계 특성 → 참석자의 회의 효과성 인식. 아젠다, 시간 엄수, 진행자, 참석자 관여 등.</div>
+    <div class="dv"><span class="label">DV</span>
+      <ul>
+        <li>perceived meeting effectiveness</li>
+        <li>attendee involvement</li>
+        <li>agenda use / punctuality</li>
+        <li>chairperson effectiveness</li>
+        <li>meeting facilities / size / duration</li>
+      </ul>
+      <div class="special"><strong>특이 변수</strong>: attendee involvement, meeting effectiveness</div>
+    </div>
+  </div>
+
+  <div class="pr">
+    <div class="idx">23</div>
+    <div class="cite">Cohen, Rogelberg, Allen &amp; Luong <span class="yr">(2011)</span><span class="venue">Group Dynamics · SSCI</span><span class="link">10.1037/a0021549</span></div>
+    <div class="ctx">실제 staff/team meeting 설계 특성 → 회의 품질 인식. 목적, 아젠다, 환경, 준비도 분석.</div>
+    <div class="dv"><span class="label">DV</span>
+      <ul>
+        <li>perceived meeting quality</li>
+        <li>agenda relevance / agenda use</li>
+        <li>meeting punctuality / environment quality</li>
+        <li>facilitator status</li>
+        <li>meeting purpose clarity / attendee preparedness</li>
+      </ul>
+      <div class="special"><strong>특이 변수</strong>: meeting quality, meeting design characteristics</div>
+    </div>
+  </div>
+
+  <div class="pr">
+    <div class="idx">25</div>
+    <div class="cite">★ Kauffeld &amp; Lehmann-Willenbrock <span class="yr">(2012)</span><span class="venue">Small Group Research · SSCI</span><span class="link">10.1177/1046496411429599</span></div>
+    <div class="ctx">★ 실제 팀 회의 92개 녹화 + 발화 수준 코딩 → 팀/조직 성과. 본 연구가 따라야 할 코딩 방법론 모델.</div>
+    <div class="dv"><span class="label">DV</span>
+      <ul>
+        <li>team success / organizational success</li>
+        <li><strong>functional meeting behavior</strong></li>
+        <li><strong>dysfunctional meeting behavior</strong></li>
+        <li>procedural statements / problem-solving statements</li>
+        <li>meeting interaction patterns</li>
+      </ul>
+      <div class="special"><strong>특이 변수</strong>: functional/dysfunctional meeting behavior, interaction coding</div>
+    </div>
+  </div>
+</div>
+
+<!-- J. VR / 원격 / 매체 비교 -->
+<h2 class="sec"><span class="tag" style="background:var(--g10);">J · VR · 원격 · 매체 비교</span></h2>
+<p class="sec-sub">FtF vs VR vs 2D 화상회의 비교 — Study 2와 직결 — 3 논문</p>
+
+<div class="papers-table">
+  <div class="pr head">
+    <div>#</div>
+    <div>저자 · 저널</div>
+    <div>연구 맥락</div>
+    <div>측정 DV</div>
+  </div>
+
+  <div class="pr">
+    <div class="idx">30</div>
+    <div class="cite">Zhang et al. <span class="yr">(2021)</span><span class="venue">British J Educational Technology · SSCI</span><span class="link">10.1111/bjet.13045</span></div>
+    <div class="ctx">온라인 그룹 창의성에서 내재동기·노력·상호작용·시각 주의 관계. eye-tracking 기반.</div>
+    <div class="dv"><span class="label">DV</span>
+      <ul>
+        <li>fluency / flexibility / originality</li>
+        <li>effort / interaction 정도</li>
+        <li>자기 아이디어 응시시간 / 동료 아이디어 응시시간</li>
+      </ul>
+      <div class="special"><strong>특이 변수</strong>: online group creativity, gaze time on own/peer ideas</div>
+    </div>
+  </div>
+
+  <div class="pr">
+    <div class="idx">31</div>
+    <div class="cite">★ Brucks &amp; Levav <span class="yr">(2022)</span><span class="venue">Nature · SCIE</span><span class="link">10.1038/s41586-022-04643-y</span></div>
+    <div class="ctx">★ 대면 vs 화상회의 비교. 화상회의가 시각 주의를 화면에 좁게 묶어 의미적 탐색 범위·창의적 생성량 낮추는지. 실험 + 현장 자료.</div>
+    <div class="dv"><span class="label">DV</span>
+      <ul>
+        <li>창의적 아이디어 수 / 아이디어 품질</li>
+        <li>선택된 아이디어 품질</li>
+        <li>eye-gaze dispersion / visual focus</li>
+        <li>object recall</li>
+        <li>latent semantic analysis 기반 의미적 범위</li>
+        <li>cognitive focus / semantic focus</li>
+      </ul>
+      <div class="special"><strong>특이 변수</strong>: semantic focus, eye-gaze dispersion, object recall</div>
+    </div>
+  </div>
+
+  <div class="pr">
+    <div class="idx">33</div>
+    <div class="cite">Macchi &amp; De Pisapia <span class="yr">(2024)</span><span class="venue">Scientific Reports · SCIE</span><span class="link">10.1038/s41598-024-60942-6</span></div>
+    <div class="ctx">★ VR vs 대면 vs 2D 화상회의 3-way 비교. 협업 매체가 피로·창의성·flow·의사결정 다르게 만드는지.</div>
+    <div class="dv"><span class="label">DV</span>
+      <ul>
+        <li>fatigue</li>
+        <li>creativity</li>
+        <li>flow</li>
+        <li>decision-making / cognitive performance</li>
+        <li>interaction setting별 차이</li>
+        <li>well-being 관련 지표</li>
+      </ul>
+      <div class="special"><strong>특이 변수</strong>: VR collaboration fatigue, flow, decision-making</div>
+    </div>
+  </div>
+</div>
+
+<!-- K. Linkography -->
+<h2 class="sec"><span class="tag" style="background:var(--g11);">K · Linkography — 디자인 사고 흐름 분석</span></h2>
+<p class="sec-sub">발화·아이디어 간 연결 구조 정량화 — 1 논문</p>
+
+<div class="papers-table">
+  <div class="pr head">
+    <div>#</div>
+    <div>저자 · 저널</div>
+    <div>연구 맥락</div>
+    <div>측정 DV</div>
+  </div>
+
+  <div class="pr">
+    <div class="idx">29</div>
+    <div class="cite">Hatcher, Ion, Maclachlan et al. <span class="yr">(2018)</span><span class="venue">Design Studies · SCIE</span><span class="link">10.1016/j.destud.2018.05.002</span></div>
+    <div class="ctx">디자인 팀 아이데이션에서 creative method를 linkography로 비교. 발화·아이디어 사이 연결 구조 분석.</div>
+    <div class="dv"><span class="label">DV</span>
+      <ul>
+        <li>design moves</li>
+        <li>links between moves</li>
+        <li><strong>critical moves</strong></li>
+        <li>idea interconnectedness</li>
+        <li>parallel thinking</li>
+        <li>creative productivity / creative characteristics</li>
+      </ul>
+      <div class="special"><strong>특이 변수</strong>: linkography, critical moves, parallel thinking</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================== -->
+<!-- ★ 보강 그룹 — PDF에 빠진 핵심 분야 (9 논문 추가) -->
+<!-- ============================================== -->
+
+<!-- L. 위계 vs 평등 구조 직접 비교 -->
+<h2 class="sec"><span class="tag" style="background:#dc2626;">L · ★ 위계 vs 평등 구조 직접 비교 — 본 연구 RQ 직격 (보강)</span></h2>
+<p class="sec-sub">PDF에 빠진 핵심 분야 — 위계·평등 구조가 팀 효과성에 어떻게 다른지 직접 검증 — 5 논문</p>
+
+<div class="papers-table">
+  <div class="pr head">
+    <div>#</div>
+    <div>저자 · 저널</div>
+    <div>연구 맥락</div>
+    <div>측정 DV</div>
+  </div>
+
+  <div class="pr">
+    <div class="idx">35</div>
+    <div class="cite">★ Bunderson &amp; Boumgarden <span class="yr">(2010)</span><span class="venue">Organization Science · SSCI Q1 Top</span><span class="link">10.1287/orsc.1090.0483</span></div>
+    <div class="ctx">★ 자기관리팀에서 "관료적" 구조(전문화·위계·공식화)가 학습에 더 좋은가 검증. 11개 production team. 구조 → psychological safety → 정보공유·갈등감소 → 학습.</div>
+    <div class="dv"><span class="label">DV</span>
+      <ul>
+        <li>team learning</li>
+        <li>psychological safety (매개)</li>
+        <li>information sharing</li>
+        <li>conflict frequency</li>
+        <li>team structure (specialization · hierarchy · formalization)</li>
+      </ul>
+      <div class="special"><strong>특이 변수</strong>: bureaucratic team structure, psychological safety mediation</div>
+    </div>
+  </div>
+
+  <div class="pr">
+    <div class="idx">36</div>
+    <div class="cite">★★ Greer, de Jong, Schouten &amp; Dannals <span class="yr">(2018)</span><span class="venue">J Applied Psychology · SSCI Q1 Top</span><span class="link">10.1037/apl0000291</span></div>
+    <div class="ctx">★★ <strong>위계 × 팀 효과성 메타분석 — 본 연구 핵심 선행</strong>. 54 studies · 13,914 teams. <strong>위계는 평균적으로 팀 효과성에 부정</strong>(performance ρ = -.08, viability ρ = -.11). conflict-enabling states가 매개. membership instability, skill differentiation, mutability가 부정 효과 강화.</div>
+    <div class="dv"><span class="label">DV</span>
+      <ul>
+        <li>★ team performance</li>
+        <li>★ team viability</li>
+        <li>team conflict (매개)</li>
+        <li>coordination (매개)</li>
+        <li>moderators: membership instability · skill differentiation · hierarchy mutability</li>
+      </ul>
+      <div class="special"><strong>특이 변수</strong>: conflict-enabling states, hierarchy negative net effect</div>
+    </div>
+  </div>
+
+  <div class="pr">
+    <div class="idx">37</div>
+    <div class="cite">Halevy, Chou, Galinsky &amp; Murnighan <span class="yr">(2012)</span><span class="venue">Social Psych &amp; Personality Sci · SSCI</span><span class="link">10.1177/1948550611424225</span></div>
+    <div class="ctx">★ "When Hierarchy Wins" — NBA 팀 archival. 위계가 절차적 상호의존 task엔 도움(coordination·cooperation), 독립 task엔 해. task type이 moderator.</div>
+    <div class="dv"><span class="label">DV</span>
+      <ul>
+        <li>team performance (NBA)</li>
+        <li>intragroup coordination</li>
+        <li>cooperation</li>
+        <li>hierarchical differentiation (pay · participation)</li>
+        <li>task interdependence 조절 효과</li>
+      </ul>
+      <div class="special"><strong>특이 변수</strong>: functional hierarchy, task interdependence moderator</div>
+    </div>
+  </div>
+
+  <div class="pr">
+    <div class="idx">38</div>
+    <div class="cite">★ Wang, Waldman &amp; Zhang <span class="yr">(2014)</span><span class="venue">J Applied Psychology · SSCI Q1 Top</span><span class="link">10.1037/a0034531</span></div>
+    <div class="ctx">★ 공유 리더십 메타분석 — 분산 권한 구조의 positive 효과. 42 independent samples. <strong>공유 리더십 → 팀 효과성 ρ = .34</strong>. new-genre(변혁적·카리스마) shared leadership이 traditional보다 효과 큼.</div>
+    <div class="dv"><span class="label">DV</span>
+      <ul>
+        <li>team effectiveness ρ = .34</li>
+        <li>shared traditional leadership ρ = .18</li>
+        <li>shared new-genre leadership ρ = .34</li>
+        <li>cumulative shared leadership ρ = .35</li>
+      </ul>
+      <div class="special"><strong>특이 변수</strong>: shared leadership emergence, new-genre vs traditional</div>
+    </div>
+  </div>
+
+  <div class="pr">
+    <div class="idx">39</div>
+    <div class="cite">Carson, Tesluk &amp; Marrone <span class="yr">(2007)</span><span class="venue">Academy of Management Journal · SSCI Q1 Top</span><span class="link">10.5465/amj.2007.20159921</span></div>
+    <div class="ctx">59개 컨설팅 팀에서 공유 리더십 출현 조건·성과 영향 실증. 내부 팀 환경(shared purpose · social support · voice) + 외부 코칭이 공유 리더십 예측.</div>
+    <div class="dv"><span class="label">DV</span>
+      <ul>
+        <li>team performance (client-rated)</li>
+        <li>shared leadership emergence</li>
+        <li>shared purpose</li>
+        <li>social support</li>
+        <li>voice</li>
+        <li>external coaching</li>
+      </ul>
+      <div class="special"><strong>특이 변수</strong>: shared leadership network density, social support antecedent</div>
+    </div>
+  </div>
+</div>
+
+<!-- M. 팀 협업 핵심 메타·리뷰 + TWQ 본가 -->
+<h2 class="sec"><span class="tag" style="background:#7c3aed;">M · 팀 협업 핵심 메타·리뷰 + 프로젝트 anchor (보강)</span></h2>
+<p class="sec-sub">PDF에 빠진 핵심 메타분석과 본 프로젝트의 anchor 논문 — 4 논문</p>
+
+<div class="papers-table">
+  <div class="pr head">
+    <div>#</div>
+    <div>저자 · 저널</div>
+    <div>연구 맥락</div>
+    <div>측정 DV</div>
+  </div>
+
+  <div class="pr">
+    <div class="idx">40</div>
+    <div class="cite">★ Hoegl &amp; Gemuenden <span class="yr">(2001)</span><span class="venue">Organization Science · SSCI Q1 Top</span><span class="link">10.1287/orsc.12.4.435.10635</span></div>
+    <div class="ctx">★ <strong>본 프로젝트 anchor — TWQ 원전</strong>. 독일 SW 개발팀 145개 575명. Teamwork Quality 6 차원(communication · coordination · balance of member contributions · mutual support · effort · cohesion) 개념화·검증. SEM, α = .91, 2,865 인용.</div>
+    <div class="dv"><span class="label">DV</span>
+      <ul>
+        <li>Teamwork Quality (6 facets) — Likert 자기보고</li>
+        <li>team performance — Effectiveness (품질) · Efficiency (일정·예산)</li>
+        <li>personal success — work satisfaction · learning</li>
+        <li>평가자별 차이 (멤버 · 리더 · 매니저)</li>
+      </ul>
+      <div class="special"><strong>특이 변수</strong>: TWQ 6 facets, multi-rater perspective</div>
+    </div>
+  </div>
+
+  <div class="pr">
+    <div class="idx">41</div>
+    <div class="cite">★ Edmondson <span class="yr">(1999)</span><span class="venue">Administrative Sci Quarterly · SSCI Q1 Top</span><span class="link">10.2307/2666999</span></div>
+    <div class="ctx">★ <strong>Psychological safety 원전</strong> — 51 work teams 제조업. 팀 심리적 안전 → 학습 행동 → 팀 성과. Outstanding Publication in OB 수상. 12,000+ 인용.</div>
+    <div class="dv"><span class="label">DV</span>
+      <ul>
+        <li>★ Psychological safety (7-item Likert)</li>
+        <li>★ Team learning behavior — 질문·피드백·실수 논의·실험 (코딩 병행)</li>
+        <li>Team performance</li>
+        <li>Team efficacy</li>
+        <li>Learning behavior = psych safety → performance 매개</li>
+      </ul>
+      <div class="special"><strong>특이 변수</strong>: psychological safety, team learning behavior coding</div>
+    </div>
+  </div>
+
+  <div class="pr">
+    <div class="idx">42</div>
+    <div class="cite">Frazier, Fainshmidt, Klinger, Pezeshkan &amp; Vracheva <span class="yr">(2017)</span><span class="venue">Personnel Psychology · SSCI Q1</span><span class="link">10.1111/peps.12183</span></div>
+    <div class="ctx">Psychological safety 메타분석 — 136 samples · 22,000+ 개인 · 5,000+ 그룹. antecedents · outcomes 종합. nomological network.</div>
+    <div class="dv"><span class="label">DV</span>
+      <ul>
+        <li>voice behavior</li>
+        <li>learning (개인 + 팀)</li>
+        <li>creativity</li>
+        <li>task performance</li>
+        <li>OCB</li>
+        <li>antecedents: leadership · personality · work design</li>
+      </ul>
+      <div class="special"><strong>특이 변수</strong>: voice behavior, psychological safety nomological network</div>
+    </div>
+  </div>
+
+  <div class="pr">
+    <div class="idx">43</div>
+    <div class="cite">Hülsheger, Anderson &amp; Salgado <span class="yr">(2009)</span><span class="venue">J Applied Psychology · SSCI Q1 Top</span><span class="link">10.1037/a0015978</span></div>
+    <div class="ctx">★ 팀 혁신·창의 30년 메타 — 104 independent studies. 15 team-level 변수 검증. Input-Process-Output 모델.</div>
+    <div class="dv"><span class="label">DV</span>
+      <ul>
+        <li>team creativity</li>
+        <li>team innovation</li>
+        <li>★ 최강 예측 변수 (ρ = .4-.5): support for innovation · vision · task orientation · external communication</li>
+        <li>input 변수(team composition · structure)는 효과 약함</li>
+        <li>self-rating vs independent rating 조절</li>
+      </ul>
+      <div class="special"><strong>특이 변수</strong>: support for innovation, vision, task orientation, IPO model</div>
+    </div>
+  </div>
+</div>
+
+<!-- ========= 6 목적별 콤보 표 (PDF 원본) ========= -->
+<div class="combo">
+  <div class="head">
+    <h2>연구 설계에 바로 쓰기 좋은 조합 — 6 목적별</h2>
+    <div class="head-sub">PDF 원본에 정리된 추천 DV 콤보 그대로</div>
+  </div>
+
+  <div class="combo-row head-r">
+    <div>목적</div>
+    <div>추천 DV</div>
+    <div>주요 근거 논문</div>
+  </div>
+
+  <div class="combo-row">
+    <div class="purpose">산출물 품질</div>
+    <div class="dvs">
+      <ul>
+        <li>novelty</li>
+        <li>usefulness</li>
+        <li>feasibility</li>
+        <li>best idea quality</li>
+        <li>selected idea quality</li>
+      </ul>
+    </div>
+    <div class="papers">Girotra et al. (2010) · Rietzschel et al. (2006) · Brucks &amp; Levav (2022)</div>
+  </div>
+
+  <div class="combo-row">
+    <div class="purpose">discussion 특화</div>
+    <div class="dvs">
+      <ul>
+        <li>information elaboration</li>
+        <li>shared understanding</li>
+        <li>unique information sharing</li>
+        <li>convergence quality</li>
+      </ul>
+    </div>
+    <div class="papers">Stasser &amp; Titus (1985) · Mesmer-Magnus &amp; DeChurch (2009) · Hoever et al. (2012) · Seeber et al. (2017)</div>
+  </div>
+
+  <div class="combo-row">
+    <div class="purpose">부작용 검증</div>
+    <div class="dvs">
+      <ul>
+        <li>collaborative fixation</li>
+        <li>cognitive interference</li>
+        <li>semantic narrowing</li>
+        <li>production blocking</li>
+      </ul>
+    </div>
+    <div class="papers">Diehl &amp; Stroebe (1987) · Nijstad et al. (2002) · Kohn &amp; Smith (2011)</div>
+  </div>
+
+  <div class="combo-row">
+    <div class="purpose">상호작용 구조</div>
+    <div class="dvs">
+      <ul>
+        <li>turn-taking equality</li>
+        <li>participation balance</li>
+        <li>functional/dysfunctional meeting behavior</li>
+      </ul>
+    </div>
+    <div class="papers">Woolley et al. (2010) · Kauffeld &amp; Lehmann-Willenbrock (2012)</div>
+  </div>
+
+  <div class="combo-row">
+    <div class="purpose">회의 경험</div>
+    <div class="dvs">
+      <ul>
+        <li>perceived meeting effectiveness</li>
+        <li>meeting quality</li>
+        <li>attendee involvement</li>
+        <li>meeting satisfaction</li>
+      </ul>
+    </div>
+    <div class="papers">Leach et al. (2009) · Cohen et al. (2011)</div>
+  </div>
+
+  <div class="combo-row">
+    <div class="purpose">VR/원격 비교</div>
+    <div class="dvs">
+      <ul>
+        <li>fatigue</li>
+        <li>flow</li>
+        <li>semantic focus</li>
+        <li>eye-gaze dispersion</li>
+        <li>object recall</li>
+      </ul>
+    </div>
+    <div class="papers">Brucks &amp; Levav (2022) · Macchi &amp; De Pisapia (2024)</div>
+  </div>
+
+  <!-- 보강 — 본 연구 RQ 직격 목적 3개 추가 -->
+  <div class="combo-row" style="background: #fef2f2;">
+    <div class="purpose" style="background: #fee2e2; color: #991b1b;">★ 위계 효과 검증<br><span style="font-weight:500; font-size:13px;">(보강)</span></div>
+    <div class="dvs">
+      <ul>
+        <li>team performance · viability</li>
+        <li>team conflict (매개)</li>
+        <li>intragroup coordination</li>
+        <li>hierarchy mutability · skill differentiation (조절)</li>
+        <li>task interdependence (조절)</li>
+      </ul>
+    </div>
+    <div class="papers">Greer et al. (2018) JAP 메타 · Halevy et al. (2012) SPPS · Bunderson &amp; Boumgarden (2010) Org Sci</div>
+  </div>
+
+  <div class="combo-row" style="background: #faf5ff;">
+    <div class="purpose" style="background: #ede9fe; color: #6d28d9;">★ 공유·분산 권한<br><span style="font-weight:500; font-size:13px;">(보강)</span></div>
+    <div class="dvs">
+      <ul>
+        <li>team effectiveness (shared leadership → ρ = .34)</li>
+        <li>shared leadership emergence</li>
+        <li>shared purpose · voice · social support</li>
+        <li>information elaboration</li>
+        <li>status conflict</li>
+      </ul>
+    </div>
+    <div class="papers">Wang, Waldman &amp; Zhang (2014) JAP 메타 · Carson, Tesluk &amp; Marrone (2007) AMJ · Wu et al. (2024) JAP</div>
+  </div>
+
+  <div class="combo-row" style="background: #f0fdf4;">
+    <div class="purpose" style="background: #dcfce7; color: #14532d;">★ Psychological safety · 학습<br><span style="font-weight:500; font-size:13px;">(보강)</span></div>
+    <div class="dvs">
+      <ul>
+        <li>psychological safety (7-item Likert)</li>
+        <li>team learning behavior (질문·피드백·실수 논의·실험 코딩)</li>
+        <li>voice behavior</li>
+        <li>creativity · task performance · OCB</li>
+        <li>information sharing · conflict frequency (매개)</li>
+      </ul>
+    </div>
+    <div class="papers">Edmondson (1999) ASQ 원전 · Frazier et al. (2017) Personnel Psych 메타 · Bunderson &amp; Boumgarden (2010)</div>
+  </div>
+
+  <div class="combo-row" style="background: #fffbeb;">
+    <div class="purpose" style="background: #fef3c7; color: #92400e;">★ 팀 협업 품질 (TWQ)<br><span style="font-weight:500; font-size:13px;">(보강)</span></div>
+    <div class="dvs">
+      <ul>
+        <li>TWQ 6 facets (communication · coordination · balance · mutual support · effort · cohesion)</li>
+        <li>team performance (effectiveness · efficiency)</li>
+        <li>personal success (satisfaction · learning)</li>
+        <li>support for innovation · vision · task orientation</li>
+        <li>external communication</li>
+      </ul>
+    </div>
+    <div class="papers">Hoegl &amp; Gemuenden (2001) Org Sci 본가 · Hülsheger, Anderson &amp; Salgado (2009) JAP 메타</div>
+  </div>
+</div>
+
+</div>
+</body>
+</html>

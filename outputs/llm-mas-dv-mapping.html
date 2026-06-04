@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>전체 DV × LLM/MAS 매핑 — SCI 등급 표시</title>
+<style>
+  :root {
+    --bg: #fafaf9;
+    --surface: #ffffff;
+    --border: #e7e5e4;
+    --text: #1c1917;
+    --muted: #57534e;
+    --yes: #16a34a; --yes-bg: #f0fdf4;
+    --partial: #ca8a04; --partial-bg: #fefce8;
+    --no: #dc2626; --no-bg: #fef2f2;
+    --gap: #be185d; --gap-bg: #fdf2f8;
+    --sci: #6d28d9; --sci-bg: #ede9fe;
+    --sci-top: #4c1d95; --sci-top-bg: #ddd6fe;
+    --scopus: #0e7490; --scopus-bg: #ecfeff;
+    --arxiv: #78716c; --arxiv-bg: #f5f5f4;
+    --uncert: #ca8a04; --uncert-bg: #fefce8;
+    --non: #b91c1c; --non-bg: #fee2e2;
+    --sec1: #6d28d9; --sec2: #0e7490; --sec3: #c2410c;
+    --sec4: #16a34a; --sec5: #be185d; --sec6: #0891b2;
+    --sec7: #db2777; --sec8: #7c3aed;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    padding: 48px 24px;
+    font-size: 18px;
+  }
+  .container { max-width: 1350px; margin: 0 auto; }
+  .doc-tag {
+    font-size: 14px;
+    color: var(--muted);
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  h1 {
+    font-size: 32px;
+    letter-spacing: -0.02em;
+    line-height: 1.25;
+    margin-bottom: 14px;
+  }
+  .lede {
+    font-size: 17px;
+    color: var(--muted);
+    margin-bottom: 28px;
+    line-height: 1.7;
+    max-width: 1100px;
+  }
+  .lede strong { color: var(--text); }
+
+  /* legend */
+  .legend {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 32px;
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    font-size: 14px;
+    color: var(--muted);
+  }
+  .legend > div {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+  }
+  .badge.sci-top { background: var(--sci-top-bg); color: var(--sci-top); }
+  .badge.sci { background: var(--sci-bg); color: var(--sci); }
+  .badge.scopus { background: var(--scopus-bg); color: var(--scopus); }
+  .badge.arxiv { background: var(--arxiv-bg); color: var(--arxiv); }
+  .badge.uncert { background: var(--uncert-bg); color: var(--uncert); }
+  .badge.non { background: var(--non-bg); color: var(--non); }
+
+  .status {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 100px;
+    font-weight: 700;
+    font-size: 12px;
+  }
+  .status.yes { background: var(--yes-bg); color: var(--yes); }
+  .status.yesyes { background: var(--yes); color: white; }
+  .status.partial { background: var(--partial-bg); color: var(--partial); }
+  .status.no { background: var(--no-bg); color: var(--no); }
+  .status.gap { background: var(--gap-bg); color: var(--gap); }
+
+  /* sections */
+  h2.sec {
+    font-size: 22px;
+    margin: 44px 0 14px;
+    letter-spacing: -0.01em;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  h2.sec .num {
+    color: white;
+    width: 30px;
+    height: 30px;
+    border-radius: 100px;
+    text-align: center;
+    line-height: 30px;
+    font-size: 14px;
+    font-weight: 700;
+  }
+  .sec-sub {
+    font-size: 15px;
+    color: var(--muted);
+    margin-bottom: 16px;
+    margin-top: -2px;
+  }
+
+  /* DV table */
+  .dv-table {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 22px;
+  }
+  .row {
+    display: grid;
+    grid-template-columns: 1.5fr 1.3fr 95px 1.4fr 110px;
+    border-bottom: 1px solid var(--border);
+    align-items: stretch;
+  }
+  .row:last-child { border-bottom: none; }
+  .row.head {
+    background: var(--bg);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    font-weight: 700;
+  }
+  .row.head > div {
+    padding: 12px 14px;
+    border-right: 1px solid var(--border);
+  }
+  .row.head > div:last-child { border-right: none; }
+  .row > div {
+    padding: 14px;
+    border-right: 1px solid var(--border);
+    font-size: 15px;
+    line-height: 1.55;
+  }
+  .row > div:last-child { border-right: none; }
+  .row .dv-name {
+    font-weight: 700;
+    color: var(--text);
+  }
+  .row .kor {
+    color: var(--text);
+  }
+  .row .status-cell {
+    text-align: center;
+    align-self: center;
+  }
+  .row .source {
+    color: var(--text);
+    font-size: 14px;
+  }
+  .row .venue {
+    text-align: center;
+    align-self: center;
+  }
+
+  .gap-row { background: rgba(190,24,93,0.04); }
+  .strong-row { background: rgba(109,40,217,0.04); }
+
+  /* summary */
+  .summary {
+    background: var(--surface);
+    border: 2px solid var(--sci);
+    border-radius: 14px;
+    padding: 26px 30px;
+    margin-top: 32px;
+  }
+  .summary h2 {
+    font-size: 22px;
+    color: var(--sci);
+    margin-bottom: 14px;
+  }
+  .summary .grade-block {
+    margin-bottom: 18px;
+  }
+  .summary .grade-title {
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 8px;
+  }
+  .summary p { font-size: 15px; line-height: 1.7; margin-bottom: 6px; }
+  .summary ul {
+    padding-left: 22px;
+    font-size: 15px;
+    line-height: 1.7;
+  }
+  .summary ul li { margin-bottom: 4px; }
+  .summary .gap-box {
+    background: var(--gap-bg);
+    border-left: 4px solid var(--gap);
+    border-radius: 6px;
+    padding: 14px 18px;
+    margin-top: 14px;
+  }
+  .summary .gap-box strong { color: var(--gap); }
+
+  @media (max-width: 1100px) {
+    .row { grid-template-columns: 1fr; }
+    .row > div { border-right: none; border-bottom: 1px solid var(--border); }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="doc-tag">전체 DV × LLM/MAS 매핑 v3 · SCI 등급 표시</div>
+<h1>전체 DV × LLM/MAS 연구 매핑 — 출처 SCI 등급 포함</h1>
+
+<p class="lede">
+  본 문서는 dv-survey.html의 43 인간 협업 논문 + user-perspective-dv.html의 53 user 인식 측정 + MAS 특유 신규 DV를 통합하여, 각 DV가 LLM/MAS 연구에서 얼마나 다뤄졌는지 매핑한다.
+  <strong>출처 SCI 등급 표시</strong>: ★★ SSCI Q1 Top / ★ SCI/SSCI/SCIE / ▲ Scopus 학술대회 / arxiv 프리프린트 / ⚠ 비-학술 (HBR 등) / ? 미확인.
+</p>
+
+<div class="legend">
+  <div><span class="status yesyes">✅✅</span> 매우 활발</div>
+  <div><span class="status yes">✅</span> 연구 있음</div>
+  <div><span class="status partial">⚠</span> 일부·간접</div>
+  <div><span class="status no">❌</span> 거의 없음</div>
+  <div><span class="status gap">★ Gap</span> 본 연구 차별 영역</div>
+  <div style="margin-left:20px;"><span class="badge sci-top">★★SSCI Q1 Top</span></div>
+  <div><span class="badge sci">★SCI</span></div>
+  <div><span class="badge scopus">▲Scopus</span></div>
+  <div><span class="badge arxiv">arxiv</span></div>
+  <div><span class="badge non">⚠비학술</span></div>
+  <div><span class="badge uncert">?</span></div>
+</div>
+
+<!-- §1 -->
+<h2 class="sec"><span class="num" style="background:var(--sec1);">1</span>발화·산출물 측정 (객관)</h2>
+
+<div class="dv-table">
+  <div class="row head">
+    <div>DV (영문)</div>
+    <div>한글 뜻</div>
+    <div>LLM/MAS</div>
+    <div>출처</div>
+    <div>등급</div>
+  </div>
+
+  <div class="row">
+    <div class="dv-name">Idea fluency · Flexibility · Originality · Novelty · Elaboration</div>
+    <div class="kor">TTCT 5 차원 (산출 수·카테고리·참신성·새로움·정교화)</div>
+    <div class="status-cell"><span class="status yes">✅</span></div>
+    <div class="source">LiveIdeaBench</div>
+    <div class="venue"><span class="badge arxiv">arxiv</span></div>
+  </div>
+  <div class="row">
+    <div class="dv-name">Idea fluency · originality (divergent thinking)</div>
+    <div class="kor">발산 사고</div>
+    <div class="status-cell"><span class="status yes">✅</span></div>
+    <div class="source">"Evaluating LLMs' divergent thinking"</div>
+    <div class="venue"><span class="badge sci">★SCI Nature Communications</span></div>
+  </div>
+  <div class="row">
+    <div class="dv-name">Best idea quality</div>
+    <div class="kor">최고 아이디어 품질 (평균 아닌 tail)</div>
+    <div class="status-cell"><span class="status yes">✅</span></div>
+    <div class="source">Beyond Brainstorming</div>
+    <div class="venue"><span class="badge arxiv">arxiv</span></div>
+  </div>
+  <div class="row">
+    <div class="dv-name">Idea diversity / homogenization</div>
+    <div class="kor">아이디어 다양성·동질화</div>
+    <div class="status-cell"><span class="status yes">✅</span></div>
+    <div class="source">"Examining Barriers to Diversity", "How AI Ideas Affect Creativity"</div>
+    <div class="venue"><span class="badge arxiv">arxiv</span></div>
+  </div>
+  <div class="row">
+    <div class="dv-name">Collaborative fixation</div>
+    <div class="kor">타인 아이디어로 인한 사고 고착</div>
+    <div class="status-cell"><span class="status yes">✅</span></div>
+    <div class="source">"Examining Barriers to Diversity in LLM Ideas"</div>
+    <div class="venue"><span class="badge arxiv">arxiv</span></div>
+  </div>
+  <div class="row">
+    <div class="dv-name">Hidden profile 비공유 정보 사용</div>
+    <div class="kor">분산 정보 통합도</div>
+    <div class="status-cell"><span class="status yes">✅</span></div>
+    <div class="source">HiddenBench · "Bringing Everyone to the Table"</div>
+    <div class="venue"><span class="badge arxiv">arxiv</span></div>
+  </div>
+  <div class="row">
+    <div class="dv-name">Decision quality (정답 대비)</div>
+    <div class="kor">최적안 일치도</div>
+    <div class="status-cell"><span class="status yes">✅</span></div>
+    <div class="source">HiddenBench, MultiAgentBench</div>
+    <div class="venue"><span class="badge arxiv">arxiv</span> <span class="badge scopus">▲ACL 2025</span></div>
+  </div>
+  <div class="row">
+    <div class="dv-name">Knowledge integration</div>
+    <div class="kor">분산 지식 통합</div>
+    <div class="status-cell"><span class="status yes">✅</span></div>
+    <div class="source">SynergyMAS</div>
+    <div class="venue"><span class="badge arxiv">arxiv</span></div>
+  </div>
+  <div class="row">
+    <div class="dv-name">Turn-taking equality</div>
+    <div class="kor">발언 차례 균등성</div>
+    <div class="status-cell"><span class="status yes">✅</span></div>
+    <div class="source">MultiAgentBench / Riedl et al. 2021</div>
+    <div class="venue"><span class="badge scopus">▲ACL</span> <span class="badge uncert">?★PNAS 확인필요</span></div>
+  </div>
+  <div class="row">
+    <div class="dv-name">Equality of participation</div>
+    <div class="kor">발화량 균형</div>
+    <div class="status-cell"><span class="status yes">✅</span></div>
+    <div class="source">MultiAgentBench</div>
+    <div class="venue"><span class="badge scopus">▲ACL 2025</span></div>
+  </div>
+  <div class="row">
+    <div class="dv-name">Communication · Planning · Coordination score</div>
+    <div class="kor">협업 process score</div>
+    <div class="status-cell"><span class="status yes">✅</span></div>
+    <div class="source">MultiAgentBench</div>
+    <div class="venue"><span class="badge scopus">▲ACL 2025</span></div>
+  </div>
+  <div class="row">
+    <div class="dv-name">Conformity dynamics</div>
+    <div class="kor">동조 압력 작동</div>
+    <div class="status-cell"><span class="status yes">✅</span></div>
+    <div class="source">"Conformity Dynamics in LLM MAS"</div>
+    <div class="venue"><span class="badge arxiv">arxiv</span></div>
+  </div>
+  <div class="row gap-row">
+    <div class="dv-name">Production blocking · Free riding · Evaluation apprehension</div>
+    <div class="kor">발화 차단·무임승차·평가 불안 (인간 특유)</div>
+    <div class="status-cell"><span class="status no">❌</span></div>
+    <div class="source">LLM N/A (병렬 입력)</div>
+    <div class="venue">—</div>
+  </div>
+  <div class="row gap-row">
+    <div class="dv-name">Build-up ratio · Linkography · Critical moves</div>
+    <div class="kor">빌드업·디자인 사고 흐름·핵심 전환</div>
+    <div class="status-cell"><span class="status no">❌</span></div>
+    <div class="source">없음 <span class="status gap">★ Gap</span></div>
+    <div class="venue">—</div>
+  </div>
+  <div class="row gap-row">
+    <div class="dv-name">Conflict-enabling states · Task/Status/Relationship conflict 발화</div>
+    <div class="kor">갈등 유발 상태·갈등 유형별 발화</div>
+    <div class="status-cell"><span class="status no">❌</span></div>
+    <div class="source">없음 <span class="status gap">★ Gap</span></div>
+    <div class="venue">—</div>
+  </div>
+  <div class="row gap-row">
+    <div class="dv-name">Functional / Dysfunctional meeting behavior</div>
+    <div class="kor">기능적·역기능 회의 발화 (Kauffeld)</div>
+    <div class="status-cell"><span class="status no">❌</span></div>
+    <div class="source">없음 <span class="status gap">★ Gap</span></div>
+    <div class="venue">—</div>
+  </div>
+  <div class="row">
+    <div class="dv-name">Emergent leadership</div>
+    <div class="kor">자발적 리더십 출현</div>
+    <div class="status-cell"><span class="status partial">⚠</span></div>
+    <div class="source">MetaAgents (관찰만, 측정 부재)</div>
+    <div class="venue"><span class="badge arxiv">arxiv</span></div>
+  </div>
+</div>
+
+<!-- §2 MAS 디자인 ideation 특유 -->
+<h2 class="sec"><span class="num" style="background:var(--sec2);">2</span>MAS 디자인 ideation 특유 (전부 Gap)</h2>
+<p class="sec-sub">기존 인간 협업 연구에도, LLM/MAS 연구에도 부재 — 본 연구 신규 측정 가능 영역</p>
+
+<div class="dv-table">
+  <div class="row head">
+    <div>DV</div>
+    <div>한글 뜻</div>
+    <div>LLM/MAS</div>
+    <div>비고</div>
+    <div>등급</div>
+  </div>
+  <div class="row gap-row">
+    <div class="dv-name">User need coverage</div>
+    <div class="kor">brief 사용자 needs 반영 비율</div>
+    <div class="status-cell"><span class="status no">❌</span></div>
+    <div class="source">신규 <span class="status gap">★ Gap</span></div>
+    <div class="venue">—</div>
+  </div>
+  <div class="row gap-row">
+    <div class="dv-name">Trade-off articulation</div>
+    <div class="kor">트레이드오프 명시 발화</div>
+    <div class="status-cell"><span class="status no">❌</span></div>
+    <div class="source">신규 <span class="status gap">★ Gap</span></div>
+    <div class="venue">—</div>
+  </div>
+  <div class="row gap-row">
+    <div class="dv-name">Cross-role dyad asymmetry</div>
+    <div class="kor">역할 쌍 상호작용 비대칭</div>
+    <div class="status-cell"><span class="status no">❌</span></div>
+    <div class="source">신규 <span class="status gap">★ Gap</span></div>
+    <div class="venue">—</div>
+  </div>
+  <div class="row gap-row">
+    <div class="dv-name">Role-boundary violation</div>
+    <div class="kor">역할 침범 빈도</div>
+    <div class="status-cell"><span class="status no">❌</span></div>
+    <div class="source">신규 <span class="status gap">★ Gap</span></div>
+    <div class="venue">—</div>
+  </div>
+  <div class="row gap-row">
+    <div class="dv-name">Concept genealogy depth</div>
+    <div class="kor">아이디어 발전 계보 깊이</div>
+    <div class="status-cell"><span class="status no">❌</span></div>
+    <div class="source">신규 <span class="status gap">★ Gap</span></div>
+    <div class="venue">—</div>
+  </div>
+  <div class="row gap-row">
+    <div class="dv-name">Semantic convergence trajectory</div>
+    <div class="kor">의미 공간 수렴 궤적</div>
+    <div class="status-cell"><span class="status no">❌</span></div>
+    <div class="source">신규 <span class="status gap">★ Gap</span></div>
+    <div class="venue">—</div>
+  </div>
+  <div class="row gap-row">
+    <div class="dv-name">Cross-domain reference density</div>
+    <div class="kor">외부 도메인 인용 빈도</div>
+    <div class="status-cell"><span class="status no">❌</span></div>
+    <div class="source">신규 <span class="status gap">★ Gap</span></div>
+    <div class="venue">—</div>
+  </div>
+  <div class="row">
+    <div class="dv-name">Generation stability (replicas)</div>
+    <div class="kor">반복 실행 결과 안정성</div>
+    <div class="status-cell"><span class="status partial">⚠</span></div>
+    <div class="source">일부 robustness 연구</div>
+    <div class="venue"><span class="badge arxiv">arxiv</span></div>
+  </div>
+</div>
+
+<!-- §3 구조 비교 -->
+<h2 class="sec"><span class="num" style="background:var(--sec3);">3</span>구조 비교 (Centralized vs Decentralized)</h2>
+
+<div class="dv-table">
+  <div class="row head">
+    <div>DV</div>
+    <div>한글 뜻</div>
+    <div>LLM/MAS</div>
+    <div>출처</div>
+    <div>등급</div>
+  </div>
+  <div class="row">
+    <div class="dv-name">Leader-led vs leaderless</div>
+    <div class="kor">리더 있는 vs 평등 구조 직접 비교</div>
+    <div class="status-cell"><span class="status yes">✅</span></div>
+    <div class="source">Beyond Brainstorming</div>
+    <div class="venue"><span class="badge arxiv">arxiv</span></div>
+  </div>
+  <div class="row">
+    <div class="dv-name">Topology (centralized · decentralized · layered)</div>
+    <div class="kor">에이전트 네트워크 구조 비교</div>
+    <div class="status-cell"><span class="status yes">✅</span></div>
+    <div class="source">MultiAgentBench · Topological Structure Learning</div>
+    <div class="venue"><span class="badge scopus">▲ACL</span> <span class="badge arxiv">arxiv</span></div>
+  </div>
+  <div class="row">
+    <div class="dv-name">Conformity by topology</div>
+    <div class="kor">구조별 동조 압력</div>
+    <div class="status-cell"><span class="status yes">✅</span></div>
+    <div class="source">"Conformity Dynamics in MAS"</div>
+    <div class="venue"><span class="badge arxiv">arxiv</span></div>
+  </div>
+  <div class="row">
+    <div class="dv-name">AutoGen supervisor pattern</div>
+    <div class="kor">감독자 에이전트 패턴 (중앙집중 구현)</div>
+    <div class="status-cell"><span class="status yes">✅</span></div>
+    <div class="source">AutoGen</div>
+    <div class="venue"><span class="badge arxiv">arxiv</span></div>
+  </div>
+</div>
+
+<!-- §4 User 인식 — 신뢰 -->
+<h2 class="sec"><span class="num" style="background:var(--sec4);">4</span>User 인식 — 신뢰·관계 ★ 가장 활발</h2>
+
+<div class="dv-table">
+  <div class="row head">
+    <div>DV</div>
+    <div>한글 뜻</div>
+    <div>LLM/MAS</div>
+    <div>출처</div>
+    <div>등급</div>
+  </div>
+  <div class="row strong-row">
+    <div class="dv-name">Trust in AI agents (종합)</div>
+    <div class="kor">AI 에이전트 신뢰</div>
+    <div class="status-cell"><span class="status yesyes">✅✅</span></div>
+    <div class="source">"AI Trust and Agency"</div>
+    <div class="venue"><span class="badge sci-top">★★SSCI Q1 Top AMR</span></div>
+  </div>
+  <div class="row">
+    <div class="dv-name">Trust dynamics</div>
+    <div class="kor">신뢰 시간 변화</div>
+    <div class="status-cell"><span class="status yes">✅</span></div>
+    <div class="source">VizTrust · Trust Systematic Review</div>
+    <div class="venue"><span class="badge arxiv">arxiv</span> <span class="badge uncert">?</span></div>
+  </div>
+  <div class="row">
+    <div class="dv-name">Perceived competence (ability)</div>
+    <div class="kor">AI 능력 인식</div>
+    <div class="status-cell"><span class="status yes">✅</span></div>
+    <div class="source">"AI Agents as Team Members" · Warmth-Competence</div>
+    <div class="venue"><span class="badge uncert">?</span> <span class="badge arxiv">arxiv</span></div>
+  </div>
+  <div class="row">
+    <div class="dv-name">Perceived benevolence · integrity</div>
+    <div class="kor">선의·정직성 인식</div>
+    <div class="status-cell"><span class="status yes">✅</span></div>
+    <div class="source">"AI Agents as Team Members" (4 trust dimensions)</div>
+    <div class="venue"><span class="badge uncert">?</span></div>
+  </div>
+  <div class="row strong-row">
+    <div class="dv-name">Perceived agency</div>
+    <div class="kor">AI 행위 주체성 인식</div>
+    <div class="status-cell"><span class="status yes">✅</span></div>
+    <div class="source">"AI Trust and Agency"</div>
+    <div class="venue"><span class="badge sci-top">★★SSCI Q1 Top AMR</span></div>
+  </div>
+  <div class="row">
+    <div class="dv-name">Willingness to work with AI</div>
+    <div class="kor">AI와 협업 의향</div>
+    <div class="status-cell"><span class="status yes">✅</span></div>
+    <div class="source">"AI Agents as Team Members"</div>
+    <div class="venue"><span class="badge uncert">?</span></div>
+  </div>
+  <div class="row">
+    <div class="dv-name">Trust dispersion in team</div>
+    <div class="kor">팀 내 신뢰 분산</div>
+    <div class="status-cell"><span class="status yes">✅</span></div>
+    <div class="source">"Trust Dispersion in Human-AI Teams"</div>
+    <div class="venue"><span class="badge scopus">▲CEUR Workshop</span></div>
+  </div>
+  <div class="row">
+    <div class="dv-name">Anthropomorphization</div>
+    <div class="kor">AI 의인화 정도</div>
+    <div class="status-cell"><span class="status yes">✅</span></div>
+    <div class="source">"Revealing LLM Stochasticity"</div>
+    <div class="venue"><span class="badge arxiv">arxiv</span></div>
+  </div>
+  <div class="row">
+    <div class="dv-name">AI human-likeness</div>
+    <div class="kor">AI 인간다움 인식</div>
+    <div class="status-cell"><span class="status yes">✅</span></div>
+    <div class="source">"Too Human to Trust"</div>
+    <div class="venue"><span class="badge sci">★SCI ScienceDirect (Elsevier)</span></div>
+  </div>
+</div>
+
+<!-- §5 User 인식 — 소유·통제·만족 -->
+<h2 class="sec"><span class="num" style="background:var(--sec5);">5</span>User 인식 — 소유·통제·만족 ★ HCI 핵심</h2>
+
+<div class="dv-table">
+  <div class="row head">
+    <div>DV</div>
+    <div>한글 뜻</div>
+    <div>LLM/MAS</div>
+    <div>출처</div>
+    <div>등급</div>
+  </div>
+  <div class="row strong-row">
+    <div class="dv-name">Sense of ownership</div>
+    <div class="kor">산출물 소유감</div>
+    <div class="status-cell"><span class="status yesyes">✅✅</span></div>
+    <div class="source">"Who Owns Creativity" · "Timing Matters" · Partnering with Gen AI</div>
+    <div class="venue"><span class="badge arxiv">arxiv</span> <span class="badge scopus">▲CHI 2025</span></div>
+  </div>
+  <div class="row strong-row">
+    <div class="dv-name">Sense of control / agency</div>
+    <div class="kor">과정 통제감·자기 통제</div>
+    <div class="status-cell"><span class="status yesyes">✅✅</span></div>
+    <div class="source">Mindalogue · PersonaFlow · Co-Creativity Review</div>
+    <div class="venue"><span class="badge arxiv">arxiv</span></div>
+  </div>
+  <div class="row">
+    <div class="dv-name">Sense of agency (think-aloud)</div>
+    <div class="kor">AI 협업 중 행위 주체감</div>
+    <div class="status-cell"><span class="status yes">✅</span></div>
+    <div class="source">"Agency in Human-AI Collaboration"</div>
+    <div class="venue"><span class="badge sci">★SCI Creativity Research Journal (확인필요 T&amp;F)</span></div>
+  </div>
+  <div class="row">
+    <div class="dv-name">Perceived AI usefulness</div>
+    <div class="kor">AI 유용성 인식</div>
+    <div class="status-cell"><span class="status yesyes">✅✅</span></div>
+    <div class="source">대다수 user study 기본</div>
+    <div class="venue">다양</div>
+  </div>
+  <div class="row">
+    <div class="dv-name">Cognitive load with AI</div>
+    <div class="kor">AI 사용 시 인지 부하</div>
+    <div class="status-cell"><span class="status yes">✅</span></div>
+    <div class="source">PersonaFlow · Mindalogue</div>
+    <div class="venue"><span class="badge arxiv">arxiv</span></div>
+  </div>
+  <div class="row">
+    <div class="dv-name">Creative self-efficacy</div>
+    <div class="kor">창의 자기 효능감</div>
+    <div class="status-cell"><span class="status yes">✅</span></div>
+    <div class="source">"Who Owns Creativity"</div>
+    <div class="venue"><span class="badge arxiv">arxiv</span></div>
+  </div>
+  <div class="row">
+    <div class="dv-name">Self-credit / autonomy</div>
+    <div class="kor">자기 기여 인식·자율성</div>
+    <div class="status-cell"><span class="status yes">✅</span></div>
+    <div class="source">"Who Owns Creativity"</div>
+    <div class="venue"><span class="badge arxiv">arxiv</span></div>
+  </div>
+  <div class="row">
+    <div class="dv-name">Empowerment · Willingness to co-create</div>
+    <div class="kor">권한 강화·함께 만들 의향</div>
+    <div class="status-cell"><span class="status yes">✅</span></div>
+    <div class="source">"From humans to AI"</div>
+    <div class="venue"><span class="badge sci">★SCI Frontiers in Psychology</span></div>
+  </div>
+  <div class="row strong-row">
+    <div class="dv-name">AI collaboration satisfaction · System satisfaction</div>
+    <div class="kor">AI 협업 만족·시스템 만족</div>
+    <div class="status-cell"><span class="status yesyes">✅✅</span></div>
+    <div class="source">"When AI is Proactive"</div>
+    <div class="venue"><span class="badge sci">★SCI BISE Springer</span></div>
+  </div>
+</div>
+
+<!-- §6 User 인식 — PS · 갈등 -->
+<h2 class="sec"><span class="num" style="background:var(--sec6);">6</span>User 인식 — Psychological safety · 갈등 (인간-AI)</h2>
+
+<div class="dv-table">
+  <div class="row head">
+    <div>DV</div>
+    <div>한글 뜻</div>
+    <div>LLM/MAS</div>
+    <div>출처</div>
+    <div>등급</div>
+  </div>
+  <div class="row strong-row">
+    <div class="dv-name">Psychological safety with AI</div>
+    <div class="kor">AI 있는 팀의 심리적 안전감</div>
+    <div class="status-cell"><span class="status yes">✅</span></div>
+    <div class="source">"From Synergy to Strain"</div>
+    <div class="venue"><span class="badge sci">★SCI PMC indexed</span></div>
+  </div>
+  <div class="row">
+    <div class="dv-name">PS when AI erodes trust</div>
+    <div class="kor">AI가 신뢰 흔들 때 PS 유지</div>
+    <div class="status-cell"><span class="status yes">✅</span></div>
+    <div class="source">"How to Foster PS When AI Erodes Trust"</div>
+    <div class="venue"><span class="badge non">⚠비학술 HBR</span></div>
+  </div>
+  <div class="row">
+    <div class="dv-name">Knowledge hiding from AI</div>
+    <div class="kor">AI에 지식 숨김 행동</div>
+    <div class="status-cell"><span class="status yes">✅</span></div>
+    <div class="source">"From Synergy to Strain"</div>
+    <div class="venue"><span class="badge sci">★SCI PMC</span></div>
+  </div>
+  <div class="row">
+    <div class="dv-name">Task conflict with AI · Contrarian AI</div>
+    <div class="kor">AI와 과업 갈등 (반대하는 AI)</div>
+    <div class="status-cell"><span class="status partial">⚠</span></div>
+    <div class="source">Contrarian AI study</div>
+    <div class="venue"><span class="badge uncert">?</span></div>
+  </div>
+  <div class="row gap-row">
+    <div class="dv-name">Status conflict (인간 vs AI 권위)</div>
+    <div class="kor">권위 갈등</div>
+    <div class="status-cell"><span class="status no">❌</span></div>
+    <div class="source">거의 없음 <span class="status gap">★ Gap</span></div>
+    <div class="venue">—</div>
+  </div>
+  <div class="row">
+    <div class="dv-name">AI 친화 vs 반대 dispersion</div>
+    <div class="kor">팀 내 AI 태도 분산</div>
+    <div class="status-cell"><span class="status yes">✅</span></div>
+    <div class="source">Trust Dispersion</div>
+    <div class="venue"><span class="badge scopus">▲CEUR</span></div>
+  </div>
+</div>
+
+<!-- §7 인간 정통 척도 -->
+<h2 class="sec"><span class="num" style="background:var(--sec7);">7</span>User 인식 — 인간 정통 척도 그대로 적용 ★★ Gap</h2>
+<p class="sec-sub">TWQ · Meeting Science · Cohesion · TCI · De Wit · Carson 정통 척도를 LLM/MAS에 그대로 이식한 연구 — 대부분 부재 (본 연구 anchor 차별)</p>
+
+<div class="dv-table">
+  <div class="row head">
+    <div>DV</div>
+    <div>한글 뜻</div>
+    <div>LLM/MAS</div>
+    <div>비고</div>
+    <div>등급</div>
+  </div>
+  <div class="row gap-row">
+    <div class="dv-name">TWQ 6 facets 그대로</div>
+    <div class="kor">팀워크 품질 6차원 (소통·조율·균형·지원·노력·응집)</div>
+    <div class="status-cell"><span class="status no">❌</span></div>
+    <div class="source">사례 없음 <span class="status gap">★ Gap</span></div>
+    <div class="venue">—</div>
+  </div>
+  <div class="row">
+    <div class="dv-name">Edmondson 7-item PS 그대로</div>
+    <div class="kor">심리적 안전 7항목 척도</div>
+    <div class="status-cell"><span class="status partial">⚠</span></div>
+    <div class="source">일부 응용 (Bunderson 등)</div>
+    <div class="venue">—</div>
+  </div>
+  <div class="row gap-row">
+    <div class="dv-name">Meeting Science 인식 (Leach, Cohen)</div>
+    <div class="kor">회의 효과성·품질 인식</div>
+    <div class="status-cell"><span class="status no">❌</span></div>
+    <div class="source">LLM facilitator·multi-agent 회의 평가 부재 <span class="status gap">★ Gap</span></div>
+    <div class="venue">—</div>
+  </div>
+  <div class="row gap-row">
+    <div class="dv-name">Chairperson/PM effectiveness 직접 평가</div>
+    <div class="kor">PM 효과성 척도</div>
+    <div class="status-cell"><span class="status no">❌</span></div>
+    <div class="source">LLM PM 평가에 직접 적용 사례 없음 <span class="status gap">★ Gap</span></div>
+    <div class="venue">—</div>
+  </div>
+  <div class="row gap-row">
+    <div class="dv-name">Cohesion 3 force (Mullen)</div>
+    <div class="kor">응집 3 요인 (attraction·task commitment·pride)</div>
+    <div class="status-cell"><span class="status no">❌</span></div>
+    <div class="source">사례 없음 <span class="status gap">★ Gap</span></div>
+    <div class="venue">—</div>
+  </div>
+  <div class="row gap-row">
+    <div class="dv-name">TCI 5 차원 (Anderson &amp; West)</div>
+    <div class="kor">팀 분위기 5 차원</div>
+    <div class="status-cell"><span class="status no">❌</span></div>
+    <div class="source">사례 없음 <span class="status gap">★ Gap</span></div>
+    <div class="venue">—</div>
+  </div>
+  <div class="row gap-row">
+    <div class="dv-name">De Wit task/relationship/process conflict scale</div>
+    <div class="kor">갈등 3 유형 척도</div>
+    <div class="status-cell"><span class="status no">❌</span></div>
+    <div class="source">사례 없음 <span class="status gap">★ Gap</span></div>
+    <div class="venue">—</div>
+  </div>
+  <div class="row gap-row">
+    <div class="dv-name">Wu status conflict scale</div>
+    <div class="kor">권위 갈등 척도</div>
+    <div class="status-cell"><span class="status no">❌</span></div>
+    <div class="source">사례 없음 <span class="status gap">★ Gap</span></div>
+    <div class="venue">—</div>
+  </div>
+  <div class="row gap-row">
+    <div class="dv-name">Carson shared leadership scale</div>
+    <div class="kor">공유 리더십 척도 (shared purpose · voice · social support)</div>
+    <div class="status-cell"><span class="status no">❌</span></div>
+    <div class="source">사례 없음 <span class="status gap">★ Gap</span></div>
+    <div class="venue">—</div>
+  </div>
+  <div class="row">
+    <div class="dv-name">Hoegl personal success (work satisfaction · learning)</div>
+    <div class="kor">TWQ personal success</div>
+    <div class="status-cell"><span class="status no">❌</span></div>
+    <div class="source">HCI에 유사 satisfaction은 있음, TWQ 척도 그대로는 없음</div>
+    <div class="venue">—</div>
+  </div>
+  <div class="row">
+    <div class="dv-name">Seeber shared understanding · convergence quality 자기보고</div>
+    <div class="kor">합의·수렴 인식 척도</div>
+    <div class="status-cell"><span class="status no">❌</span></div>
+    <div class="source">척도 그대로는 없음</div>
+    <div class="venue">—</div>
+  </div>
+  <div class="row">
+    <div class="dv-name">Mesmer-Magnus decision satisfaction</div>
+    <div class="kor">결정 만족 척도 그대로</div>
+    <div class="status-cell"><span class="status partial">⚠</span></div>
+    <div class="source">HCI에 유사 measure 있음, 척도 그대로는 부분만</div>
+    <div class="venue">—</div>
+  </div>
+  <div class="row">
+    <div class="dv-name">Gilson trust in team / Commitment / Identification</div>
+    <div class="kor">팀 신뢰·헌신·소속 구체 척도</div>
+    <div class="status-cell"><span class="status partial">⚠</span></div>
+    <div class="source">일반 trust ✅, 척도 그대로는 ❌</div>
+    <div class="venue">—</div>
+  </div>
+</div>
+
+<!-- §8 VR/매체 -->
+<h2 class="sec"><span class="num" style="background:var(--sec8);">8</span>VR · 매체 경험 (Study 2 관련)</h2>
+
+<div class="dv-table">
+  <div class="row head">
+    <div>DV</div>
+    <div>한글 뜻</div>
+    <div>LLM/MAS</div>
+    <div>출처</div>
+    <div>등급</div>
+  </div>
+  <div class="row">
+    <div class="dv-name">Fatigue (VR collaboration)</div>
+    <div class="kor">피로감</div>
+    <div class="status-cell"><span class="status partial">⚠</span></div>
+    <div class="source">VR-AI 협업 일부</div>
+    <div class="venue"><span class="badge uncert">?</span></div>
+  </div>
+  <div class="row">
+    <div class="dv-name">Flow experience</div>
+    <div class="kor">몰입 경험</div>
+    <div class="status-cell"><span class="status partial">⚠</span></div>
+    <div class="source">HCI 일부</div>
+    <div class="venue"><span class="badge arxiv">arxiv</span></div>
+  </div>
+  <div class="row">
+    <div class="dv-name">Cognitive performance 인식 · Well-being</div>
+    <div class="kor">인지 수행 자기평가·웰빙</div>
+    <div class="status-cell"><span class="status no">❌</span></div>
+    <div class="source">LLM 맥락 부재</div>
+    <div class="venue">—</div>
+  </div>
+</div>
+
+<!-- ========= 요약 ========= -->
+<div class="summary">
+  <h2>핵심 요약 — 출처 등급별 분포 + 본 연구 차별 영역</h2>
+
+  <div class="grade-block">
+    <div class="grade-title">★★ SSCI Q1 Top 확인 (가장 강한 근거)</div>
+    <ul>
+      <li><strong>Academy of Management Review (AMR)</strong> — "AI Trust and Agency" (Trust · Agency)</li>
+    </ul>
+  </div>
+
+  <div class="grade-block">
+    <div class="grade-title">★ SCI / SSCI / SCIE 확인 (강한 근거)</div>
+    <ul>
+      <li><strong>Nature Communications</strong> — "Evaluating LLMs' divergent thinking" (Idea fluency·originality)</li>
+      <li><strong>Frontiers in Psychology</strong> — "From humans to AI" (Empowerment · Co-creation 의향)</li>
+      <li><strong>BISE Springer</strong> — "When AI is Proactive" (Satisfaction · Competence)</li>
+      <li><strong>ScienceDirect (Elsevier)</strong> — "Too Human to Trust" (AI 인간다움)</li>
+      <li><strong>PMC indexed</strong> — "From Synergy to Strain" (PS · Knowledge hiding)</li>
+      <li><strong>AI EDAM (Cambridge)</strong> — designer creativity co-ideation</li>
+      <li><strong>Creativity Research Journal</strong> (확인필요) — "Agency in Human-AI Collaboration"</li>
+    </ul>
+  </div>
+
+  <div class="grade-block">
+    <div class="grade-title">▲ Scopus 학술대회 (인정되는 근거)</div>
+    <ul>
+      <li><strong>ACL 2025</strong> — MultiAgentBench</li>
+      <li><strong>CHI 2025</strong> — Timing Matters · 기타 HCI 핵심</li>
+      <li><strong>CEUR Workshop</strong> — Trust Dispersion (낮은 등급)</li>
+    </ul>
+  </div>
+
+  <div class="grade-block">
+    <div class="grade-title">arxiv 프리프린트 (가장 많음, SCI 게재 전)</div>
+    <p>HiddenBench · LiveIdeaBench · Beyond Brainstorming · SynergyMAS · Topological Structure Learning · Conformity Dynamics · VizTrust · Warmth-Competence · PersonaFlow · Mindalogue · Who Owns Creativity · Examining Barriers · Partnering with Gen AI 등</p>
+  </div>
+
+  <div class="grade-block">
+    <div class="grade-title">⚠ 비-학술 · ? 미확인</div>
+    <ul>
+      <li><strong>HBR</strong> — Psychological safety with AI (실무 잡지)</li>
+      <li>"AI Agents as Team Members" 정확한 저널 확인필요</li>
+      <li>Contrarian AI study 출처 확인필요</li>
+    </ul>
+  </div>
+
+  <div class="gap-box">
+    <strong>★ 본 연구 차별 가능 영역 — SCI 저널 게재 contribution 후보</strong>
+    <ol style="margin-top:8px; padding-left: 22px; font-size:15px; line-height:1.7;">
+      <li><strong>TWQ 6 facets · Meeting Science · Cohesion 3 force · TCI · De Wit · Carson 척도를 LLM/MAS에 그대로 이식</strong> — 현재 거의 부재. 인간 팀 협업 정통 척도의 LLM 팀 적용 자체가 contribution</li>
+      <li><strong>Status conflict (인간-AI 권위 갈등)</strong> — 거의 미연구, 본 연구가 첫 측정 가능</li>
+      <li><strong>MAS 디자인 ideation 특유 transcript 측정</strong> — Build-up ratio · Linkography · Role-boundary violation · Cross-role dyad asymmetry · Concept genealogy depth · Semantic convergence trajectory · Cross-domain reference</li>
+      <li><strong>Conflict-enabling states · Functional/dysfunctional behavior</strong> — Kauffeld 인간 회의 코딩 방법론의 LLM 적용</li>
+    </ol>
+  </div>
+</div>
+
+</div>
+</body>
+</html>

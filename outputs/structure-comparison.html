@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>MAS 구조 분류 — SCI/Scopus 인덱싱 표시</title>
+<style>
+  :root {
+    --bg: #fafaf9;
+    --surface: #ffffff;
+    --border: #e7e5e4;
+    --text: #1c1917;
+    --muted: #57534e;
+    --pm: #4f46e5;
+    --pm-bg: #eef2ff;
+    --match: #16a34a;
+    --match-bg: #f0fdf4;
+    --partial: #ca8a04;
+    --partial-bg: #fefce8;
+    --mismatch: #dc2626;
+    --mismatch-bg: #fef2f2;
+    --arxiv: #78716c;
+    --arxiv-bg: #f5f5f4;
+    --scopus: #0e7490;
+    --scopus-bg: #ecfeff;
+    --sci: #6d28d9;
+    --sci-bg: #ede9fe;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    padding: 40px 24px;
+  }
+  .container { max-width: 1200px; margin: 0 auto; }
+  h1 { font-size: 28px; margin-bottom: 8px; letter-spacing: -.02em; }
+  .sub { color: var(--muted); margin-bottom: 24px; font-size: 15px; }
+  section { margin-bottom: 48px; }
+  .section-title {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    font-weight: 700;
+    margin-bottom: 16px;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    margin-bottom: 16px;
+    border-left-width: 6px;
+  }
+  .card.sci { border-left-color: var(--sci); }
+  .card.scopus { border-left-color: var(--scopus); }
+  .card.arxiv { border-left-color: var(--arxiv); }
+
+  .card h3 {
+    font-size: 17px;
+    margin-bottom: 4px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .venue-pill {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 100px;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .venue-pill.sci { background: var(--sci-bg); color: var(--sci); }
+  .venue-pill.scopus { background: var(--scopus-bg); color: var(--scopus); }
+  .venue-pill.arxiv { background: var(--arxiv-bg); color: var(--arxiv); }
+
+  .source {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 14px;
+    margin-top: 6px;
+  }
+  .structures-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-top: 12px;
+  }
+  .struct-mini {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    background: var(--bg);
+  }
+  .struct-mini h4 {
+    font-size: 12px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .struct-mini.cen h4 { color: var(--pm); }
+  .struct-mini.dec h4 { color: var(--match); }
+  .struct-mini.hier h4 { color: var(--partial); }
+  .struct-mini.smp h4 { color: var(--muted); }
+  .struct-mini .desc {
+    font-size: 11.5px;
+    color: var(--muted);
+    line-height: 1.4;
+    margin-top: 4px;
+  }
+  .struct-mini.use-cen, .struct-mini.use-dec {
+    border-color: var(--match);
+    border-width: 2px;
+    background: var(--match-bg);
+  }
+  .struct-mini .use-tag {
+    display: inline-block;
+    margin-top: 6px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: var(--match);
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+  }
+
+  .ours {
+    background: linear-gradient(135deg, var(--surface), #f5f5f4);
+    border: 2px solid var(--text);
+    border-radius: 14px;
+    padding: 24px;
+    margin-bottom: 36px;
+  }
+  .ours h2 {
+    font-size: 18px;
+    margin-bottom: 18px;
+    text-align: center;
+  }
+  .ours-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  .ours-row > div {
+    background: var(--surface);
+    border-radius: 10px;
+    padding: 18px;
+  }
+  .ours-row svg {
+    width: 100%;
+    height: 200px;
+    display: block;
+    margin: 10px 0;
+  }
+  .ours-row h4 {
+    font-size: 16px;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 4px;
+  }
+  .quote {
+    background: var(--bg);
+    border-left: 3px solid var(--scopus);
+    padding: 10px 14px;
+    margin: 12px 0;
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.5;
+    font-style: italic;
+  }
+  .quote .cite {
+    display: block;
+    font-style: normal;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+
+  .legend-bar {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 28px;
+    padding: 14px 18px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 12px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .legend-item .swatch {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+  }
+  .legend-item .swatch.sci { background: var(--sci); }
+  .legend-item .swatch.scopus { background: var(--scopus); }
+  .legend-item .swatch.arxiv { background: var(--arxiv); }
+  .legend-item strong { color: var(--text); font-weight: 700; }
+  .legend-item span { color: var(--muted); }
+
+  .match-table {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    margin-top: 20px;
+  }
+  table { width: 100%; border-collapse: collapse; }
+  th, td {
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+  }
+  th {
+    background: var(--bg);
+    font-weight: 700;
+    color: var(--muted);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  td.match { color: var(--match); font-weight: 600; }
+  td.mismatch { color: var(--mismatch); font-weight: 600; }
+
+  .conclusion {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 28px;
+    margin-top: 24px;
+  }
+  .conclusion h2 {
+    font-size: 18px;
+    margin-bottom: 14px;
+  }
+  .conclusion p { font-size: 15px; margin-bottom: 12px; }
+  .conclusion ul { padding-left: 20px; }
+  .conclusion li { font-size: 14px; color: var(--muted); margin-bottom: 6px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>MAS 구조 분류 — SCI/Scopus 인덱싱 표시</h1>
+<div class="sub">색상으로 인덱스 등급 구분: 보라 = SCI(E) · 청록 = Scopus · 회색 = arXiv 미게재</div>
+
+<!-- 범례 -->
+<div class="legend-bar">
+  <div class="legend-item"><span class="swatch sci"></span><div><strong>SCI(E)</strong> &nbsp;<span>Web of Science 색인, 학술적으로 가장 안전</span></div></div>
+  <div class="legend-item"><span class="swatch scopus"></span><div><strong>Scopus</strong> &nbsp;<span>Scopus 색인 (IJCAI 같은 학회·Springer 신규 저널 포함)</span></div></div>
+  <div class="legend-item"><span class="swatch arxiv"></span><div><strong>arXiv 미게재</strong> &nbsp;<span>정식 출판 안 됨, 보조 인용용</span></div></div>
+</div>
+
+<!-- 본 연구 (기준) -->
+<div class="ours">
+  <h2>본 연구의 구조 (기준)</h2>
+  <div class="ours-row">
+    <div>
+      <h4 style="color: var(--pm);">Centralized</h4>
+      <svg viewBox="0 0 360 200">
+        <line x1="180" y1="40" x2="180" y2="90" stroke="#4f46e5" stroke-width="3"/>
+        <line x1="180" y1="120" x2="100" y2="170" stroke="#a8a29e" stroke-width="2"/>
+        <line x1="180" y1="120" x2="260" y2="170" stroke="#a8a29e" stroke-width="2"/>
+        <circle cx="180" cy="30" r="20" fill="#1c1917"/>
+        <text x="180" y="35" fill="white" text-anchor="middle" font-size="11" font-weight="700">디자이너</text>
+        <rect x="140" y="90" width="80" height="32" rx="16" fill="#eef2ff" stroke="#4f46e5" stroke-width="2"/>
+        <text x="180" y="110" fill="#4f46e5" text-anchor="middle" font-size="11" font-weight="700">PM</text>
+        <circle cx="100" cy="180" r="18" fill="white" stroke="#57534e" stroke-width="2"/>
+        <text x="100" y="184" fill="#1c1917" text-anchor="middle" font-size="10">Dev</text>
+        <circle cx="260" cy="180" r="18" fill="white" stroke="#57534e" stroke-width="2"/>
+        <text x="260" y="184" fill="#1c1917" text-anchor="middle" font-size="10">Eng</text>
+      </svg>
+      <div style="font-size:13px; color:var(--muted); text-align:center;">PM이 중심 에이전트로 디자이너와 다른 에이전트들 조율</div>
+    </div>
+    <div>
+      <h4 style="color: var(--match);">Decentralized</h4>
+      <svg viewBox="0 0 360 200">
+        <line x1="180" y1="40" x2="80" y2="160" stroke="#a8a29e" stroke-width="2"/>
+        <line x1="180" y1="40" x2="280" y2="160" stroke="#a8a29e" stroke-width="2"/>
+        <line x1="180" y1="40" x2="180" y2="180" stroke="#a8a29e" stroke-width="2"/>
+        <line x1="80" y1="160" x2="280" y2="160" stroke="#a8a29e" stroke-width="1.5" stroke-dasharray="3,3"/>
+        <line x1="80" y1="160" x2="180" y2="180" stroke="#a8a29e" stroke-width="1.5" stroke-dasharray="3,3"/>
+        <line x1="280" y1="160" x2="180" y2="180" stroke="#a8a29e" stroke-width="1.5" stroke-dasharray="3,3"/>
+        <circle cx="180" cy="30" r="20" fill="#1c1917"/>
+        <text x="180" y="35" fill="white" text-anchor="middle" font-size="11" font-weight="700">디자이너</text>
+        <circle cx="80" cy="160" r="18" fill="white" stroke="#57534e" stroke-width="2"/>
+        <text x="80" y="164" fill="#1c1917" text-anchor="middle" font-size="10">PM</text>
+        <circle cx="280" cy="160" r="18" fill="white" stroke="#57534e" stroke-width="2"/>
+        <text x="280" y="164" fill="#1c1917" text-anchor="middle" font-size="10">Dev</text>
+        <circle cx="180" cy="185" r="18" fill="white" stroke="#57534e" stroke-width="2"/>
+        <text x="180" y="189" fill="#1c1917" text-anchor="middle" font-size="10">Eng</text>
+      </svg>
+      <div style="font-size:13px; color:var(--muted); text-align:center;">peer-to-peer, 디자이너가 누구에게나 직접 발화</div>
+    </div>
+  </div>
+</div>
+
+<!-- SCI 등급 (고전 foundational) -->
+<section>
+  <div class="section-title">SCI 게재 — Foundational MAS Taxonomy</div>
+
+  <div class="card sci">
+    <h3>Stone & Veloso (2000) <span class="venue-pill sci">SCI · Autonomous Robots</span></h3>
+    <div class="source">"Multiagent Systems: A Survey from a Machine Learning Perspective" · Autonomous Robots, Vol. 8, pp. 345–383 · Springer · IF~3.5 · 인용 5,000+</div>
+    <div class="quote">
+      Multi-agent systems 분야 가장 고전적 분류 출전. 후속 LLM-MAS taxonomy(Guo, Li 등)의 root.
+      <span class="cite">— pre-LLM 시대 고전, 개념 framework로 인용 가능</span>
+    </div>
+    <div style="font-size:13px; color: var(--muted);">SCI 게재의 안전한 foundational 인용. 직접 LLM-MAS는 아니나 centralized/decentralized 개념의 원천.</div>
+  </div>
+
+  <div class="card sci">
+    <h3>Wooldridge &amp; Jennings (1995) <span class="venue-pill sci">SCI · Knowledge Engineering Review</span></h3>
+    <div class="source">"Intelligent Agents: Theory and Practice" · Knowledge Engineering Review, Vol. 10(2), pp. 115–152 · Cambridge · 인용 15,000+</div>
+    <div style="font-size:13px; color: var(--muted);">에이전트·MAS 분야 정의의 표준 출전. 가장 오래된 foundational 인용으로 사용.</div>
+  </div>
+</section>
+
+<!-- Scopus 등급 (LLM-MAS 직접 매칭) -->
+<section>
+  <div class="section-title">Scopus 게재 — LLM-MAS Taxonomy (본 연구 직접 매핑)</div>
+
+  <div class="card scopus">
+    <h3>Guo et al. (2024) <span class="venue-pill scopus">Scopus · IJCAI 2024</span></h3>
+    <div class="source">"Large Language Model based Multi-Agents: A Survey of Progress and Challenges" · Proceedings of the 33rd International Joint Conference on Artificial Intelligence, pp. 8048–8057 · Survey Track</div>
+
+    <div class="quote">
+      "Decentralized operates on a peer-to-peer network, where agents directly communicate with each other. <strong>Centralized involves a central agent coordinating the system's communication, with other agents primarily interacting through this central node.</strong> Shared Message Pool is proposed by MetaGPT..."
+      <span class="cite">— Guo et al. 2024, IJCAI Survey Track p.8050, Section 2.2 "Communication Structure"</span>
+    </div>
+
+    <div class="structures-row">
+      <div class="struct-mini use-cen cen">
+        <h4>Centralized</h4>
+        <div class="desc">중심 에이전트가 시스템 통신 조율, 다른 에이전트들은 이 중심 노드를 통해 상호작용</div>
+        <span class="use-tag">본 연구 Centralized ✓</span>
+      </div>
+      <div class="struct-mini use-dec dec">
+        <h4>Decentralized</h4>
+        <div class="desc">peer-to-peer 네트워크, 에이전트들이 직접 소통</div>
+        <span class="use-tag">본 연구 Decentralized ✓</span>
+      </div>
+      <div class="struct-mini hier">
+        <h4>Layered</h4>
+        <div class="desc">계층적, 각 레벨이 별도 역할, 인접 층끼리만 소통</div>
+      </div>
+      <div class="struct-mini smp">
+        <h4>Shared Message Pool</h4>
+        <div class="desc">발행-구독 (publish/subscribe)</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card scopus">
+    <h3>Li et al. (2024) <span class="venue-pill scopus">Scopus · Vicinagearth (Springer)</span></h3>
+    <div class="source">"A Survey on LLM-based Multi-Agent Systems: Workflow, Infrastructure, and Challenges" · Vicinagearth, Vol. 1, Issue 1, pp. 1–43 · Springer Nature · DOI: 10.1007/s44336-024-00009-2</div>
+
+    <div class="quote">
+      "Decentralized communication operates within peer-to-peer networks where agents communicate directly with each other without relying on central authority. <strong>In centralized interaction structures, a central agent or a group of central agents coordinate the system, managing and orchestrating interactions among all agents.</strong> In hierarchical interactions, the relationships among agents typically manifest as a tree structure."
+      <span class="cite">— Li et al. 2024, Vicinagearth p.~104, Section "Interaction Structures"</span>
+    </div>
+
+    <div class="structures-row">
+      <div class="struct-mini use-cen cen">
+        <h4>Centralized</h4>
+        <div class="desc">중심 에이전트(또는 그룹)가 시스템 조율, 모든 상호작용 관리·오케스트레이션</div>
+        <span class="use-tag">본 연구 Centralized ✓</span>
+      </div>
+      <div class="struct-mini use-dec dec">
+        <h4>Decentralized</h4>
+        <div class="desc">peer-to-peer, 중앙 권위 없음, 평등한 동등 상호작용</div>
+        <span class="use-tag">본 연구 Decentralized ✓</span>
+      </div>
+      <div class="struct-mini hier">
+        <h4>Hierarchical</h4>
+        <div class="desc">트리 구조, 부모 노드가 목표·과제 분배</div>
+      </div>
+      <div class="struct-mini smp">
+        <h4>Shared Message Pool</h4>
+        <div class="desc">발행-구독, 프로필 기반 필터링</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- arXiv 등급 -->
+<section>
+  <div class="section-title">arXiv 미게재 (참고용, 인용 약함)</div>
+  <div class="card arxiv">
+    <h3>Tran et al. (2025) <span class="venue-pill arxiv">arXiv only</span></h3>
+    <div class="source">"Multi-Agent Collaboration Mechanisms: A Survey of LLMs" · arXiv:2501.06322 · 정식 게재 X</div>
+    <div class="quote">
+      "Structures (e.g., peer-to-peer, centralized, or distributed)."
+      <span class="cite">동일 분류 패턴, 단 정식 게재 안 됨</span>
+    </div>
+    <div style="font-size:13px; color:var(--muted); margin-top: 8px;">Guo / Li가 이미 같은 분류를 SCI/Scopus급으로 출판했으므로 Tran은 보조 인용으로만 사용. 정당화 라인업에서 빼도 무방.</div>
+  </div>
+</section>
+
+<!-- 종합 비교 -->
+<section>
+  <div class="section-title">출처 등급별 정리</div>
+  <div class="match-table">
+    <table>
+      <thead>
+        <tr>
+          <th>출처</th>
+          <th>인덱스</th>
+          <th>발행 venue</th>
+          <th>본 연구 정당화 강도</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Stone &amp; Veloso (2000)</td>
+          <td><span class="venue-pill sci">SCI</span></td>
+          <td>Autonomous Robots (Springer)</td>
+          <td class="match">Foundational, 안전</td>
+        </tr>
+        <tr>
+          <td>Wooldridge &amp; Jennings (1995)</td>
+          <td><span class="venue-pill sci">SCI</span></td>
+          <td>Knowledge Engineering Review (Cambridge)</td>
+          <td class="match">Foundational, 안전</td>
+        </tr>
+        <tr>
+          <td><strong>Guo et al. (2024)</strong></td>
+          <td><span class="venue-pill scopus">Scopus</span></td>
+          <td>IJCAI 2024 Proceedings</td>
+          <td class="match">★ 메인 인용, 본 연구 직접 매핑</td>
+        </tr>
+        <tr>
+          <td><strong>Li et al. (2024)</strong></td>
+          <td><span class="venue-pill scopus">Scopus</span></td>
+          <td>Vicinagearth Springer</td>
+          <td class="match">★ 메인 인용, 본 연구 직접 매핑</td>
+        </tr>
+        <tr>
+          <td>Tran et al. (2025)</td>
+          <td><span class="venue-pill arxiv">arXiv</span></td>
+          <td>미게재</td>
+          <td>보조 (빼도 OK)</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- 결론 -->
+<div class="conclusion">
+  <h2>본 연구 정당화 — 한 단락 초안 (인용 등급 명시)</h2>
+
+  <p>"멀티에이전트 시스템의 통신 구조는 고전 MAS 연구에서 <strong>centralized vs decentralized</strong>로 분류되어 왔다 [Wooldridge &amp; Jennings, 1995, <em>Knowledge Engineering Review</em>; Stone &amp; Veloso, 2000, <em>Autonomous Robots</em>]. 이 분류는 LLM 기반 MAS surveys에서도 일관되게 유지된다 [Guo et al., 2024, <em>IJCAI Survey Track</em>; Li et al., 2024, <em>Vicinagearth</em>]. Guo et al. (2024)은 centralized 구조를 '<em>central agent coordinating the system's communication, with other agents primarily interacting through this central node</em>'로 정의하며, Li et al. (2024)도 동일하게 '<em>a central agent or a group of central agents coordinate the system, managing and orchestrating interactions</em>'으로 명시한다. 본 연구의 Centralized 조건에서 PM 에이전트가 정확히 이 정의에 해당하는 central agent 역할을 수행한다."</p>
+
+  <h2 style="margin-top:24px;">인용 라인업 (등급별)</h2>
+  <ul>
+    <li><span class="venue-pill sci">SCI</span> &nbsp; Stone &amp; Veloso (2000), Wooldridge &amp; Jennings (1995) — foundational MAS 분류 root</li>
+    <li><span class="venue-pill scopus">Scopus</span> &nbsp; Guo et al. (2024 IJCAI), Li et al. (2024 Vicinagearth) — LLM-MAS 직접 분류, 본 연구 메인 인용</li>
+    <li><span class="venue-pill arxiv">arXiv</span> &nbsp; Tran et al. (2025) — 보조 (빼도 무방)</li>
+  </ul>
+
+  <h2 style="margin-top:24px;">한 줄 정리</h2>
+  <p>본 연구 자극물은 <strong>SCI 고전(Stone &amp; Veloso, Wooldridge &amp; Jennings) → Scopus LLM-MAS surveys(Guo, Li) 두 layer의 표준 분류에 정확히 정렬</strong>. Lim 2026의 mismatch는 Guo/Li 정의에서 풀림 (central agent가 AI여도 됨이 명시).</p>
+</div>
+
+</div>
+</body>
+</html>

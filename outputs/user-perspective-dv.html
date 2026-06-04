@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>참가자 입장 측정 DV — 43 SCI 논문 기반</title>
+<style>
+  :root {
+    --bg: #fafaf9;
+    --surface: #ffffff;
+    --border: #e7e5e4;
+    --text: #1c1917;
+    --muted: #57534e;
+    --a: #6d28d9; --a-bg: #ede9fe;
+    --b: #0e7490; --b-bg: #ecfeff;
+    --c: #c2410c; --c-bg: #ffedd5;
+    --d: #16a34a; --d-bg: #f0fdf4;
+    --e: #be185d; --e-bg: #fdf2f8;
+    --f: #dc2626; --f-bg: #fef2f2;
+    --g: #0891b2; --g-bg: #cffafe;
+    --h: #ca8a04; --h-bg: #fefce8;
+    --i: #4f46e5; --i-bg: #eef2ff;
+    --j: #7c2d12; --j-bg: #fed7aa;
+    --k: #db2777; --k-bg: #fce7f3;
+    --cent: #ca8a04; --cent-bg: #fefce8;
+    --dec: #0891b2; --dec-bg: #ecfeff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    padding: 48px 24px;
+    font-size: 18px;
+  }
+  .container { max-width: 1200px; margin: 0 auto; }
+  .doc-tag {
+    font-size: 14px;
+    color: var(--muted);
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  h1 {
+    font-size: 34px;
+    letter-spacing: -0.02em;
+    line-height: 1.25;
+    margin-bottom: 14px;
+  }
+  .lede {
+    font-size: 18px;
+    color: var(--muted);
+    margin-bottom: 30px;
+    line-height: 1.7;
+    max-width: 1000px;
+  }
+  .lede strong { color: var(--text); }
+
+  .source-note {
+    background: var(--cent-bg);
+    border-left: 5px solid var(--cent);
+    border-radius: 10px;
+    padding: 18px 22px;
+    margin-bottom: 36px;
+    font-size: 16px;
+    line-height: 1.7;
+  }
+  .source-note strong { color: var(--cent); }
+
+  h2.sec {
+    font-size: 24px;
+    margin: 44px 0 14px;
+    letter-spacing: -0.01em;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  h2.sec .tag {
+    font-size: 13px;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 100px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+  }
+  .sec-sub {
+    font-size: 15px;
+    color: var(--muted);
+    margin-bottom: 16px;
+    margin-top: -4px;
+  }
+
+  .source-line {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--muted);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 12px;
+    font-size: 14px;
+    color: var(--muted);
+    font-style: italic;
+  }
+  .source-line strong { color: var(--text); font-style: normal; }
+
+  .dv-list {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 22px;
+    margin-bottom: 24px;
+  }
+  .dv-item {
+    display: grid;
+    grid-template-columns: 50px 1fr;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px dashed var(--border);
+    font-size: 15.5px;
+    line-height: 1.6;
+  }
+  .dv-item:last-child { border-bottom: none; }
+  .dv-item .num {
+    font-weight: 800;
+    color: var(--muted);
+    text-align: right;
+  }
+  .dv-item .body strong {
+    color: var(--text);
+    font-weight: 700;
+  }
+  .dv-item .body .desc {
+    color: var(--muted);
+    font-size: 14px;
+    margin-top: 2px;
+    display: block;
+  }
+  .dv-item .body .star {
+    display: inline-block;
+    background: #fef3c7;
+    color: #92400e;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 700;
+    margin-left: 6px;
+  }
+
+  /* structure table */
+  .struct-table {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .st-row {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 1.5fr;
+    border-bottom: 1px solid var(--border);
+    align-items: stretch;
+  }
+  .st-row:last-child { border-bottom: none; }
+  .st-row.head {
+    background: var(--bg);
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    font-weight: 700;
+  }
+  .st-row.head > div {
+    padding: 14px 18px;
+    border-right: 1px solid var(--border);
+  }
+  .st-row.head > div:last-child { border-right: none; }
+  .st-row > div {
+    padding: 14px 18px;
+    border-right: 1px solid var(--border);
+    font-size: 15px;
+    line-height: 1.6;
+  }
+  .st-row > div:last-child { border-right: none; }
+  .st-row .dv-name {
+    font-weight: 700;
+  }
+  .st-row .arrow {
+    text-align: center;
+    align-self: center;
+    font-weight: 700;
+  }
+  .arrow .cent { color: var(--cent); }
+  .arrow .dec { color: var(--dec); }
+
+  /* recommend */
+  .recommend {
+    background: var(--surface);
+    border: 2px solid var(--a);
+    border-radius: 14px;
+    padding: 26px 30px;
+    margin-top: 32px;
+  }
+  .recommend h2 {
+    font-size: 22px;
+    color: var(--a);
+    margin-bottom: 14px;
+  }
+  .recommend p { font-size: 16px; line-height: 1.7; margin-bottom: 12px; }
+  .recommend ol { padding-left: 24px; font-size: 16px; line-height: 1.75; }
+  .recommend ol li { margin-bottom: 8px; }
+
+  @media (max-width: 900px) {
+    .st-row { grid-template-columns: 1fr; }
+    .st-row > div { border-right: none; border-bottom: 1px solid var(--border); }
+    .dv-item { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="doc-tag">참가자 응답 측정 DV · 43 SCI 논문 기반</div>
+<h1>사용자 입장에서 측정 가능한 DV 정리</h1>
+
+<div class="source-note">
+  <strong>출처</strong>: 이전 정리한 dv-survey.html의 43 SCI/SSCI 논문에서 <strong>참가자 자기보고·인식</strong>으로 측정한 DV만 추출. 새 HCI 척도(CSI, NASA-TLX 등) 끌어오기 전에, 이미 검증된 척도가 본 매트릭스 안에 다 있음. 본 문서는 그것들을 11 카테고리로 정리.
+</div>
+
+<p class="lede">
+  본 문서는 (1) 11 카테고리 53개 user-perception DV, (2) Centralized vs Decentralized에서 변별 예상되는 측정 표, (3) 단발 ideation 세션용 최소 set 9개 추천을 담는다.
+</p>
+
+<!-- A · 회의 경험 인식 -->
+<h2 class="sec"><span class="tag" style="background:var(--a);">A · 회의 경험 인식</span></h2>
+<p class="sec-sub">Meeting Science 문헌에서 검증된 참가자 인식 척도</p>
+
+<div class="source-line">
+  <strong>Leach, Rogelberg, Warr &amp; Burnfield (2009)</strong> · J Business &amp; Psychology #19
+</div>
+<div class="dv-list">
+  <div class="dv-item"><span class="num">①</span><div class="body"><strong>Perceived meeting effectiveness</strong> <span class="desc">회의가 유용했다고 느끼는 정도</span></div></div>
+  <div class="dv-item"><span class="num">②</span><div class="body"><strong>Attendee involvement</strong> <span class="desc">본인 관여도 인식</span></div></div>
+  <div class="dv-item"><span class="num">③</span><div class="body"><strong>Agenda use perception</strong> <span class="desc">진행이 체계적이었는가</span></div></div>
+  <div class="dv-item"><span class="num">④</span><div class="body"><strong>Chairperson (PM) effectiveness</strong> <span class="star">★ 본 연구 PM 직접 평가</span><span class="desc">진행자(PM)의 효과성 — Centralized 조건 핵심</span></div></div>
+  <div class="dv-item"><span class="num">⑤</span><div class="body"><strong>Punctuality perception</strong> <span class="desc">시간 엄수 인식</span></div></div>
+</div>
+
+<div class="source-line">
+  <strong>Cohen, Rogelberg, Allen &amp; Luong (2011)</strong> · Group Dynamics #23
+</div>
+<div class="dv-list">
+  <div class="dv-item"><span class="num">⑥</span><div class="body"><strong>Perceived meeting quality</strong> <span class="desc">Leach과 별개 검증 척도</span></div></div>
+  <div class="dv-item"><span class="num">⑦</span><div class="body"><strong>Agenda relevance</strong> <span class="desc">다룬 주제가 의미 있었는가</span></div></div>
+  <div class="dv-item"><span class="num">⑧</span><div class="body"><strong>Purpose clarity</strong> <span class="desc">목적이 명확했는가</span></div></div>
+  <div class="dv-item"><span class="num">⑨</span><div class="body"><strong>Attendee preparedness</strong> <span class="desc">멤버가 준비됐다고 느꼈는가</span></div></div>
+  <div class="dv-item"><span class="num">⑩</span><div class="body"><strong>Facilitator status</strong> <span class="desc">진행자 권위 인식</span></div></div>
+</div>
+
+<!-- B · 결정·합의 만족 -->
+<h2 class="sec"><span class="tag" style="background:var(--b);">B · 결정·합의 만족</span></h2>
+<p class="sec-sub">결정·수렴 단계에 대한 사용자 만족·이해 인식</p>
+
+<div class="source-line">
+  <strong>Mesmer-Magnus &amp; DeChurch (2009)</strong> · J Applied Psychology 메타 #18
+</div>
+<div class="dv-list">
+  <div class="dv-item"><span class="num">⑪</span><div class="body"><strong>Decision satisfaction</strong> <span class="desc">도출된 결정에 대한 만족</span></div></div>
+  <div class="dv-item"><span class="num">⑫</span><div class="body"><strong>Cohesion (perceived)</strong> <span class="desc">팀 응집 인식</span></div></div>
+</div>
+
+<div class="source-line">
+  <strong>Seeber, de Vreede, Maier &amp; Weber (2017)</strong> · J Management Information Systems #28
+</div>
+<div class="dv-list">
+  <div class="dv-item"><span class="num">⑬</span><div class="body"><strong>Shared understanding</strong> <span class="desc">합의에 대한 공통 이해</span></div></div>
+  <div class="dv-item"><span class="num">⑭</span><div class="body"><strong>Perceived usefulness of moderation</strong> <span class="desc">진행 방식의 도움됨</span></div></div>
+  <div class="dv-item"><span class="num">⑮</span><div class="body"><strong>Attention guidance effectiveness</strong> <span class="desc">주의 유도가 잘 됐는가</span></div></div>
+  <div class="dv-item"><span class="num">⑯</span><div class="body"><strong>Convergence quality 자기보고</strong> <span class="desc">수렴이 잘 됐다고 느끼는가</span></div></div>
+</div>
+
+<!-- C · 응집 3 force -->
+<h2 class="sec"><span class="tag" style="background:var(--c);">C · 응집의 3 force</span></h2>
+<p class="sec-sub">Cohesion 분해 측정 — 구조 변별에 강함</p>
+
+<div class="source-line">
+  <strong>Mullen &amp; Copper (1994)</strong> · Psych Bulletin 메타 + <strong>Beal et al. (2003)</strong> · J Applied Psych 메타 #17
+</div>
+<div class="dv-list">
+  <div class="dv-item"><span class="num">⑰</span><div class="body"><strong>Task commitment</strong> <span class="desc">과업 헌신 인식 — Mullen 메타 핵심 driver</span></div></div>
+  <div class="dv-item"><span class="num">⑱</span><div class="body"><strong>Interpersonal attraction</strong> <span class="desc">멤버 간 친밀감</span></div></div>
+  <div class="dv-item"><span class="num">⑲</span><div class="body"><strong>Group pride</strong> <span class="desc">팀 자부심</span></div></div>
+  <div class="dv-item"><span class="num">⑳</span><div class="body"><strong>Task cohesion</strong> <span class="desc">Beal 메타에서 가장 강한 driver</span></div></div>
+</div>
+
+<!-- D · TWQ 본가 -->
+<h2 class="sec"><span class="tag" style="background:var(--d);">D · TWQ 본가 user 측정 ★ 프로젝트 anchor</span></h2>
+<p class="sec-sub">Hoegl &amp; Gemuenden 2001 — 본 프로젝트가 기반한 척도</p>
+
+<div class="source-line">
+  <strong>Hoegl &amp; Gemuenden (2001)</strong> · Organization Science #40
+</div>
+<div class="dv-list">
+  <div class="dv-item"><span class="num">㉑</span><div class="body"><strong>Work satisfaction</strong> <span class="desc">TWQ personal success 1</span></div></div>
+  <div class="dv-item"><span class="num">㉒</span><div class="body"><strong>Learning</strong> <span class="desc">TWQ personal success 2</span></div></div>
+  <div class="dv-item"><span class="num">㉓</span><div class="body"><strong>TWQ 6 facets 자기보고</strong> <span class="star">★ 핵심</span><span class="desc">Communication · Coordination · Balance · Mutual Support · Effort · Cohesion</span></div></div>
+  <div class="dv-item"><span class="num">㉔</span><div class="body"><strong>TWQ 통합 점수</strong> <span class="desc">단일 latent factor (α = .91)</span></div></div>
+</div>
+
+<!-- E · 심리적 안전 -->
+<h2 class="sec"><span class="tag" style="background:var(--e);">E · 심리적 안전 + 학습</span></h2>
+<p class="sec-sub">Edmondson 원전 + Frazier 메타 + Bunderson 구조 효과</p>
+
+<div class="source-line">
+  <strong>Edmondson (1999)</strong> · Admin Sci Quarterly #41 (12,000+ 인용)
+</div>
+<div class="dv-list">
+  <div class="dv-item"><span class="num">㉕</span><div class="body"><strong>Psychological safety</strong> <span class="star">★ 핵심</span><span class="desc">7-item Likert. 발언이 안전하다는 공유 신념</span></div></div>
+  <div class="dv-item"><span class="num">㉖</span><div class="body"><strong>Team learning behavior</strong> <span class="desc">자기보고 — 질문·피드백·실수 논의 빈도</span></div></div>
+  <div class="dv-item"><span class="num">㉗</span><div class="body"><strong>Team efficacy</strong> <span class="desc">팀이 해낼 수 있다는 인식</span></div></div>
+</div>
+
+<div class="source-line">
+  <strong>Frazier et al. (2017)</strong> · Personnel Psychology 메타 #42 (136 samples)
+</div>
+<div class="dv-list">
+  <div class="dv-item"><span class="num">㉘</span><div class="body"><strong>Voice behavior</strong> <span class="desc">의견 표명 빈도 자기보고</span></div></div>
+  <div class="dv-item"><span class="num">㉙</span><div class="body"><strong>OCB</strong> <span class="desc">조직시민행동 — 자발적 도움</span></div></div>
+</div>
+
+<!-- F · 갈등 인식 -->
+<h2 class="sec"><span class="tag" style="background:var(--f);">F · 갈등 인식 ★ 구조 변별 핵심</span></h2>
+<p class="sec-sub">위계 구조가 만드는 갈등 유형 — Greer 2018 메타 예측 검증</p>
+
+<div class="source-line">
+  <strong>De Wit, Greer &amp; Jehn (2012)</strong> · J Applied Psychology 메타 #15 (100+ studies)
+</div>
+<div class="dv-list">
+  <div class="dv-item"><span class="num">㉚</span><div class="body"><strong>Task conflict</strong> <span class="desc">과업 내용 갈등 — 적정 수준은 의사결정 품질 ↑</span></div></div>
+  <div class="dv-item"><span class="num">㉛</span><div class="body"><strong>Relationship conflict</strong> <span class="desc">인신공격 갈등 — 거의 모든 outcome 부정</span></div></div>
+  <div class="dv-item"><span class="num">㉜</span><div class="body"><strong>Process conflict</strong> <span class="desc">절차·역할 갈등</span></div></div>
+</div>
+
+<div class="source-line">
+  <strong>Wu, Zhang, Song &amp; Zhu (2024)</strong> · J Applied Psychology #32
+</div>
+<div class="dv-list">
+  <div class="dv-item"><span class="num">㉝</span><div class="body"><strong>Status conflict</strong> <span class="star">★ Centralized에서 ↑ 예측</span><span class="desc">권위·서열 갈등. 위계 구조 직접 검증</span></div></div>
+</div>
+
+<!-- G · 신뢰·헌신 -->
+<h2 class="sec"><span class="tag" style="background:var(--g);">G · 신뢰 · 헌신 · 정체성</span></h2>
+<p class="sec-sub">대인 신뢰와 팀에 대한 헌신·소속감</p>
+
+<div class="source-line">
+  <strong>De Wit (2012) #15</strong> · <strong>Mesmer-Magnus &amp; DeChurch (2009) #18</strong> · <strong>Gilson et al. (2015) VT review #24</strong>
+</div>
+<div class="dv-list">
+  <div class="dv-item"><span class="num">㉞</span><div class="body"><strong>Trust in team</strong> <span class="desc">동료 능력·선의에 대한 신뢰</span></div></div>
+  <div class="dv-item"><span class="num">㉟</span><div class="body"><strong>Competence-based trust</strong> <span class="desc">Gilson 가상팀 리뷰의 핵심 측정</span></div></div>
+  <div class="dv-item"><span class="num">㊱</span><div class="body"><strong>Commitment to team</strong> <span class="desc">팀 목표 헌신</span></div></div>
+  <div class="dv-item"><span class="num">㊲</span><div class="body"><strong>Team identification</strong> <span class="desc">팀 소속감·동일시</span></div></div>
+</div>
+
+<!-- H · Collective Intelligence 자기보고 -->
+<h2 class="sec"><span class="tag" style="background:var(--h);">H · Collective Intelligence 자기보고</span></h2>
+<p class="sec-sub">Woolley 2010 Science — c-factor 외 측정</p>
+
+<div class="source-line">
+  <strong>Woolley, Chabris, Pentland, Hashmi &amp; Malone (2010)</strong> · Science #21
+</div>
+<div class="dv-list">
+  <div class="dv-item"><span class="num">㊳</span><div class="body"><strong>Group cohesion (Likert)</strong> <span class="desc">집단 응집 자기보고</span></div></div>
+  <div class="dv-item"><span class="num">㊴</span><div class="body"><strong>Motivation</strong> <span class="desc">집단 동기 자기보고</span></div></div>
+  <div class="dv-item"><span class="num">㊵</span><div class="body"><strong>Group satisfaction</strong> <span class="desc">집단 만족</span></div></div>
+</div>
+
+<!-- I · VR/매체 경험 -->
+<h2 class="sec"><span class="tag" style="background:var(--i);">I · VR · 매체 경험 (Study 2 직결)</span></h2>
+<p class="sec-sub">Macchi &amp; De Pisapia 2024 — VR·대면·2D 비교</p>
+
+<div class="source-line">
+  <strong>Macchi &amp; De Pisapia (2024)</strong> · Scientific Reports #33
+</div>
+<div class="dv-list">
+  <div class="dv-item"><span class="num">㊶</span><div class="body"><strong>Fatigue</strong> <span class="desc">VR collaboration 특유 측정</span></div></div>
+  <div class="dv-item"><span class="num">㊷</span><div class="body"><strong>Flow experience</strong> <span class="desc">몰입</span></div></div>
+  <div class="dv-item"><span class="num">㊸</span><div class="body"><strong>Well-being indicators</strong> <span class="desc">웰빙</span></div></div>
+  <div class="dv-item"><span class="num">㊹</span><div class="body"><strong>Cognitive performance 인식</strong> <span class="desc">자기 인지 수행 평가</span></div></div>
+</div>
+
+<!-- J · 공유 리더십 -->
+<h2 class="sec"><span class="tag" style="background:var(--j);">J · 분산 권한 · 공유 리더십 인식 ★ Decentralized 검증</span></h2>
+<p class="sec-sub">Carson 2007 — 공유 리더십 emergence 측정</p>
+
+<div class="source-line">
+  <strong>Carson, Tesluk &amp; Marrone (2007)</strong> · AMJ #39 · <strong>Wang, Waldman &amp; Zhang (2014)</strong> 메타 #38
+</div>
+<div class="dv-list">
+  <div class="dv-item"><span class="num">㊺</span><div class="body"><strong>Shared purpose</strong> <span class="star">★ Decentralized 에서 ↑ 예측</span><span class="desc">공유된 목적 인식</span></div></div>
+  <div class="dv-item"><span class="num">㊻</span><div class="body"><strong>Social support</strong> <span class="desc">동료 지원 인식</span></div></div>
+  <div class="dv-item"><span class="num">㊼</span><div class="body"><strong>Voice</strong> <span class="desc">발언 가능성 인식</span></div></div>
+  <div class="dv-item"><span class="num">㊽</span><div class="body"><strong>Shared leadership perception</strong> <span class="desc">분산 리더십 인식</span></div></div>
+</div>
+
+<!-- K · 팀 분위기 (TCI) -->
+<h2 class="sec"><span class="tag" style="background:var(--k);">K · 팀 분위기 (TCI · 본 표엔 없지만 Hülsheger 메타 최강 예측)</span></h2>
+<p class="sec-sub">Anderson &amp; West 1998 — Hülsheger 2009 메타에서 ρ=.4-.5 최강 예측 변수</p>
+
+<div class="source-line">
+  <strong>Anderson &amp; West (1998)</strong> TCI · <strong>Hülsheger, Anderson &amp; Salgado (2009)</strong> 메타 #43
+</div>
+<div class="dv-list">
+  <div class="dv-item"><span class="num">㊾</span><div class="body"><strong>Vision</strong> <span class="desc">공유 비전 인식</span></div></div>
+  <div class="dv-item"><span class="num">㊿</span><div class="body"><strong>Participative safety</strong> <span class="star">★ Decentralized 에서 ↑ 예측</span><span class="desc">참여 안전감</span></div></div>
+  <div class="dv-item"><span class="num">51</span><div class="body"><strong>Support for innovation</strong> <span class="desc">혁신 지지 분위기 (Hülsheger 메타 최강 예측)</span></div></div>
+  <div class="dv-item"><span class="num">52</span><div class="body"><strong>Task orientation</strong> <span class="desc">과업 지향</span></div></div>
+  <div class="dv-item"><span class="num">53</span><div class="body"><strong>Interaction frequency</strong> <span class="desc">상호작용 빈도 인식</span></div></div>
+</div>
+
+<!-- ========= 구조 변별 표 ========= -->
+<h2 class="sec"><span class="tag" style="background:var(--text);">★ 구조 변별 강한 측정 (Centralized vs Decentralized 예측)</span></h2>
+<p class="sec-sub">위 53 측정 중 본 연구 RQ에 직결되는 변별 측정</p>
+
+<div class="struct-table">
+  <div class="st-row head">
+    <div>측정</div>
+    <div style="text-align:center;">어느 구조 ↑</div>
+    <div>출처</div>
+  </div>
+  <div class="st-row">
+    <div class="dv-name">Chairperson/PM effectiveness ④</div>
+    <div class="arrow"><span class="cent">Centralized</span></div>
+    <div>Leach #19</div>
+  </div>
+  <div class="st-row">
+    <div class="dv-name">Status conflict ㉝</div>
+    <div class="arrow"><span class="cent">Centralized</span></div>
+    <div>Wu #32</div>
+  </div>
+  <div class="st-row">
+    <div class="dv-name">Shared understanding ⑬</div>
+    <div class="arrow"><span class="dec">Decentralized</span></div>
+    <div>Seeber #28</div>
+  </div>
+  <div class="st-row">
+    <div class="dv-name">Voice ㊼ · Shared purpose ㊺</div>
+    <div class="arrow"><span class="dec">Decentralized</span></div>
+    <div>Carson #39</div>
+  </div>
+  <div class="st-row">
+    <div class="dv-name">Participative safety ㊿</div>
+    <div class="arrow"><span class="dec">Decentralized</span></div>
+    <div>Anderson &amp; West</div>
+  </div>
+  <div class="st-row">
+    <div class="dv-name">Psychological safety ㉕</div>
+    <div class="arrow">구조 vs PS 관계 검증</div>
+    <div>Bunderson #35 · Edmondson #41</div>
+  </div>
+  <div class="st-row">
+    <div class="dv-name">Task conflict ㉚</div>
+    <div class="arrow"><span class="dec">Decentralized</span></div>
+    <div>De Wit #15</div>
+  </div>
+  <div class="st-row">
+    <div class="dv-name">Relationship conflict ㉛</div>
+    <div class="arrow">둘 다 ↓ 바람직</div>
+    <div>De Wit #15</div>
+  </div>
+  <div class="st-row">
+    <div class="dv-name">Decision satisfaction ⑪</div>
+    <div class="arrow">구조별 다름</div>
+    <div>Mesmer-Magnus #18</div>
+  </div>
+  <div class="st-row">
+    <div class="dv-name">Task cohesion ⑳</div>
+    <div class="arrow">구조에 따라</div>
+    <div>Beal #17</div>
+  </div>
+</div>
+
+<!-- ========= 최소 set 추천 ========= -->
+<div class="recommend">
+  <h2>최소 set 추천 — 단발 ideation 세션용 (응답 15-20분)</h2>
+  <p>본 연구 single-shot session 한계 고려. 핵심 9개 측정:</p>
+  <ol>
+    <li><strong>TWQ 6 facets 단축형</strong> (#40 ㉓) — 협업 품질 종합 ★ 프로젝트 anchor</li>
+    <li><strong>Decision satisfaction</strong> (#18 ⑪) — 결정 만족</li>
+    <li><strong>Shared understanding</strong> (#28 ⑬) — 합의 인식</li>
+    <li><strong>Status conflict</strong> (#32 ㉝) — ★ 위계 변별</li>
+    <li><strong>Participative safety</strong> (TCI ㊿) — ★ 평등 변별</li>
+    <li><strong>Psychological safety</strong> (#41 ㉕) — Edmondson 원전</li>
+    <li><strong>PM/Facilitator effectiveness</strong> (#19 ④) — Centralized PM 평가</li>
+    <li><strong>Shared leadership emergence</strong> (#39 ㊽) — Decentralized 검증</li>
+    <li><strong>Work satisfaction + Learning</strong> (#40 ㉑ ㉒) — TWQ personal success</li>
+  </ol>
+  <p style="margin-top: 16px;">9개 측정으로 (a) 협업 품질 종합 (TWQ) (b) 위계 효과 (status conflict, PM effectiveness) (c) 평등 효과 (participative safety, shared leadership) (d) 결과 만족 (decision satisfaction, work satisfaction) 모두 커버.</p>
+</div>
+
+</div>
+</body>
+</html>

@@ -113,28 +113,13 @@ def clean_message_hook(*, sender, message, recipient, silent):
         _log("guardrail", f"{sender.name}: 클리닝 후 빈 메시지 → 차단")
         return _set_message_content(message, "")
 
-    # 4) cross-agent 복사 감지
-    fp = _fingerprint(cleaned)
-    if fp and fp in _recent_fingerprints:
-        _log("guardrail", f"{sender.name}: cross-agent 복사 감지 → 차단")
-        return _set_message_content(message, "")
-
-    # 5) 자기 직전 발언과 동일
+    # cross-agent 복사 감지·groupchat history 비교는 제거됨 —
+    # build-on 톤(동료 발화 위에 발전시키기)이 본질적으로 인용을 포함하므로 차단되면 안 됨.
+    # 자기 자신이 직전과 똑같은 말을 또 하는 경우만 차단.
     if hasattr(sender, '_last_sent_content') and sender._last_sent_content == cleaned:
-        _log("guardrail", f"{sender.name}: 직전 발언 동일 → 차단")
+        _log("guardrail", f"{sender.name}: 자기 직전 발언 동일 → 차단")
         return _set_message_content(message, "")
 
-    # 6) recipient GroupChat 히스토리와 비교
-    if hasattr(recipient, 'groupchat'):
-        recent = recipient.groupchat.messages[-5:] if recipient.groupchat.messages else []
-        for prev in recent:
-            prev_content = prev.get("content", "")
-            if prev_content and fp == _fingerprint(prev_content):
-                return _set_message_content(message, "")
-
-    # 통과
-    if fp:
-        _recent_fingerprints.append(fp)
     sender._last_sent_content = cleaned
 
     return _set_message_content(message, cleaned)

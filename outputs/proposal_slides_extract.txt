@@ -1,0 +1,247 @@
+PAGES 13
+
+=== PAGE 1 ===
+디 지 털 미 디 어 디 자 인 1 · 기 말  발표
+연구 계 획  발표
+멀 티 에 이 전트  시스 템 의  협 업  구조 와
+환 경에  따 른  창 의 적  지 원  비 교  연구
+A Comparative Study of Creativity Support by Collaboration
+Structures and Environments in Multi-Agent Systems
+발표박 성 훈  · TED 융 합 디 자 인 학 과  · G2025040
+지 도박 재 완  교 수 님 2026
+=== PAGE 2 ===
+01 · 연구  소개
+연구  개요
+여러  AI가 한  팀 이 되 어  디 자 이 너 를  돕 는  상 황 에서 , 그  팀 을  어 떻 게  구성 하 느 냐가 디 자
+이 너 의  창 의를  어 떻 게  지 원 하 는 지 비 교 한 다.
+디 자 이 너  PM UX/UI SW AI 팀  — 텍 스 트  채팅 과  VR 환 경에  걸 쳐
+=== PAGE 3 ===
+02 · 배 경
+AI 아 이 데 이 션 의  발 전
+아 이 데 이 션 을  돕 는  AI 는  하 나에서  팀 으 로 발 전해  왔 다.
+1 단계
+단 일  LLM 도구
+IdeationWebShen, 2025
+마 인 드 맵  UI로 한  LLM 과  아 이 디 어를  펼 치 고 추
+적
+AIdeationWang, 2025
+컨 셉  디 자 이 너 용  단 일  LLM 발 상  도구
+
+2 단계
+다 중  페 르 소나
+PersonaFlowLiu, 2025
+한  LLM 을  여러  전문 가 페 르 소나 로 분 화  — 단
+일보 다 비 평 의  관 련 성 이 높 아 짐 
+3 단계
+멀 티 에 이 전트  팀
+MultiColleaguesQuan, 2026
+역할  다 른  에 이 전트들 이 동 료처 럼  협 업  — 단 일보
+다 우위
+Design Activity Sim.Yang, 2025
+7 개  역할  에 이 전트 로 디 자 인 활 동을  자 율  시 뮬 레
+이 션  — 본  연구의  역할  구성과  가 장  가 까 움
+=== PAGE 4 ===
+03 · 배 경
+멀 티 에 이 전트  토 론  · VR 아 이 데 이 션
+멀 티 에 이 전트  토 론 과  창 의성
+에 이 전트 끼 리 토 론 시 키 면  창 의 가 올 라간 다 — 단 , 자동  평 가 일  뿐  사 람 은  빠져  있 다.
+LLM Discussion Lu, 2024
+여러  LLM 에  다 른  역할 을  주 고 3 단계 로 토 론  — 단 일  LLM 대비  창 의성  1 σ  이
+상 ↑
+VirSci Su, 2025
+5 단계 로 과 학  아 이 디 어를  생 성  — 단 일  대비  새 로 움  + 13.8 %
+VR 에서의  아 이 데 이 션
+VR로 발 상 · 협 업 을  시 도해  왔 고, 몰 입 · 공간 이 창 의에  영 향 을  준 다.
+VRCopilot Zhang, 2024
+VR 에서  생 성 형  AI 와  함 께  3D 레 이 아 웃 을  디 자 인
+VR 브레 인스 토 밍  Bauerov á , 2025
+VR 팀  발 상 이 물 리 환 경보 다 빠 르 고 즐 겁 다 (AI
+없 음 )
+Lyu, 2023
+VR 디 자 인 씽 킹  리 뷰  — VR + AI 통 합을  향 후  과제
+로 지 목
+=== PAGE 5 ===
+04 · 리 서치  갭
+멀 티 에 이 전트  연구 가 비 교 해 온  것
+비 교  대상
+단 일  vs 멀 티 MultiColleagues, LLM Discussion 등 5 편
+에 이 전트  수 Tsuchiya, Song, VirSci 4 편
+토 론  방 식 · 깊 이 Ueda, VirSci 등 3 편
+페 르 소나 · 역할 PersonaFlow, LLM Discussion 4 편
+워 크 플 로 우  단계 LLM Discussion 등 4 편
+주관  경 험  측 정  방 법
+MultiColleagues자작  12 문 항 (7 점 )
+PersonaFlow 자작  5 점  · 창 의 · 부 하·agency
+PosterMate 자작  5 점  · 만 족 · 관 점
+Tsuchiya 자작  7 점  · 의 존 · 확 신 · 동조
+CrafTeam 자작  7 점  +  인 터 뷰
+참 고 — 검 증 된  표 준  척 도 (CSI) 는  멀 티 에 이 전트 가 아 닌  단 일  AI 도구  연구에서만  쓰 였 다 (IdeationWeb, VRCopilot, Luminate)
+이 연구 가 새 로 다 루 는  세  축
+상호작용  구조
+Centralized vs Decentralized
+측 정
+검 증 된  CSI +  산출물  다 양 성 · 품질
+환 경
+텍 스 트에서  VR 체화 까 지 확 장
+=== PAGE 6 ===
+05 · 관 련  연구  (1)
+팀  구조 와  창 의성
+사 람  팀 에서  검 증 된  두  구조를 , AI 팀 이 그대 로 빌 려  쓴 다.
+사 람  팀
+Hierarchical
+위 계  · 빠 른  합의 · 점 진
+Flat
+수 평  · 다 양 성 · 혁 신
+
+AI 팀
+Centralized
+중앙 집 중
+Decentralized
+분산
+Xu et al., 2022 · Guo et al., 2024 ● 디 자 이 너 (사 람 )● AI 에 이 전트
+=== PAGE 7 ===
+06 · 관 련  연구  (2)
+사 람  협 업 과의  차 이
+사 람  팀 에서  얻 은  결 론 이 AI 팀 에도  그대 로 통할 지 단 정 할  수  없 는  이 유 .
+
+수 렴  Convergence
+생 성 형  AI 를  쓰 면  개 인 창 의는  오 르 지 만 , 결 과
+물 이 서 로 비 슷 해 져  집단  다 양 성은  줄 어 든 다
+Doshi &  Hauser, 2024
+
+동조  Conformity
+멀 티 에 이 전트  토 론 에서  다 수 · 우세한  의 견 에
+쉽 게  동조한 다
+Choi et al., 2025
+
+동 질  Homogeneity
+여러  에 이 전트 가 같 은  모 델 에서  나 와 , 사 람  팀
+처 럼  서 로 다 른  관 점 을  갖 기 어 렵 다
+Lu et al., 2024
+=== PAGE 8 ===
+07 · 연구  질 문과  설계
+연구  질 문과  설계
+구조는  한  참 가 자 가 둘  다 경 험 하고( 반복 측 정 ), 환 경은  서 로 다 른  집단 에서  비 교 한 다.
+Study 1 — Chat
+RQ1-1 어 떤  구조 (Centralized/Decentralized) 에서  창 의  지 원을
+더  받 았 다고 느 끼 는 가 (CSI)
+RQ1-2 느 낀  지 원 감 과  실 제  산출물 이 일치 하 는 가
+Study 1 +  2 — Chat·VR
+RQ2-1 환 경 이 창 의  지 원 · 산출물 에  차 이 를  만드는 가
+RQ2-2 구조의  효 과 가 환 경 (Chat/VR) 에  따 라  달 라 지 는 가
+ 가로 =  같 은  참 가 자 가 두  구조  모 두  (within)
+Centralized Decentralized
+Chat Study 1 Study 1
+VR Study 2 Study 2
+ 세 로 =  Chat·VR 은  서 로 다 른  집단  (between)
+=== PAGE 9 ===
+08 · 시스 템
+협 업  구조 와  에 이 전트  설계
+디 자 이 너 가 두  방 식 으 로 AI 팀 과  협 업 한 다. 역할 은  같 고 연 결 만  다 르 다.
+Centralized 중 앙 집 중
+디 자 이 너
+PM
+UX/UI SW
+디 자 이 너 는  PM 에게만 , PM이 종 합
+Decentralized 분산
+디 자 이 너 PM
+UX/UI SW
+넷 이 위 계  없 이 직 접  주 고 받 음
+세  에 이 전트 (PM·UX/UI Designer·SW Engineer) 는  같 은  LLM 에  서 로 다 른  역할 을  부여한  것  — AutoGen(AG2) 프 레임 워 크 로 구 현 하고 3 단계 ( 발산 → 심 화 → 수 렴 )로 진 행 한
+다. 두  구조의  차 이 는  ' 누 가 누 구에게  말 하 느 냐 '( 연 결  방 식 ) 뿐 이 며 , 에 이 전트  프 롬 프트는  세  협 업  이 론 을  근 거 로 설계 했 다 ( 창 의  리 더 십  전 술 은  Centralized 의  PM 에만  적 용 )
+=== PAGE 10 ===
+09 · 시스 템
+시스 템  파 이 프라 인
+디 자 이 너 의  입 력 이 AG2 토 론 을  거 쳐  두  환 경으 로 출력된 다 — 구조에  따 라  토 론  방 식 만  달 라진 다.
+전체  흐 름
+디 자 이 너
+웹 ·VR 입 력→ web.py
+WebSocket·로 깅 → AG2 멀 티 에 이 전트  토 론
+PM·UX/UI·SW ( 단 일  LLM) · 발산 → 심 화 → 수 렴  3 페 이 즈 →guardrails
+발 화  정 리 →
+Chat
+웹  텍 스 트  UI
+· Study 1
+VR
+TTS → Audio2Face → UE5
+MetaHuman
+· Study 2
+Centralized · 중 앙 집 중  (star)
+PM 라우 팅→
+병 렬  sub-chat
+UX/UI SW →PM 종 합
+· UX/UI·SW 는  서 로 직 접  말  안  함  — PM 거 쳐 서만
+· 페 이 즈 당  4 라운드 · 디 자 이 너  2 라운드마 다
+Decentralized · 분산  (round-robin)
+PM →UX/UI→SW →↻
+· 누 구 든  서 로 직 접  호명 · 반 박 (PM 도  한  명 )
+· 디 자 이 너  6 발 화마 다 개입
+=== PAGE 11 ===
+10 · 실 험  설계
+실 험  설계
+두  환 경에서  같 은  절 차 로, 한  참 가 자 가 두  구조를  차 례 로 경 험 한 다.
+Study 1 · Chat
+n = 30 · 웹  채팅  · 약  80 분  ( 조 건당  최 대  20 분 )
+Study 2 · VR
+신규  n = 30 · VR HMD · 약  100 분  ( 조 건당  최 대  30 분 )
+한  참 가 자는  환 경 (Chat·VR) 은  둘  중  하 나만 쓰 고, 구조 ( 중 앙 집 중 · 분산 ) 는  둘  다 경험 한 다. →  환 경은  집단  간  비 교 , 구조는  같 은  사 람  안에서  비 교 .
+과제 — 디 자 이 너 가 AI 팀 과  토 론 하 며  모바일  앱 의  핵 심  컨 셉 과  주요  기 능 을  발 상 하고, 마 지 막 에  핵 심  컨 셉  1 · 주요  기 능  3 · 차 별점  1로 정 리 한 다( 산출물  평 가 용 ).
+과제  A 대 학  신입 생 의  학 교생 활  적 응 을  돕 는  앱 과제  B자 취  청년 의  동 네  생 활  정 착 을  돕 는  앱
+두  과제는  유 사 난 이 도  · 조 건  순 서  ×  과제  =  4 그 룹 에  무작위  배 정 ( 순 서  효 과  통 제 )
+1
+안내 · 동의
+ 2
+과제  A
+구조  1
+ 3
+정 리· 설 문
+ 4
+휴 식
+ 5
+과제  B
+구조  2
+ 6
+정 리· 설 문 ·인 터 뷰
+=== PAGE 12 ===
+11 · 측 정과  분 석
+측 정과  분 석
+디 자 이 너 가 느 낀  것 과  실 제 로 나 온  것 을  함 께  재 서 , 둘 이 맞 는 지 본 다.
+주관  · 디 자 이 너 가 느 낀  것
+CSI
+창 의  지 원을  6 요 인 으 로 측 정
+( 탐 색 · 표현 · 몰 입 · 즐 거 움 · 노력 대비 결 과 · 협 업 )
+
+일치 ? 괴 리?
+객 관  · 실 제 로 나 온  산출물
+다 양 성 — 산출물  임 베딩  간  거 리
+품질 — 외 부  평 가 자  2 명 이 독 립  평 가
+Dean 4 차 원  · 새 로 움 (Novelty)· 실현 가 능 성 (Workability)· 적 합성 (Relevance)·
+구체성 (Specificity)
+분 석
+Study 별
+두  구조  간  비 교  — paired t·Wilcoxon +  Cohen's
+d · 주관 (CSI) ↔ 객 관 ( 산출물 ) 상관
+품질  평 가
+평 가 자  2 명  · 하 위  차 원 별  Cronbach's α  ≥  .70 확
+보  후  점 수  사 용
+통 합  (Study 1 + 2)
+Mixed ANOVA — 환 경  ×  구조  상호작용
+=== PAGE 13 ===
+12 · 연구  일정
+연구  일정
+데 이 터를  모으 기 전에  비 교  조 건 과  평 가 기 준 을  먼 저  확 정한 다.
+
+IRB
+승 인
+
+자 극 물  제작
+●  현재
+
+실 험
+Study 1 · 2
+
+분 석
+Study 별  →  통 합
+
+논 문  작성
+집 필

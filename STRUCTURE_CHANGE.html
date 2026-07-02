@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>에이전트 시스템 변경 — Before / After</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --card:#ffffff; --ink:#1d2330; --muted:#69707e; --line:#e3e6ec;
+    --old:#bf5d1c; --oldbg:#fdf3ec; --oldln:#f0d6c2;
+    --new:#1f6fb0; --newbg:#eef6fc; --newln:#cfe4f3;
+    --pm:#a9760f; --pmbg:#fdf4dd; --de:#3a5bbf; --debg:#eaeefb;
+    --green:#2e8b57; --greenbg:#e9f6ef; --red:#b03a3a; --redbg:#fbeeee;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"Segoe UI","Malgun Gothic",system-ui,sans-serif;
+    font-size:16px;line-height:1.7;padding:40px 22px;}
+  .wrap{max-width:960px;margin:0 auto;}
+  h1{font-size:28px;margin:0 0 6px;}
+  .sub{color:var(--muted);margin:0 0 26px;font-size:15px;}
+  .sub code{background:#eceef2;padding:1px 6px;border-radius:5px;}
+  h2{font-size:22px;margin:46px 0 6px;}
+  .lead{color:var(--muted);font-size:15px;margin:0 0 16px;}
+  .hero{background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:20px 24px;font-size:16.5px;line-height:1.75;box-shadow:0 1px 3px rgba(0,0,0,.05);}
+  .hero b.o{color:var(--old);} .hero b.n{color:var(--new);}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:8px;}
+  @media(max-width:740px){.grid{grid-template-columns:1fr;}}
+  .col{border-radius:14px;padding:20px 22px;border:1px solid var(--line);background:var(--card);}
+  .col.old{background:var(--oldbg);border-color:var(--oldln);}
+  .col.new{background:var(--newbg);border-color:var(--newln);}
+  .tag{display:inline-block;font-size:12px;font-weight:700;letter-spacing:.5px;
+    padding:4px 12px;border-radius:20px;margin-bottom:12px;}
+  .tag.old{background:var(--old);color:#fff;}
+  .tag.new{background:var(--new);color:#fff;}
+  .col h3{margin:0 0 10px;font-size:17px;}
+  .col.old h3{color:var(--old);} .col.new h3{color:var(--new);}
+  ul{margin:8px 0 0;padding-left:20px;} li{margin:8px 0;font-size:15.5px;line-height:1.6;}
+  .muted{color:var(--muted);}
+  code{background:#eceef2;padding:1px 6px;border-radius:5px;font-size:13.5px;
+    color:#384150;font-family:Consolas,monospace;}
+  .why{background:var(--greenbg);border-left:4px solid var(--green);border-radius:10px;
+    padding:16px 20px;margin-top:14px;font-size:15.5px;line-height:1.7;}
+  .why b{color:var(--green);}
+
+  .diagrow{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:10px;}
+  @media(max-width:740px){.diagrow{grid-template-columns:1fr;}}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px 20px;
+    box-shadow:0 1px 3px rgba(0,0,0,.05);}
+  .panel .ptitle{font-size:16px;font-weight:700;color:var(--new);text-align:center;margin-bottom:6px;}
+  .panel svg{display:block;width:100%;height:auto;}
+  .pcap{text-align:center;color:var(--muted);font-size:14px;line-height:1.6;margin-top:10px;}
+
+  table{width:100%;border-collapse:collapse;margin-top:10px;font-size:15px;background:var(--card);
+    border:1px solid var(--line);border-radius:12px;overflow:hidden;}
+  th,td{text-align:left;padding:12px 15px;border-bottom:1px solid var(--line);vertical-align:top;}
+  tr:last-child td{border-bottom:none;}
+  th{color:var(--muted);font-weight:700;font-size:13px;background:#fafbfc;}
+  td.k{color:var(--muted);white-space:nowrap;width:130px;font-weight:600;}
+  .o{color:var(--old);} .n{color:var(--new);}
+  .removed{background:var(--redbg);border:1px solid #efcccc;border-radius:14px;padding:18px 22px;margin-top:12px;}
+  .removed h3{color:var(--red);margin:0 0 8px;font-size:17px;}
+  .foot{color:var(--muted);font-size:13px;margin-top:42px;border-top:1px solid var(--line);padding-top:16px;line-height:1.6;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>에이전트 시스템 변경 — Before / After</h1>
+  <p class="sub">여러 AI가 모여 회의하는 시스템이 <b>어떻게 돌아가는지</b>가 바뀌었습니다. (독립/토론 → 중앙집중/분산)</p>
+
+  <div class="hero">
+    한눈에 — <b class="o">예전에는 두 방식이 똑같은 한 가지 회의 엔진</b> 위에서, "다른 사람 말을 보여주느냐 / 가리느냐"로만 갈렸습니다.<br>
+    <b class="n">지금은 회의 엔진 자체가 두 개</b>로 나뉘었습니다.
+    <b>분산</b>은 예전의 '돌아가며 말하기'를 그대로 쓰고,
+    <b>중앙집중</b>은 <b>PM이 사회를 보며 두 전문가에게 동시에 질문하고 정리하는</b> 완전히 새로운 방식입니다.
+  </div>
+
+  <!-- ① 진짜 바뀐 축 -->
+  <h2>① 실제로 바뀐 것 (Before → After)</h2>
+  <p class="lead">두 조건 중 <b style="color:var(--ink);">하나는 그대로</b>고, 하나가 <b style="color:var(--ink);">통째로 교체</b>됐습니다.</p>
+
+  <!-- 안 바뀐 축: 토론 = 분산 -->
+  <div style="background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 22px;margin-bottom:6px;display:flex;align-items:center;gap:22px;flex-wrap:wrap;box-shadow:0 1px 3px rgba(0,0,0,.05);">
+    <div style="flex:0 0 auto;text-align:center;">
+      <div style="display:inline-block;font-size:12.5px;font-weight:700;color:#2e8b57;background:#e9f6ef;border-radius:20px;padding:3px 13px;margin-bottom:6px;">그대로인 축</div>
+      <svg viewBox="0 0 230 132" width="220" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, sans-serif" style="display:block;">
+        <defs><marker id="bl" markerWidth="10" markerHeight="10" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#9aa3b2"/></marker></defs>
+        <path d="M103,34 A62,62 0 0 1 176,88" fill="none" stroke="#9aa3b2" stroke-width="2" marker-end="url(#bl)"/>
+        <path d="M168,106 A62,62 0 0 1 62,106" fill="none" stroke="#9aa3b2" stroke-width="2" marker-end="url(#bl)"/>
+        <path d="M54,88 A62,62 0 0 1 92,37" fill="none" stroke="#9aa3b2" stroke-width="2" marker-end="url(#bl)"/>
+        <circle cx="115" cy="28" r="22" fill="#eaeefb" stroke="#3a5bbf" stroke-width="2"/><text x="115" y="33" fill="#3a5bbf" font-size="12" font-weight="700" text-anchor="middle">PM</text>
+        <circle cx="188" cy="98" r="24" fill="#eaeefb" stroke="#3a5bbf" stroke-width="2"/><text x="188" y="102" fill="#3a5bbf" font-size="10.5" font-weight="600" text-anchor="middle">Design</text>
+        <circle cx="42" cy="98" r="24" fill="#eaeefb" stroke="#3a5bbf" stroke-width="2"/><text x="42" y="102" fill="#3a5bbf" font-size="10.5" font-weight="600" text-anchor="middle">Engin</text>
+      </svg>
+    </div>
+    <div style="flex:1 1 250px;font-size:16px;line-height:1.65;">
+      <b style="color:var(--ink);">예전 '토론' = 지금 '분산'</b><br>
+      셋이 동등하게 돌아가며 발언하고 모두가 서로의 말을 다 봅니다.
+      <b>이름만 바뀌었을 뿐, 회의 방식은 똑같습니다.</b>
+    </div>
+  </div>
+
+  <p class="lead" style="margin-top:24px;">바뀐 축 — 두 번째 조건이 <b style="color:var(--ink);">'독립'에서 '중앙집중'으로</b> 통째로 교체됐습니다:</p>
+
+  <div class="diagrow">
+    <!-- BEFORE: 독립 -->
+    <div class="panel">
+      <div class="ptitle" style="color:var(--old);">예전 · 독립 (Independent)</div>
+      <svg viewBox="0 0 380 312" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, sans-serif">
+        <defs><marker id="agrey" markerWidth="11" markerHeight="11" refX="8" refY="4" orient="auto"><path d="M0,0 L9,4 L0,8 Z" fill="#69707e"/></marker></defs>
+        <!-- 격리 박스 -->
+        <rect x="12" y="36" width="112" height="124" rx="12" fill="none" stroke="#bf5d1c" stroke-width="2" stroke-dasharray="6 5"/>
+        <rect x="134" y="36" width="112" height="124" rx="12" fill="none" stroke="#bf5d1c" stroke-width="2" stroke-dasharray="6 5"/>
+        <rect x="256" y="36" width="112" height="124" rx="12" fill="none" stroke="#bf5d1c" stroke-width="2" stroke-dasharray="6 5"/>
+        <!-- 벽 표시 -->
+        <text x="129" y="104" fill="#bf5d1c" font-size="16" font-weight="700" text-anchor="middle">✕</text>
+        <text x="251" y="104" fill="#bf5d1c" font-size="16" font-weight="700" text-anchor="middle">✕</text>
+        <!-- 노드 -->
+        <circle cx="68" cy="98" r="31" fill="#eaeefb" stroke="#3a5bbf" stroke-width="2.5"/><text x="68" y="103" fill="#3a5bbf" font-size="13" font-weight="600" text-anchor="middle">UX</text>
+        <circle cx="190" cy="98" r="31" fill="#eaeefb" stroke="#3a5bbf" stroke-width="2.5"/><text x="190" y="103" fill="#3a5bbf" font-size="12.5" font-weight="600" text-anchor="middle">Visual</text>
+        <circle cx="312" cy="98" r="31" fill="#eaeefb" stroke="#3a5bbf" stroke-width="2.5"/><text x="312" y="102" fill="#3a5bbf" font-size="11" font-weight="600" text-anchor="middle">Engineer</text>
+        <!-- 사용자로 연결 -->
+        <line x1="74" y1="126" x2="166" y2="258" stroke="#69707e" stroke-width="2" marker-end="url(#agrey)"/>
+        <line x1="190" y1="130" x2="190" y2="256" stroke="#69707e" stroke-width="2" marker-end="url(#agrey)"/>
+        <line x1="306" y1="126" x2="214" y2="258" stroke="#69707e" stroke-width="2" marker-end="url(#agrey)"/>
+        <!-- 사용자 -->
+        <rect x="138" y="258" width="104" height="34" rx="8" fill="#e9f6ef" stroke="#2e8b57" stroke-width="2"/>
+        <text x="190" y="280" fill="#2e8b57" font-size="13.5" font-weight="600" text-anchor="middle">사용자</text>
+      </svg>
+      <div class="pcap">셋이 돌아가며 말하지만 <b>서로의 말은 차단(벽)</b><br>각자 자기 말과 사용자 말만 보고 발언</div>
+    </div>
+
+    <!-- 중앙집중: 허브 -->
+    <div class="panel">
+      <div class="ptitle" style="color:var(--new);">지금 · 중앙집중 (Centralized)</div>
+      <svg viewBox="0 0 380 320" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, sans-serif">
+        <defs>
+          <marker id="agold" markerWidth="11" markerHeight="11" refX="8" refY="4" orient="auto">
+            <path d="M0,0 L9,4 L0,8 Z" fill="#a9760f"/>
+          </marker>
+          <marker id="ablue2" markerWidth="11" markerHeight="11" refX="8" refY="4" orient="auto">
+            <path d="M0,0 L9,4 L0,8 Z" fill="#3a5bbf"/>
+          </marker>
+          <marker id="agreen" markerWidth="11" markerHeight="11" refX="8" refY="4" orient="auto">
+            <path d="M0,0 L9,4 L0,8 Z" fill="#2e8b57"/>
+          </marker>
+        </defs>
+        <!-- ① PM down to D and E (gold) -->
+        <line x1="160" y1="92" x2="92" y2="168" stroke="#a9760f" stroke-width="2.5" marker-end="url(#agold)"/>
+        <line x1="220" y1="92" x2="288" y2="168" stroke="#a9760f" stroke-width="2.5" marker-end="url(#agold)"/>
+        <!-- ② D and E back up (blue dashed) -->
+        <line x1="108" y1="170" x2="172" y2="96" stroke="#3a5bbf" stroke-width="2.5" stroke-dasharray="6 4" marker-end="url(#ablue2)"/>
+        <line x1="272" y1="170" x2="208" y2="96" stroke="#3a5bbf" stroke-width="2.5" stroke-dasharray="6 4" marker-end="url(#ablue2)"/>
+        <!-- labels -->
+        <text x="120" y="150" fill="#a9760f" font-size="13" font-weight="600" text-anchor="middle">①질문</text>
+        <text x="262" y="150" fill="#3a5bbf" font-size="13" font-weight="600" text-anchor="middle">②답변</text>
+        <!-- PM hub -->
+        <circle cx="190" cy="62" r="40" fill="#fdf4dd" stroke="#a9760f" stroke-width="3"/>
+        <text x="190" y="68" fill="#a9760f" font-size="18" font-weight="700" text-anchor="middle">PM</text>
+        <!-- D and E -->
+        <circle cx="78" cy="200" r="38" fill="#eaeefb" stroke="#3a5bbf" stroke-width="2.5"/>
+        <text x="78" y="206" fill="#3a5bbf" font-size="13.5" font-weight="600" text-anchor="middle">Designer</text>
+        <circle cx="302" cy="200" r="38" fill="#eaeefb" stroke="#3a5bbf" stroke-width="2.5"/>
+        <text x="302" y="206" fill="#3a5bbf" font-size="13.5" font-weight="600" text-anchor="middle">Engineer</text>
+        <!-- ③ PM synth down to user -->
+        <line x1="190" y1="104" x2="190" y2="280" stroke="#2e8b57" stroke-width="2.5" stroke-dasharray="3 4" marker-end="url(#agreen)"/>
+        <text x="226" y="200" fill="#2e8b57" font-size="13" font-weight="600" text-anchor="middle">③정리</text>
+        <!-- user -->
+        <rect x="138" y="284" width="104" height="32" rx="8" fill="#e9f6ef" stroke="#2e8b57" stroke-width="2"/>
+        <text x="190" y="305" fill="#2e8b57" font-size="13.5" font-weight="600" text-anchor="middle">사용자</text>
+      </svg>
+      <div class="pcap"><b>PM이 사회자</b> · 두 전문가에게 동시에 질문 →<br>답을 받아 한 방향으로 정리 → 사용자에게 전달</div>
+    </div>
+  </div>
+
+  <div class="why">
+    <b>요점:</b> 비교의 축 자체가 바뀌었습니다. 예전엔 "서로 말을 <b>보느냐(토론) vs 가리느냐(독립)</b>"였고,
+    지금은 "<b>PM이 통제하느냐(중앙집중) vs 동등하게 도느냐(분산)</b>"입니다.
+    공유 토론 방식(토론=분산)은 양쪽 실험에 공통으로 남는 기준선이고, <b>실제로 새로 만든 건 '중앙집중' 하나뿐</b>입니다.
+  </div>
+
+  <!-- A. 에이전트 -->
+  <h2>② 회의 참가자(에이전트)</h2>
+  <div class="grid">
+    <div class="col old">
+      <span class="tag old">BEFORE</span>
+      <h3>똑같은 급의 3명</h3>
+      <ul>
+        <li>UX 연구자 · 비주얼 디자이너 · 소프트웨어 엔지니어</li>
+        <li>셋 다 <b>지위가 같음</b> — 사회자도, 리더도 없음</li>
+        <li>역할 차이만 있고 권한·서열 개념이 없었음</li>
+      </ul>
+    </div>
+    <div class="col new">
+      <span class="tag new">AFTER</span>
+      <h3>PM + 전문가 2명</h3>
+      <ul>
+        <li>PM(사회자) · 디자이너 · 엔지니어</li>
+        <li><b>중앙집중에서는 PM이 회의를 끌고 가고</b>, 분산에서는 PM도 동등한 한 명</li>
+        <li>같은 PM이라도 조건에 따라 "주도하라" 또는 "결정권 없다"는 다른 지시를 받음</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- C. 가시성 -->
+  <h2>③ 누가 누구의 말을 보는가</h2>
+  <table>
+    <tr><th>방식</th><th>시기</th><th>볼 수 있는 범위</th></tr>
+    <tr><td class="o">독립</td><td class="k o">BEFORE</td>
+      <td>가려짐 — 각자 <b>자기 말과 사용자 말만</b> 봄 (서로의 발언 차단)</td></tr>
+    <tr><td class="o">토론</td><td class="k o">BEFORE</td>
+      <td>전부 공유 — 모두가 모두의 말을 봄</td></tr>
+    <tr><td class="n">분산</td><td class="k n">AFTER</td>
+      <td>전부 공유 — 모두가 모두의 말을 봄 (예전 '토론'과 같음)</td></tr>
+    <tr><td class="n">중앙집중</td><td class="k n">AFTER</td>
+      <td><b>PM 중심</b> — 디자이너와 엔지니어는 <u>서로의 답을 못 봄</u>. PM만 둘 다 보고 정리</td></tr>
+  </table>
+  <div class="why">
+    예전의 '독립(완전 차단)'은 없어졌습니다. 대신 중앙집중에서 <b>두 전문가가 한 라운드 안에서는 서로의 답을 못 보는</b> 형태가 새로 생겼는데,
+    이건 정보를 막으려는 게 아니라 <b>PM이 모든 정보를 거치는 중심점이 되도록</b> 만든 구조입니다.
+  </div>
+
+  <!-- D. 진행 -->
+  <h2>④ 언제 사용자에게 차례가 오나</h2>
+  <div class="grid">
+    <div class="col old">
+      <span class="tag old">BEFORE</span>
+      <ul>
+        <li><b>6번 발언마다</b> 사용자 차례 한 번</li>
+        <li>단계마다 정해진 발언 수만큼 진행 후 종료</li>
+      </ul>
+    </div>
+    <div class="col new">
+      <span class="tag new">AFTER</span>
+      <ul>
+        <li><b>분산:</b> 예전과 같음 — 6번 발언마다 사용자</li>
+        <li><b>중앙집중:</b> '라운드' 단위 — 한 단계에 4라운드, <b>2·4라운드 끝에</b> 사용자 차례</li>
+        <li>사용자가 매 차례 <b>반드시 입력</b>하도록 바뀜 (자동 넘김 없음)</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 제거 -->
+  <div class="removed">
+    <h3>✕ 없어진 것</h3>
+    <ul>
+      <li><b>발언 차단 장치</b> — 예전 '독립' 방식의 서로 가리기 기능과 개인별 요약 처리 전부 삭제</li>
+      <li><b>서로 다른 AI 모델 섞어 쓰기</b> — 예전엔 참가자마다 다른 모델(서로 다른 회사 AI)을 썼는데, 지금은 <b>전원 같은 모델</b>로 통일</li>
+    </ul>
+  </div>
+
+  <!-- 요약표 -->
+  <h2>⑤ 한눈에 요약</h2>
+  <table>
+    <tr><th>항목</th><th class="o">BEFORE</th><th class="n">AFTER</th></tr>
+    <tr><td class="k">참가자</td><td>같은 급 3명</td><td>PM + 전문가 2명 (PM이 사회자 될 수 있음)</td></tr>
+    <tr><td class="k">회의 엔진</td><td>두 방식 모두 '돌아가며 말하기'</td><td>분산=돌아가며 / 중앙집중=PM 사회(완전 새 방식)</td></tr>
+    <tr><td class="k">말 공유</td><td>전부 공유 또는 완전 차단</td><td>전부 공유 / PM 중심(전문가끼리는 못 봄)</td></tr>
+    <tr><td class="k">진행 방식</td><td>한 명씩 순차</td><td>분산=순차 / 중앙집중=두 명 동시 진행</td></tr>
+    <tr><td class="k">AI 모델</td><td>참가자마다 다른 모델</td><td>전원 같은 모델</td></tr>
+  </table>
+
+  <p class="foot">
+    근거: 변경 전 코드(<code>stage2.py · independent.py · config_premium.py · web.py · simple_agents.py</code>)와
+    변경 후 코드(<code>centralized.py · decentralized.py · common.py · config_uniform.py · web.py · simple_agents.py</code>)를 직접 대조.
+    변경 후 파일은 아직 커밋 전 상태입니다.
+  </p>
+
+</div>
+</body>
+</html>

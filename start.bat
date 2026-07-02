@@ -1,5 +1,6 @@
 @echo off
 chcp 65001 >nul
+cd /d "%~dp0"
 echo 실험 서버를 시작합니다...
 echo.
 python web.py

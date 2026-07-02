@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Centralized vs Decentralized — 경험 차이 설계 리서치 정리</title>
+<style>
+  :root{
+    --ink:#1a1c1f; --muted:#5c6773; --line:#e3e7ec; --bg:#fbfcfd;
+    --accent:#2f6f4f; --accentbg:#eaf3ee; --warn:#8a5a00; --warnbg:#fdf3df;
+    --danger:#9a2b2b; --dangerbg:#fbeaea; --blue:#28527a; --bluebg:#eaf1f8;
+  }
+  *{box-sizing:border-box;}
+  body{
+    font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic","Segoe UI",sans-serif;
+    color:var(--ink); background:var(--bg); line-height:1.72;
+    max-width:860px; margin:0 auto; padding:48px 28px 96px; font-size:16px;
+  }
+  h1{font-size:26px; line-height:1.35; margin:0 0 6px; letter-spacing:-.02em;}
+  .sub{color:var(--muted); font-size:14.5px; margin:0 0 4px;}
+  h2{font-size:20px; margin:44px 0 6px; padding-top:20px; border-top:2px solid var(--line); letter-spacing:-.01em;}
+  h2 .n{color:var(--accent); font-weight:800; margin-right:8px;}
+  h3{font-size:16.5px; margin:26px 0 6px; color:#25303a;}
+  p{margin:10px 0;}
+  ul,ol{margin:10px 0; padding-left:22px;}
+  li{margin:5px 0;}
+  strong{font-weight:700;}
+  em{font-style:normal; background:#fff6d6; padding:0 3px; border-radius:3px;}
+  .lead{font-size:16.5px; background:#fff; border:1px solid var(--line); border-left:4px solid var(--accent);
+    padding:14px 18px; border-radius:6px; margin:16px 0;}
+  .callout{background:var(--bluebg); border:1px solid #cfe0f0; border-radius:8px; padding:14px 18px; margin:18px 0;}
+  .callout.warn{background:var(--warnbg); border-color:#efd9a3;}
+  .callout.danger{background:var(--dangerbg); border-color:#eecbcb;}
+  .callout .lbl{font-weight:800; font-size:13px; letter-spacing:.04em; text-transform:uppercase; display:block; margin-bottom:4px;}
+  .callout.warn .lbl{color:var(--warn);} .callout.danger .lbl{color:var(--danger);} .callout .lbl{color:var(--blue);}
+  table{border-collapse:collapse; width:100%; margin:16px 0; font-size:14.5px;}
+  th,td{border:1px solid var(--line); padding:9px 11px; text-align:left; vertical-align:top;}
+  th{background:#eef2f5; font-weight:700;}
+  td.dir{white-space:nowrap;}
+  .badge{display:inline-block; font-size:11px; font-weight:800; padding:1px 7px; border-radius:20px; vertical-align:middle; letter-spacing:.02em;}
+  .b-full{background:var(--accentbg); color:var(--accent); border:1px solid #bcdcc9;}
+  .b-part{background:var(--warnbg); color:var(--warn); border:1px solid #e8d19a;}
+  .b-need{background:var(--dangerbg); color:var(--danger); border:1px solid #e6bcbc;}
+  .legend{display:flex; gap:16px; flex-wrap:wrap; font-size:13px; color:var(--muted); margin:10px 0 4px;}
+  .ref{font-size:13.5px; margin:9px 0; padding-left:16px; text-indent:-16px;}
+  .ref a{color:var(--blue); text-decoration:none; border-bottom:1px solid #bcd0e4;}
+  .ref .meta{color:var(--muted);}
+  code{background:#eef2f5; padding:1px 5px; border-radius:4px; font-size:13px; font-family:"SF Mono",Consolas,monospace;}
+  .flow{background:#fff; border:1px solid var(--line); border-radius:8px; padding:4px 18px; margin:14px 0;}
+  .chain{font-family:inherit; background:#f3f6f4; border-left:3px solid var(--accent); padding:10px 14px; border-radius:5px; margin:10px 0; font-size:14.5px;}
+  .miss{border-left-color:var(--danger); background:#faf0f0;}
+  hr.soft{border:none; border-top:1px dashed var(--line); margin:22px 0;}
+  .foot{color:var(--muted); font-size:12.5px; margin-top:8px;}
+  .tag{font-size:12px; color:var(--muted);}
+</style>
+</head>
+<body>
+
+<h1>Centralized vs Decentralized<br>— 참가자 "경험 차이"를 설계하기 위한 인간 팀 연구 정리</h1>
+<p class="sub">내부 작업 문서 · 2026-07-01 · 멀티에이전트 디자인 아이데이션 연구 (인간 1 + LLM 에이전트 3: PM/Designer/Engineer)</p>
+
+<div class="legend">
+  <span><span class="badge b-full">원문 확인</span> 본문/PDF를 실제로 읽음</span>
+  <span><span class="badge b-part">요지 확인·본문 미독</span> 서지·초록·요약은 확인, 본문은 못 읽음</span>
+  <span><span class="badge b-need">원문 필요</span> 인용 전 반드시 본문 확인 (아래 §6에서 요청)</span>
+</div>
+
+<div class="lead">
+<strong>출발점.</strong> 현재 centralized/decentralized 두 조건은 참가자 입장에서 잘 안 갈린다 — 둘 다 "에이전트 셋이 떠들고 나는 가끔 낀다"로 느껴진다.
+그래서 <strong>인간 팀 연구</strong>에서 (1) 구조 차이가 참가자 경험의 <em>어느 차원</em>에서 나타나는지, (2) 그 차이를 키우려면 시스템을 어떻게 고쳐야 하는지 근거를 모았다. 아래는 그 흐름이다.
+</div>
+
+<h2><span class="n">1</span>인간 팀 연구는 "구조"를 어떻게 조작하나</h2>
+<p>핵심 통찰: 인간 팀 연구는 구조를 <strong>말로 설명하지 않고</strong>, 누가 누구에게·언제 말할 수 있는지, 누가 정리·결정권을 쥐는지, 정보가 어떤 형태로 도달하는지를 <strong>강제로 다르게</strong> 만들어 행동으로 드러낸다. 축은 셋:</p>
+<ul>
+  <li><strong>A. 발화 경로</strong> — 누가 누구에게 말하나 (star/wheel vs all-channel). <span class="tag">Bavelas 1950 · Leavitt 1951</span></li>
+  <li><strong>B. 권한·영향력 집중</strong> — 정리·결정권이 한 명에 집중 vs 분산. <span class="tag">Keum &amp; See 2017 · Wu 2025</span></li>
+  <li><strong>C. 정보구조</strong> — 참가자에게 정보가 위계적으로 정리돼 도달 vs 평면적 raw로 도달. <span class="tag">Kim &amp; Zhong 2017</span></li>
+</ul>
+<div class="callout warn">
+  <span class="lbl">방법론 경고 — 교란(confound)</span>
+  "Nemeth식 토론·비판 규칙을 decentralized에만 넣기" 같은 건 <strong>구조와 상호작용 규범 두 개를 동시에</strong> 조작하는 것이라 효과의 원인을 못 가린다.
+  <strong>규범은 양 조건 동일하게 고정</strong>하고, 직접성·이견은 <em>설정하는 규칙</em>이 아니라 구조에서 <em>자연 발생하는 것을 측정</em>하는 대상으로 둔다.
+</div>
+
+<h2><span class="n">2</span>경험 차이는 CSI/IMI의 <em>어느 차원</em>에서 나는가</h2>
+<p>네 갈래 문헌 스캔 결과, 구조가 실제로 가르는 차원과 그 방향은 다음과 같다. (Enjoyment·Immersion은 신기함이 좌우 → 조건 간 차이 예상 안 함)</p>
+
+<table>
+<thead><tr><th>CSI/IMI 차원</th><th>예측</th><th>지지 근거</th><th>비고</th></tr></thead>
+<tbody>
+<tr>
+  <td><strong>IMI Perceived Choice (자율성)</strong><br><span class="tag">가장 단단</span></td>
+  <td class="dir">Decentralized ↑</td>
+  <td>Ryan 1982 (choice/control 조작의 원류) · Patall 2008 메타 · Deci 1981 · Leavitt 1951 (주변부 저만족)</td>
+  <td>근거 전부 인간 팀 → human-AI 이전은 우리 논증 몫</td>
+</tr>
+<tr>
+  <td><strong>커스텀 Ownership</strong></td>
+  <td class="dir">Decentralized ↑</td>
+  <td>Pierce·Kostova·Dirks 2001/2003 (소유의 <em>통제 경로</em>) + human-AI 소유감 선례</td>
+  <td>선례는 AI 기여량 조작이지 구조 조작 아님</td>
+</tr>
+<tr>
+  <td><strong>CSI Exploration / Expressiveness</strong></td>
+  <td class="dir">Decentralized ↑<br><span class="tag">(덜 확실)</span></td>
+  <td>Keum &amp; See 2017 · Kim &amp; Zhong 2017 · Xu 2022 (PNAS) · Wu 2025</td>
+  <td>반대전류 있음 ↓</td>
+</tr>
+<tr>
+  <td>IMI Perceived Competence</td>
+  <td class="dir">Decentralized ↑ (약)</td>
+  <td>Deci 1981 · Patall 2008</td>
+  <td>효과 약할 수 있음</td>
+</tr>
+<tr>
+  <td>Enjoyment / Immersion</td>
+  <td class="dir">차이 예상 안 함</td>
+  <td>—</td>
+  <td>신기함 천장</td>
+</tr>
+</tbody>
+</table>
+
+<div class="callout danger">
+  <span class="lbl">반드시 함께 말할 반대전류 — 탐색 방향은 뒤집힐 수 있다</span>
+  "flat = 탐색↑"만큼 강한 반대 증거가 있다. <strong>Lazer &amp; Friedman 2007</strong>: 촘촘히 연결된(decentralized) 네트워크는 빨리 수렴해 다양성을 잃고 <strong>탐색을 덜 한다</strong>(성긴 네트워크가 다양성 보존 → 장기 탐색 유리). <strong>CrafTeam 2026</strong>: peer 에이전트가 무한루프에 빠져 사용자가 오히려 오케스트레이션으로 회귀. → CSI Exploration은 <em>자율성보다 덜 확실한 예측</em>으로 다뤄야 한다.
+</div>
+
+<div class="callout">
+  <span class="lbl">그리고 이게 곧 연구 기여 (GAP)</span>
+  HCI/멀티에이전트 문헌을 훑은 결과 — <strong>고정 인원에서 centralized(hub) vs decentralized(peer) 토폴로지를 between-subjects로 조작하며 인간의 UX(CSI/IMI/소유감)를 검증 척도로 잰 연구는 없다.</strong> 가장 근접한 CrafTeam조차 emergent drift·질적 관찰이다. 그 빈 칸이 이 연구의 자리다.
+</div>
+
+<h2><span class="n">3</span>Centralized를 어떻게 고치나</h2>
+<p><strong>방향:</strong> 참가자를 더 확실한 "주변부"로 — 허브(PM)에 더 종속되고 전문가에 직접 못 닿게. 이것이 §2에서 가장 단단했던 <strong>자율성·접근</strong> 차원을 벌린다. (Kim &amp; Zhong 정보구조 · Leavitt 접근제한)</p>
+<p><strong>확정 수정(킵 중):</strong> 지금 UI는 centralized에서 Designer/Engineer 발화를 <em>접힌 블록(펼치기 가능)</em>으로 보여준다. → <strong>펼치기를 제거하고 한 줄 gist만 남긴다.</strong> 참가자는 팀 존재는 알되(gist), 전문가 원발화엔 못 닿고 PM 종합으로만 받는다. 로그·CSV엔 원발화 전문이 그대로 보존(화면에서만 제거).</p>
+
+<h2><span class="n">4</span>Decentralized — 실측 진단 (로그 근거)</h2>
+<p>실제 세션 로그(2026-06-15/25)에서 뽑은 문제. decentralized가 "flat/peer"로 안 느껴지게 만드는 순서.</p>
+<ol>
+  <li><strong>PM이 decentralized에서도 사회자처럼 군다 (구조 붕괴, 최심각).</strong> PM이 매 라운드 종합+다음 질문을 던지고("두 분 말씀 종합하면… 그렇다면…?"), 엔지니어가 "PM님 어떻게 생각하세요?"라며 승인을 구한다. → decentralized에 사실상 코디네이터가 존재.</li>
+  <li><strong>참가자 입력을 항상 PM이 먼저 받는다 (구조 leak).</strong> 코드상 <code>agents[0]=PM</code>이라 참가자 발언 뒤 늘 PM이 응답 → 참가자 창구가 PM으로 고정.</li>
+  <li><strong>발화가 너무 길다 (norm 불일치).</strong> 매 턴이 5~8문장 + 브랜드 비유. centralized는 2~3문장 강제 → 조건 간 길이 norm이 다름 = 잠재 교란. <span class="tag">※ 최종 단계에서 일괄 정리 예정</span></li>
+  <li><strong>끝없는 동의 preamble + "한 걸음 더 나아가" (yes-and).</strong> 거의 모든 턴이 "공감합니다"로 시작해 하나로 뭉침.</li>
+</ol>
+<div class="callout">
+  <span class="lbl">관통하는 이론 — flat 팀은 가만두면 리더가 생긴다</span>
+  Emergent leadership 연구: 리더 없는 팀도 자연히 de-facto 리더가 떠오른다. 위 ①②는 이 자연 경향이 그대로 나타난 것 = <strong>decentralized가 저절로 centralize되고 있음.</strong> 그래서 ①②는 "추가 기능"이 아니라 그 경향을 <strong>능동적으로 억제</strong>해야 진짜 decentralized가 유지된다는 뜻이다.
+</div>
+
+<h3>수정안별 인간 팀 근거 — 비교 평가</h3>
+<table>
+<thead><tr><th>수정안</th><th>인간 팀 근거</th><th>지지</th><th>판정</th></tr></thead>
+<tbody>
+<tr><td>① PM 코디네이터 leak 제거</td><td>Emergent leadership · 자기관리팀 연구</td><td>강함</td><td>필수 (프롬프트만, 교란 안전)</td></tr>
+<tr><td>② 참가자→PM 깔때기 제거</td><td>Network position (Leavitt 1951 · Mullen 1991: 중심=리더십·만족·참여↑, 주변부↓)</td><td>강함</td><td>근거 최강. 단 speaker-selection 건드림 → 결정 필요</td></tr>
+<tr><td>④ 동의 과잉(yes-and) 억제</td><td>Groupthink (Janis) · Nemeth 2004 · "Diversity Collapse in Multi-Agent LLM" </td><td>강함(품질)</td><td>하되 <strong>양 조건 동일 적용 필수</strong> (아니면 §1 교란)</td></tr>
+<tr><td>③ 발화 길이 맞추기</td><td>Woolley 2010 (turn-taking 평등) — 단 빈도 평등이지 길이 아님</td><td>약함(경험)/강함(방법론)</td><td>주로 교란 제거(norm 상수화). 마지막에 일괄</td></tr>
+</tbody>
+</table>
+
+<h2><span class="n">5</span>Decentralized — "토론처럼" 흐르게 만드는 설계</h2>
+
+<h3>5.1 수렴을 뒤로 미룬다 (phase별 역할)</h3>
+<p>지금은 발산·심화에서도 계속 하나로 뭉친다(PM 종합 + yes-and). <strong>Keum &amp; See 2017</strong>과 정확히 맞물린다 — 위계(centralized)는 <em>고르고 좁히는 데</em>(수렴) 강하고, flat(decentralized)은 <em>벌리는 데</em>(발산) 강하다. 따라서:</p>
+<ul>
+  <li><strong>발산</strong>: 각자 다른 각도의 독립 아이디어를 내려놓기 (뭉치지 말고 폭)</li>
+  <li><strong>심화</strong>: 2~3갈래를 각자 발전·보완 (성급히 하나로 좁히지 않기, 깊이)</li>
+  <li><strong>수렴</strong>: 이제 모아서 하나로</li>
+</ul>
+<p>이 "발산→수렴" 뼈대는 양 조건 공통으로 두고, <strong>차이는 딱 하나 — centralized엔 매 라운드 좁히는 PM이 있고 decentralized엔 없다.</strong> 억지 규범이 아니라 구조의 자연스러운 결과라 교란이 아니다.</p>
+
+<h3>5.2 목표 상태 = Exploratory talk (뇌피셜 아님, 확립된 프레임)</h3>
+<p>참가자가 걱정한 "각자 할말만 하는 것"과 지금의 "yes-and"는 둘 다 <strong>이름 붙은 실패 유형</strong>이다. <strong>Mercer(1999/2000)</strong>의 세 가지 talk:</p>
+<ul>
+  <li><strong>Cumulative talk</strong> — 무비판적으로 얹기(반복·확인·부연) → <em>지금의 yes-and</em></li>
+  <li><strong>Disputational talk</strong> — 각자 자기 결정, 반박만 하고 안 모음, 경쟁적 → <em>"각자 할말만"의 우려</em></li>
+  <li><strong>Exploratory talk</strong> — 서로 challenge하되 이유를 대고 공동의 답으로 → <em>우리 목표</em></li>
+</ul>
+<p>즉 cumulative(현재)와 disputational(우려) 사이의 <strong>exploratory talk</strong>가 "받아치되 안 뭉치기"의 학술적 이름이다.</p>
+
+<h3>5.3 한 턴의 '움직임' — 근거 있는 분류</h3>
+<p>"한 턴 = 직전 포인트에 대한 한 번의 움직임"으로 바꾼다. 움직임 분류는 두 프레임에서 가져온다:</p>
+<ul>
+  <li><strong>Weinberger &amp; Fischer 2006 — social modes of co-construction</strong> <span class="tag">(이미 본 연구 base 인용)</span>: externalization(내 생각 내놓기) / elicitation(끌어내기) / <span style="color:var(--danger)">quick consensus(빨리 동의 = yes-and, 피할 것)</span> / integration-oriented / conflict-oriented.</li>
+  <li><strong>Berkowitz &amp; Gibbs 1983 — transact</strong>: 남의 추론에 대한 조작 (extension·clarification·refinement·contradiction·counter-consideration). → "직전 포인트에 걸어 한 걸음"의 근거.</li>
+</ul>
+
+<h3>5.4 "흐름 vs 새 방향" 긴장의 해소</h3>
+<p>움직임은 두 종류이고, 둘을 <strong>이유와 함께 섞은 것</strong>이 exploratory talk이다:</p>
+<ul>
+  <li><strong>(a) 남 추론에 조작(transact)</strong> → 이어짐(flow)</li>
+  <li><strong>(b) 새로 내놓기(externalization)</strong> → 방향 던지기(throw)</li>
+</ul>
+<div class="chain"><strong>(a) 이어가기(심화):</strong> A "신입생이 진짜 막히는 건 첫 2주 아냐?" → B "그 2주엔 같이 밥 먹을 사람이 없지, 그때 매칭을 확 밀면?" → C "매칭하려면 걔 시간표를 알아야 하는데 그건 자동으로 끌어오면 되잖아"</div>
+<div class="chain miss"><strong>(b) 방향 던지기(발산):</strong> "잠깐, 매칭 말고 아예 틀어서 — 신입생이 굳이 앱을 왜 켜지? 켤 이유부터 없으면 다 소용없잖아." <span class="tag">→ 새 방향인데 <strong>이유를 달고 앞말에 걸어서</strong> 던짐</span></div>
+<p><strong>핵심 구분:</strong> 새 방향을 <em>이유 없이 툭</em> 던지면 disputational(우려), <em>이유 달고 남 것에 걸어서</em> 던지면 exploratory(목표). 그 "이유+걸기"가 flow를 만든다. phase가 섞는 비율을 정한다 — 발산은 (b) 위주, 심화는 (a) 위주, 수렴은 integration-oriented.</p>
+<div class="callout warn">
+  <span class="lbl">라운드로빈은 유지 · 열지 않음</span>
+  발언권을 완전히 열면(동적 화자 선택) 발언 기회 균형이 깨진다 → 채택 안 함. 순서는 그대로 두되, <strong>한 턴을 작고 반응적인 "한 움직임"으로</strong> 만들어 사슬처럼 흐르게 한다. 그러면 "할 말 없어 억지로 채우는" yes-and도 줄고, 시간 낭비 느낌(병렬 에세이)도 사라진다. 전부 프롬프트 문구(공통규칙 + phase prefix)로 조절 가능.
+</div>
+
+<h2><span class="n">6</span>검증 상태 &amp; 원문이 필요한 논문 (요청)</h2>
+<p>아래 뱃지가 검증 수준이다. <strong>인용을 설계 문서에 박기 전, 특히 아래 <span class="badge b-need">원문 필요</span> 항목은 본문 확인이 선행돼야 한다.</strong> 접근이 되면 PDF를 주거나, 안 되면 "이 제목은 접근 시도해줘"라고 말해주면 내가 읽고 실제 측정·실제 방향으로 다시 대조한다.</p>
+<div class="callout danger">
+  <span class="lbl">지금 가장 필요한 원문 (load-bearing인데 본문 미독)</span>
+  <ul style="margin:6px 0;">
+    <li><strong>Kim &amp; Zhong 2017 (OBHDP)</strong> — centralized 정보구조 개선의 핵심 근거. 페이월로 본문 못 읽음.</li>
+    <li><strong>Leavitt 1951 (원전)</strong> — "주변부 저만족"의 실제 측정 문항·수치. 지금 2차 요약 의존.</li>
+    <li><strong>Weinberger &amp; Fischer 2006 (Computers &amp; Education)</strong> — social modes 정의(§5.3). 이미 우리 base 인용이라 대조만 하면 됨.</li>
+    <li><strong>"Diversity Collapse in Multi-Agent LLM Systems" (arXiv 2604.18005)</strong> — 우리 yes-and 현상에 정확히 꽂히는 최신 논문. <em>제목만</em> 봤음.</li>
+    <li>(선택) <strong>Wu et al. 2025 (JAP)</strong> — 서지만 Crossref로 확인, 본문 미독.</li>
+  </ul>
+</div>
+
+<h2 style="border:none; padding-top:8px;">References <span class="tag" style="font-weight:400;">(갈래별 · 검증 뱃지 포함)</span></h2>
+
+<h3>구조 조작 · 네트워크 위치</h3>
+<p class="ref"><span class="badge b-need">원문 필요</span> Leavitt, H. J. (1951). Some effects of certain communication patterns on group performance. <span class="meta">J. Abnormal &amp; Social Psychology, 46(1), 38–50.</span> <a href="https://pubmed.ncbi.nlm.nih.gov/14813886/">PubMed</a></p>
+<p class="ref"><span class="badge b-need">원문 필요</span> Bavelas, A. (1950). Communication patterns in task-oriented groups. <span class="meta">JASA, 22(6), 725–730.</span></p>
+<p class="ref"><span class="badge b-need">원문 필요</span> Shaw, M. E. (1964). Communication networks. <span class="meta">Advances in Experimental Social Psychology, 1, 111–147.</span></p>
+<p class="ref"><span class="badge b-part">요지 확인</span> Mullen, B., Johnson, C., &amp; Salas, E. (1991). Effects of communication network structure: Components of positional centrality. <span class="meta">Social Networks, 13(2), 169–185.</span> <span class="tag">중심성 → 리더십·만족·참여 정적 예측(메타).</span></p>
+
+<h3>위계 · 정보구조 · 창의성</h3>
+<p class="ref"><span class="badge b-part">요지 확인</span> Keum, D. Y., &amp; See, K. E. (2017). The influence of hierarchy on idea generation and selection in the innovation process. <span class="meta">Organization Science, 28(4), 653–669.</span> <a href="https://doi.org/10.1287/orsc.2017.1142">DOI</a> <span class="tag">위계: 생성↓ / 선택↑ (phase 의존). open PDF 존재.</span></p>
+<p class="ref"><span class="badge b-need">원문 필요</span> Kim, Y. J., &amp; Zhong, C.-B. (2017). Ideas rise from chaos: Information structure and creativity. <span class="meta">OBHDP, 138, 15–27.</span> <a href="https://doi.org/10.1016/j.obhdp.2016.10.001">DOI</a> <span class="tag">평면/무질서 정보 → 창의↑ (페이월).</span></p>
+<p class="ref"><span class="badge b-part">요지 확인</span> Greer, L. L., de Jong, B. A., Schouten, M. E., &amp; Dannals, J. E. (2018). Why and when hierarchy impacts team effectiveness: A meta-analytic integration. <span class="meta">JAP, 103(6), 591–613.</span> <a href="https://doi.org/10.1037/apl0000291">DOI</a></p>
+<p class="ref"><span class="badge b-part">요지 확인</span> Xu, F., Wu, L., &amp; Evans, J. (2022). Flat teams drive scientific innovation. <span class="meta">PNAS, 119(23), e2200927119.</span> <a href="https://doi.org/10.1073/pnas.2200927119">DOI</a></p>
+
+<h3>공유·분산 리더십</h3>
+<p class="ref"><span class="badge b-part">서지 확인</span> Wu, J., Zhang, Z., Song, L. J., &amp; Zhu, L. (2025). Shared leadership and team creativity: … level and concentration … <span class="meta">JAP, 110(7), 1001–1014.</span> <a href="https://doi.org/10.1037/apl0001258">DOI</a> <span class="tag">분산→정보정교화→창의; 집중→지위갈등.</span></p>
+<p class="ref"><span class="badge b-part">스니펫</span> D'Innocenzo, Mathieu, &amp; Kukenberger (2016), <span class="meta">J. Management, 42(7).</span> · Nicolaides et al. (2014), <span class="meta">Leadership Quarterly, 25(5).</span></p>
+
+<h3>자율성 · 내재동기 · 소유감 (IMI 근거)</h3>
+<p class="ref"><span class="badge b-part">요지 확인</span> Ryan, R. M. (1982). Control and information in the intrapersonal sphere … <span class="meta">JPSP, 43(3), 450–461.</span> <span class="tag">choice/control 조작 = IMI Perceived Choice의 원류.</span></p>
+<p class="ref"><span class="badge b-part">요지 확인</span> Deci, Nezlek, &amp; Sheinman (1981). <span class="meta">JPSP, 40(1), 1–10.</span> <span class="tag">통제적 맥락 → IM·역량↓.</span></p>
+<p class="ref"><span class="badge b-part">요지 확인</span> Patall, Cooper, &amp; Robinson (2008). The effects of choice on intrinsic motivation … meta-analysis. <span class="meta">Psychological Bulletin, 134(2), 270–300.</span></p>
+<p class="ref"><span class="badge b-part">요지 확인</span> Pierce, Kostova, &amp; Dirks (2001, <span class="meta">AMR 26(2)</span>; 2003, <span class="meta">RGP 7(1)</span>). <span class="tag">심리적 소유 — 통제 경로.</span></p>
+<p class="ref"><span class="badge b-part">요지 확인</span> McAuley, Duncan, &amp; Tammen (1989). <span class="meta">RQES, 60(1), 48–58.</span> <span class="tag">IMI 요인구조 검증(측정 인용). ※1987 아님.</span></p>
+
+<h3>탐색 반대전류</h3>
+<p class="ref"><span class="badge b-full">원문 확인</span> Lazer, D., &amp; Friedman, A. (2007). The network structure of exploration and exploitation. <span class="meta">ASQ, 52(4), 667–694.</span> <span class="tag">효율적(연결 촘촘) 네트워크 → 조기수렴 → 장기 탐색↓ (시뮬레이션).</span></p>
+<p class="ref"><span class="badge b-need">원문 필요</span> "Diversity Collapse in Multi-Agent LLM Systems …" <span class="meta">arXiv 2604.18005.</span> <span class="tag">제목만 확인.</span></p>
+
+<h3>인간+다중 AI 에이전트 UX</h3>
+<p class="ref"><span class="badge b-part">초록 확인</span> Lim et al. (2026). Understanding human–multi-agent team formation for creative work (CrafTeam). <span class="meta">CHI '26; arXiv 2601.13865.</span></p>
+<p class="ref"><span class="badge b-part">초록 확인</span> Song et al. (2024/25). Multi-agents are social groups … <span class="meta">CSCW/PACM HCI; arXiv 2411.04578.</span> · Clarke et al. (2024). One agent too many. <span class="meta">arXiv 2401.07123.</span></p>
+
+<h3>토론 역학 (decentralized 설계)</h3>
+<p class="ref"><span class="badge b-part">요지 확인</span> Woolley, Chabris, Pentland, Hashmi, &amp; Malone (2010). Evidence for a collective intelligence factor … <span class="meta">Science, 330, 686–688.</span> <span class="tag">turn-taking 평등 → 집단지능↑.</span></p>
+<p class="ref"><span class="badge b-part">요지 확인</span> Nemeth et al. (2004). The liberating role of conflict in group creativity. <span class="meta">Eur. J. Social Psychology.</span> · Janis — groupthink. <span class="tag">메커니즘 설명용(대칭 적용).</span></p>
+<p class="ref"><span class="badge b-part">요지 확인</span> Mercer, N. (1999/2000). Three types of talk: cumulative · disputational · exploratory. <span class="tag">목표 프레임.</span></p>
+<p class="ref"><span class="badge b-need">원문 필요</span> Weinberger, A., &amp; Fischer, F. (2006). A framework to analyze argumentative knowledge construction in CSCL. <span class="meta">Computers &amp; Education, 46(1), 71–95.</span> <span class="tag">social modes(§5.3) — 이미 base 인용, 정의 대조 필요.</span></p>
+<p class="ref"><span class="badge b-part">요지 확인</span> Berkowitz, M. W., &amp; Gibbs, J. C. (1983). Measuring the developmental features of moral discussion. <span class="meta">Merrill-Palmer Quarterly.</span> <span class="tag">transact — 남 추론에 대한 조작.</span></p>
+
+<p class="foot">이 문서는 논의 중간 정리본이다. 인용은 위 뱃지 수준까지만 신뢰. <span class="badge b-need">원문 필요</span> 항목이 확정되면 실제 측정·효과·방향으로 본문을 갱신한다.</p>
+
+</body>
+</html>

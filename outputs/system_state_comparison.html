@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Centralized vs Decentralized — 현재 상태 비교</title>
+<style>
+  :root{
+    --ink:#1a1c1f; --muted:#5c6773; --line:#e3e7ec; --bg:#fbfcfd;
+    --cen:#2b5a8c; --cenbg:#eef4fa; --dec:#2f7d5b; --decbg:#ecf6f0;
+    --red:#a12b2b; --redbg:#fbecec; --amber:#8a5a00; --amberbg:#fdf4de;
+    --green:#1f6b45; --greenbg:#e7f4ec;
+  }
+  *{box-sizing:border-box;}
+  body{font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic","Segoe UI",sans-serif;
+    color:var(--ink); background:var(--bg); line-height:1.7; max-width:960px; margin:0 auto;
+    padding:44px 26px 90px; font-size:15.5px;}
+  h1{font-size:25px; margin:0 0 6px; letter-spacing:-.02em;}
+  .sub{color:var(--muted); font-size:14px; margin:0 0 20px;}
+  h2{font-size:19px; margin:38px 0 10px; padding-top:16px; border-top:2px solid var(--line);}
+  p{margin:9px 0;}
+  .legend{display:flex; gap:14px; flex-wrap:wrap; font-size:12.5px; margin:14px 0; align-items:center;}
+  .chip{display:inline-block; padding:2px 9px; border-radius:20px; font-weight:700; font-size:12px;}
+  .c-now{background:#eef1f4; color:#41505e; border:1px solid #d5dce3;}
+  .c-prob{background:var(--redbg); color:var(--red); border:1px solid #edc9c9;}
+  .c-fix{background:var(--greenbg); color:var(--green); border:1px solid #bfe0cd;}
+  .c-open{background:var(--amberbg); color:var(--amber); border:1px solid #e9d29a;}
+  table{border-collapse:collapse; width:100%; margin:14px 0; font-size:14px; table-layout:fixed;}
+  th,td{border:1px solid var(--line); padding:10px 12px; vertical-align:top;}
+  th.dim{width:15%; background:#f2f5f7; font-size:13px;}
+  th.cen{width:42.5%; background:var(--cenbg); color:var(--cen);}
+  th.dec{width:42.5%; background:var(--decbg); color:var(--dec);}
+  td.cen{background:#fafcfe;} td.dec{background:#f9fdfb;}
+  .prob{color:var(--red); font-size:13px; display:block; margin-top:5px;}
+  .prob::before{content:"⚠ 문제 · "; font-weight:700;}
+  .k{font-weight:700;}
+  .box{border:1px solid var(--line); border-radius:8px; padding:6px 18px; margin:14px 0; background:#fff;}
+  .box.cen{border-left:4px solid var(--cen);} .box.dec{border-left:4px solid var(--dec);}
+  ul{margin:8px 0; padding-left:20px;} li{margin:4px 0;}
+  .fix{color:var(--green);} .fix::before{content:"✔ "; font-weight:700;}
+  .open{color:var(--amber);} .open::before{content:"◐ 미결정 · "; font-weight:700;}
+  .crux{background:#fff8e6; border:1px solid #ecdca6; border-radius:8px; padding:12px 18px; margin:16px 0;}
+  code{background:#eef2f5; padding:1px 5px; border-radius:4px; font-size:12.5px; font-family:Consolas,monospace;}
+  .foot{color:var(--muted); font-size:12px; margin-top:24px;}
+</style>
+</head>
+<body>
+
+<h1>Centralized vs Decentralized — 지금 시스템은 이렇게 돌아간다</h1>
+<p class="sub">코드(centralized.py · decentralized.py · simple_agents.py · web.py)와 실제 세션 로그 기준 · 2026-07-01</p>
+
+<div class="legend">
+  <span class="chip c-now">현재 이렇게 작동</span>
+  <span class="chip c-prob">지금의 문제</span>
+  <span class="chip c-fix">확정된 변경</span>
+  <span class="chip c-open">아직 결정 안 함</span>
+</div>
+
+<h2>1. 지금 상태 — 나란히 비교</h2>
+<table>
+<thead><tr><th class="dim">항목</th><th class="cen">CENTRALIZED (조건 1)</th><th class="dec">DECENTRALIZED (조건 2)</th></tr></thead>
+<tbody>
+
+<tr>
+<td class="dim k">한 라운드 구조</td>
+<td class="cen">PM이 질문을 던짐 → Designer·Engineer가 <span class="k">동시에</span> 답(화면 뒤에서) → PM이 종합. 이걸 한 phase에 4번 반복.</td>
+<td class="dec">정해진 순서로 한 명씩 돌아가며 발언(round-robin). 6명분 발화마다 참가자 차례.</td>
+</tr>
+
+<tr>
+<td class="dim k">발언권을 누가 쥐나</td>
+<td class="cen">PM이 전부 통제 — 누구에게 물을지, 어떻게 정리할지 PM이 결정.</td>
+<td class="dec">아무도 통제 안 함. 고정 순환(기계적).<span class="prob">순번대로 "뭐라도" 말해야 해서, 할 말 없으면 채우기 발화가 됨</span></td>
+</tr>
+
+<tr>
+<td class="dim k">참가자가 보는 화면</td>
+<td class="cen">PM 종합은 <span class="k">전문</span>으로 보임. Designer·Engineer 발화는 <span class="k">접힌 한 줄 요약</span>(클릭하면 펼쳐짐).</td>
+<td class="dec">세 명 발화가 <span class="k">전부 전문</span>으로 동등하게 보임(접힘 없음).</td>
+</tr>
+
+<tr>
+<td class="dim k">참가자 입력 처리</td>
+<td class="cen">입력창 하나 → PM에게 감. PM이 받아 다음에 반영. 참가자는 전문가에 직접 못 닿음.</td>
+<td class="dec">입력창 하나 → 방에 깔림. 그런데 코드상 <span class="k">항상 PM이 먼저</span> 받음(<code>agents[0]=PM</code>).<span class="prob">평등한 팀인데 참가자 창구가 사실상 PM으로 고정</span></td>
+</tr>
+
+<tr>
+<td class="dim k">대화가 어떻게 흐르나</td>
+<td class="cen">PM이 매 라운드 종합 → 계속 하나로 수렴.</td>
+<td class="dec">로그상 셋이 "공감합니다, 한 걸음 더"로 계속 동의하며 <span class="k">하나로 뭉침</span>. PM이 종합·다음질문까지 함.<span class="prob">yes-and(무비판 동의) + PM이 몰래 사회자 노릇 → 사실상 centralized처럼 됨</span></td>
+</tr>
+
+<tr>
+<td class="dim k">발화 길이·톤</td>
+<td class="cen">2~3문장으로 짧게 강제(트리거).</td>
+<td class="dec">한 턴이 5~8문장 + 브랜드 비유까지. 길다.<span class="prob">조건 간 길이가 달라 잠재적 교란</span></td>
+</tr>
+
+<tr>
+<td class="dim k">참가자가 겪는 느낌</td>
+<td class="cen">"PM이라는 창구를 통해 팀과 일한다. 전문가는 배경."</td>
+<td class="dec">"세 명이 번갈아 비슷한 무게로 발표하고 다음 단계로." (평평하다기보단 순번 발표에 가까움)</td>
+</tr>
+
+</tbody>
+</table>
+
+<div class="crux">
+<span class="k">핵심 — 그래서 지금 왜 차이가 약한가:</span> 참가자 입장에서 실제로 다른 건 <span class="k">화면(접힘 vs 전문)</span>과 <span class="k">PM 종합 위주냐 vs 셋이 평면이냐</span> 정도다. 입력이 PM으로 가는 것도, 톤도, 참가자가 하는 행동도 <span class="k">거의 같다.</span> 게다가 decentralized조차 PM이 몰래 정리·수렴을 해서 두 조건이 서로 닮아 있다.
+</div>
+
+<h2>2. 우리가 목표로 하는 차이</h2>
+<table>
+<thead><tr><th class="dim">축</th><th class="cen">CENTRALIZED가 이래야</th><th class="dec">DECENTRALIZED가 이래야</th></tr></thead>
+<tbody>
+<tr><td class="dim k">참가자 위치</td><td class="cen">주변부 — 허브(PM)에 종속, 걸러진 정보만 받음</td><td class="dec">동등한 한 명 — 직접 접근, 날것 정보</td></tr>
+<tr><td class="dim k">정보 흐름</td><td class="cen">PM이 정리해 하나로(위계적 정보구조)</td><td class="dec">세 목소리 그대로 평면</td></tr>
+<tr><td class="dim k">수렴 시점</td><td class="cen">계속 수렴(PM이 매번 정리) — 맞음</td><td class="dec">발산·심화엔 안 뭉치고, 수렴에서만 모음</td></tr>
+<tr><td class="dim k">대화 성격</td><td class="cen">PM 중심 정리형</td><td class="dec"><span class="k">Exploratory talk</span> — 이유 대고 서로 받아치되 하나로 안 뭉침</td></tr>
+</tbody>
+</table>
+<p style="font-size:13px; color:var(--muted);">근거: 참가자 주변부 위치→만족·자율 (Leavitt 1951 ✔원문확인) · 위계적 정보구조→창의성↓ (Kim &amp; Zhong 2017 ✔원문확인) · 위계=수렴/flat=발산 (Keum &amp; See 2017) · 목표 대화 유형 (Mercer, exploratory talk).</p>
+
+<h2>3. 그래서 무엇을 바꾸나</h2>
+
+<div class="box cen">
+<p class="k" style="color:var(--cen);">CENTRALIZED</p>
+<ul>
+<li class="fix"><span class="c-fix chip">확정</span> Designer·Engineer 발화의 <span class="k">펼치기 제거, 한 줄 요약만</span> 남김 → 참가자는 팀 존재는 알되 전문가 원발화엔 못 닿고 PM 종합으로만 받음. (원발화는 로그엔 그대로 보존) <span style="font-size:12.5px;color:var(--muted)">— web.py 렌더링만 수정</span></li>
+</ul>
+</div>
+
+<div class="box dec">
+<p class="k" style="color:var(--dec);">DECENTRALIZED</p>
+<ul>
+<li class="fix"><span class="c-fix chip">방향 합의</span> <span class="k">PM의 사회자 역할 제거</span> — 종합·다음질문·승인자 노릇 빼고 PM도 동등한 한 명. → 조기 수렴 방지.</li>
+<li class="fix"><span class="c-fix chip">방향 합의</span> <span class="k">수렴을 뒤로</span> — 발산·심화엔 각자 안을 세우고 받아치되 안 뭉침, 수렴에서만 모음.</li>
+<li class="fix"><span class="c-fix chip">방향 합의</span> <span class="k">Exploratory talk 규칙</span> — yes-and(동의만) 금지, 한 턴=한 움직임(새 방향/밀기/허점짚기/질문 중 하나 + 반드시 "왜"). <span style="font-size:12.5px;color:var(--muted)">— 프롬프트(공통규칙·phase) 수정</span></li>
+<li class="open"><span class="c-open chip">미결정</span> 참가자 입력이 <span class="k">항상 PM에게 먼저 가는 것</span>을 풀지 — 이건 발언 순서 코드(speaker-selection)를 건드려야 함.</li>
+<li class="open"><span class="c-open chip">미결정</span> 발화 길이 통일 — 마지막에 일괄 정리 예정.</li>
+</ul>
+</div>
+
+<h2>4. 지금 네가 정할 것</h2>
+<ul>
+<li><span class="k">① 참가자→PM 깔때기</span>를 풀까? (decentralized를 진짜 평등하게 만들지만 순서 코드 수정 필요)</li>
+<li><span class="k">② centralized 확정 수정</span>(펼치기 제거)부터 착수할까, 아니면 decentralized 프롬프트 수정을 먼저 짤까?</li>
+<li>그 외 위 "방향 합의" 항목 중 빼거나 바꿀 것이 있는지</li>
+</ul>
+
+<p class="foot">이 문서는 현재 구현 상태(코드·로그)를 그대로 옮긴 것이다. "확정/방향 합의"는 논의로 정한 것이고, 아직 코드에 반영되지 않았다(착수 신호 대기).</p>
+
+</body>
+</html>

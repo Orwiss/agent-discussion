@@ -191,3 +191,6 @@ _*.ipynb
 _scratch/
 /.omx
 /literature
+
+# proposal 문서 스냅샷 (파생물, 백업 제외)
+outputs/_*.png

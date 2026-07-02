@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<style>
+  @page { size: 1280px 720px; margin: 0; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  :root {
+    --ink: #1b2230; --muted: #586073; --faint: #939cab;
+    --accent: #234a87; --accent2: #5b86c4; --person: #d9831f;
+    --soft: #eef2f8; --soft2: #f5f8fc; --line: #d3dae4; --line2: #e6eaf1;
+  }
+  body { font-family: "Malgun Gothic","맑은 고딕",sans-serif; color: var(--ink); letter-spacing: -0.01em; }
+
+  .page { position: relative; width: 1280px; height: 720px; overflow: hidden;
+    background: #fff; page-break-after: always; padding: 44px 60px 46px 60px; }
+  .page:last-child { page-break-after: auto; }
+  .page.tight .sec { margin-bottom: 4px; }
+  .page.tight ul.kx > li { margin-bottom: 4px; line-height: 1.5; }
+  .page.tight .sec > h2 { margin-bottom: 5px; }
+  .page.tight ul.kx ul > li { font-size: 11px; line-height: 1.4; margin-bottom: 2px; }
+
+  .dochead { border-bottom: 2.5px solid var(--accent); padding-bottom: 12px; margin-bottom: 11px; }
+  .p1 .sec { margin-bottom: 8px; }
+  .p1 ul.kx > li { margin-bottom: 2.5px; line-height: 1.45; }
+  .dochead .t { font-size: 25px; font-weight: 700; letter-spacing: -0.025em; line-height: 1.3; }
+  .dochead .en { font-size: 13px; color: var(--muted); margin-top: 6px; font-style: italic; }
+  .dochead .meta { font-size: 13.5px; color: var(--muted); margin-top: 11px; }
+  .dochead .meta b { color: var(--accent); }
+
+  .runhead { font-size: 12.5px; color: var(--faint); border-bottom: 1px solid var(--line2);
+    padding-bottom: 9px; margin-bottom: 20px; display: flex; justify-content: space-between; }
+
+  .sec { margin-bottom: 19px; }
+  .sec > h2 { font-size: 18px; font-weight: 700; color: var(--accent);
+    display: flex; align-items: center; gap: 10px; margin-bottom: 11px; }
+  .sec > h2 .no { font-size: 13px; color: #fff; background: var(--accent);
+    width: 24px; height: 24px; border-radius: 6px; display: inline-flex;
+    align-items: center; justify-content: center; font-weight: 700; flex: 0 0 auto; }
+  .sec > h2 .ko { font-size: 13px; font-weight: 500; color: var(--faint); }
+
+  .grid2 { display: flex; gap: 42px; }
+  .col { flex: 1; min-width: 0; }
+
+  p.body { font-size: 14.5px; line-height: 1.7; color: var(--ink); }
+  .em { color: var(--accent); font-weight: 700; }
+
+  ul.kx { list-style: none; }
+  ul.kx > li { position: relative; padding-left: 16px; font-size: 14.5px; line-height: 1.65;
+    margin-bottom: 9px; color: var(--ink); }
+  ul.kx > li::before { content: ""; position: absolute; left: 2px; top: 0.62em;
+    width: 6px; height: 6px; background: var(--accent); border-radius: 1px; }
+  ul.kx > li > b { color: var(--accent); font-weight: 700; }
+  ul.kx ul { list-style: none; margin-top: 5px; }
+  ul.kx ul > li { position: relative; padding-left: 15px; font-size: 13.5px; line-height: 1.55;
+    margin-bottom: 4px; color: var(--muted); }
+  ul.kx ul > li::before { content: "–"; position: absolute; left: 0; top: 0; color: var(--faint); }
+  ul.kx ul > li b { color: var(--ink); font-weight: 700; }
+  .ref { font-size: 11.5px; color: var(--faint); }
+
+  .structrow { display: flex; gap: 30px; margin: 8px 0 12px 0; }
+  .structcard { flex: 1; border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; background: #fff; }
+  .structcard .cap { font-size: 16px; font-weight: 700; color: var(--accent); }
+  .structcard .cap span { font-size: 12.5px; font-weight: 500; color: var(--muted); margin-left: 7px; }
+  .structcard svg { display: block; margin: 8px auto 6px auto; }
+  .structcard .desc { font-size: 14px; color: var(--ink); line-height: 1.6; }
+  .structcard .desc b { color: var(--accent); }
+  .legend { display: flex; gap: 26px; font-size: 13px; color: var(--muted); margin-top: 10px; }
+  .legend span { display: inline-flex; align-items: center; gap: 7px; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+
+  .matrix { display: grid; grid-template-columns: 56px 1fr 1fr; gap: 7px; margin-top: 8px; }
+  .matrix .mh { font-size: 13px; font-weight: 700; color: var(--accent); text-align: center; padding: 3px 0; }
+  .matrix .rl { display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: var(--muted); }
+  .matrix .band { grid-column: 2/4; border: 1.5px solid var(--accent); border-radius: 9px; background: var(--soft);
+    padding: 11px 14px; display: flex; align-items: center; justify-content: space-between; }
+  .matrix .band .s { font-size: 15px; font-weight: 700; color: var(--accent); }
+  .matrix .band .w { font-size: 12px; color: var(--muted); }
+  .matrix .band .n { font-size: 12px; font-weight: 700; color: var(--accent); background: #fff; border: 1px solid var(--accent); border-radius: 12px; padding: 2px 11px; }
+  .between { font-size: 12px; color: var(--faint); text-align: center; margin-top: 7px; }
+
+  /* RQ groups */
+  .rqg { font-size: 13.5px; font-weight: 700; color: var(--accent); margin: 1px 0 4px; padding-left: 10px; border-left: 3px solid var(--accent2); }
+  .rqg + ul.kx { margin-bottom: 7px; }
+
+  /* design diagram */
+  .dz { margin-top: 10px; }
+  .dz .row { display: flex; align-items: stretch; gap: 13px; margin-bottom: 10px; }
+  .dz .who { flex: 0 0 132px; border: 1.5px solid var(--accent); border-radius: 9px; background: var(--soft);
+    padding: 8px 8px; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+  .dz .who .e { font-size: 12px; color: var(--muted); font-weight: 700; }
+  .dz .who .n { font-size: 14.5px; font-weight: 700; color: var(--accent); margin-top: 2px; }
+  .dz .arr { display: flex; align-items: center; color: var(--faint); font-size: 17px; }
+  .dz .conds { flex: 1; display: flex; align-items: center; gap: 9px; }
+  .dz .cond { flex: 1; border: 1.5px solid var(--accent2); border-radius: 9px; background: #fff;
+    padding: 13px 8px; text-align: center; font-size: 14.5px; font-weight: 700; color: var(--accent); }
+  .dz .plus { color: var(--faint); font-size: 15px; font-weight: 700; }
+  .dz .within { flex: 0 0 96px; font-size: 11.5px; color: var(--muted); line-height: 1.35; }
+  .dz .note { font-size: 12px; color: var(--muted); margin-top: 4px; padding-top: 9px; border-top: 1px solid var(--line2); line-height: 1.55; }
+  .dz .note b { color: var(--accent); }
+
+  .flow { display: flex; align-items: center; gap: 0; margin-top: 4px; }
+  .flow .box { border: 1.5px solid var(--line); border-radius: 10px; padding: 8px 14px; background: var(--soft2); text-align: center; }
+  .flow .box.srv { background: var(--soft); border-color: var(--accent); }
+  .flow .box .bt { font-size: 14px; font-weight: 700; color: var(--accent); }
+  .flow .box .bs { font-size: 12px; color: var(--muted); margin-top: 4px; line-height: 1.4; }
+  .flow .ar { display: flex; flex-direction: column; align-items: center; color: var(--faint); padding: 0 14px; }
+  .flow .ar .lab { font-size: 11px; color: var(--accent); font-weight: 700; margin-bottom: 2px; white-space: nowrap; }
+  .flow .ar .sym { font-size: 18px; line-height: 1; }
+  .flow .outcol { display: flex; flex-direction: column; gap: 7px; }
+  .flow .outcol .box { text-align: left; }
+  /* system-design engine */
+  .engine { flex: 0 0 auto; max-width: 430px; border: 1.5px solid var(--accent); border-radius: 10px; background: var(--soft); padding: 10px 15px; }
+  .engine .et { font-size: 14.5px; font-weight: 700; color: var(--accent); }
+  .engine .etag { font-size: 11.5px; font-weight: 500; color: var(--muted); margin-left: 6px; }
+  .engine .es { font-size: 12px; color: var(--muted); margin-top: 4px; line-height: 1.45; }
+  .engine .intv { font-size: 12px; color: var(--person); margin-top: 5px; padding-top: 5px; border-top: 1px dashed #d6bd95; }
+  .engine .intv b { color: var(--person); font-weight: 700; }
+  .syscap { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .flow .outcol .box .sub { font-weight: 400; color: var(--muted); font-size: 12px; }
+  /* technical architecture diagram */
+  .arch { display: flex; align-items: stretch; gap: 0; margin-top: 6px; }
+  .srvbox, .clibox { border: 1.5px solid var(--line); border-radius: 9px; padding: 7px 13px 9px; }
+  .srvbox { border-color: var(--accent); background: var(--soft); flex: 0 0 auto; max-width: 502px; }
+  .clibox { flex: 1; display: flex; flex-direction: column; gap: 6px; justify-content: center; }
+  .arch .lbl { font-size: 10px; font-weight: 700; color: var(--accent); letter-spacing: 0.05em; margin-bottom: 4px; }
+  .srvbox .ct { font-size: 14px; font-weight: 700; color: var(--accent); }
+  .srvbox .chips { display: flex; align-items: center; gap: 5px; margin: 5px 0; flex-wrap: wrap; }
+  .srvbox .chips span { font-size: 11px; font-weight: 700; color: #fff; background: var(--accent2); border-radius: 5px; padding: 2px 8px; }
+  .srvbox .chips span.ph { background: transparent; color: var(--muted); font-weight: 500; padding: 0 0 0 3px; }
+  .srvbox .cmeta { font-size: 11.5px; color: var(--muted); line-height: 1.45; }
+  .srvbox .cmeta b { color: var(--ink); font-weight: 700; }
+  .clibox .comp { font-size: 12.5px; color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 7px 11px; background: #fff; }
+  .clibox .comp b { color: var(--accent); }
+  .clibox .comp .st { color: var(--muted); font-size: 11.5px; }
+  .clibox .comp .proto { color: var(--accent2); font-weight: 700; }
+  .arch .ar2 { display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--faint); padding: 0 13px; }
+  .arch .ar2 .lab2 { font-size: 10.5px; font-weight: 700; color: var(--accent); margin-bottom: 2px; white-space: nowrap; }
+  .arch .ar2 .sym { font-size: 19px; line-height: 1; }
+  .archnote { font-size: 12px; color: var(--person); margin-top: 7px; }
+  .archnote b { color: var(--person); font-weight: 700; }
+
+  .steps { display: flex; align-items: stretch; gap: 5px; margin-top: 8px; }
+  .steps .s { flex: 1; text-align: center; border: 1px solid var(--line); border-radius: 8px; padding: 9px 4px; background: var(--soft2); }
+  .steps .s.key { background: var(--soft); border-color: var(--accent); }
+  .steps .s.intv { background: #fff; border-color: var(--accent2); }
+  .steps .s .n { display: inline-block; width: 20px; height: 20px; line-height: 20px; background: var(--accent); color: #fff; border-radius: 50%; font-size: 11.5px; font-weight: 700; margin-bottom: 6px; }
+  .steps .s .t { font-size: 12.5px; line-height: 1.32; color: var(--ink); }
+  .steps .arrow { display: flex; align-items: center; color: var(--faint); font-size: 13px; }
+
+  .miles { font-size: 13.5px; color: var(--ink); margin-bottom: 14px; }
+  .miles b { color: var(--accent); }
+  .gh { display: flex; margin-bottom: 8px; }
+  .gh .sp { width: 150px; flex: 0 0 150px; }
+  .gh .m { flex: 1; text-align: center; font-size: 13px; color: var(--muted); font-weight: 700; }
+  .grow { display: flex; align-items: center; margin-bottom: 12px; }
+  .grow .gl { width: 150px; flex: 0 0 150px; text-align: right; padding-right: 16px; font-size: 13.5px; line-height: 1.25; color: var(--ink); }
+  .gtrack { flex: 1; position: relative; height: 28px;
+    background: repeating-linear-gradient(to right, transparent 0, transparent calc(16.666% - 1px), var(--line2) calc(16.666% - 1px), var(--line2) 16.666%); border-radius: 4px; }
+  .gbar { position: absolute; top: 3px; height: 22px; border-radius: 5px; background: var(--accent2); }
+  .gbar.cur { background: var(--accent); }
+  .gbar .tag { position: absolute; right: 9px; top: 50%; transform: translateY(-50%); font-size: 11px; color: #fff; font-weight: 700; }
+
+  .ft { position: absolute; left: 60px; right: 60px; bottom: 18px; display: flex; justify-content: space-between;
+    font-size: 11.5px; color: var(--faint); border-top: 1px solid var(--line2); padding-top: 8px; }
+</style>
+</head>
+<body>
+
+<!-- =================== PAGE 1 =================== -->
+<div class="page p1">
+  <div class="dochead">
+    <div class="t">멀티에이전트 시스템의 협업 구조·환경에 따른 창의적 지원 비교 연구</div>
+    <div class="en">A Comparative Study of Creativity Support by Collaboration Structures and Environments in Multi-Agent Systems</div>
+    <div class="meta">박성훈 · TED 융합디자인학과 (G2025040) &nbsp;|&nbsp; 지도 <b>박재완 교수님</b> &nbsp;|&nbsp; IRB 승인 완료 (2026.05.18)</div>
+  </div>
+
+  <div class="grid2">
+    <div class="col">
+      <div class="sec">
+        <h2><span class="no">1</span>연구 배경<span class="ko">Background</span></h2>
+        <ul class="kx">
+          <li>아이데이션·브레인스토밍에 활용하는 AI는 <b>단일 LLM → 멀티 페르소나 → 멀티에이전트 팀</b>으로 진화하고 있다.</li>
+          <li>멀티에이전트의 협업 구조(Centralized·Hierarchical·Decentralized)는 <b>인간 협업 구조에서 차용</b>되었고, 인간 팀에서는 수평적 조건(≈Decentralized)에서 창의성이 올라간다고 보고된다. <span class="ref">(Xu 2022; Guo 2024)</span></li>
+          <li>그러나 AI 팀은 동조가 쉽고 의미 네트워크가 좁은 등 인간과 달라, <b>단독 사용 시 산출물 동질화·주체성 저하</b>가 보고된다 → 여러 연구가 <b>HITL과 사용자 주관 경험</b>의 중요성을 짚는다. <span class="ref">(Doshi &amp; Hauser 2024; Song 2025; Khan 2025)</span></li>
+          <li>그러나 협업 구조에 따른 <b>경험 차이·산출물과의 상관</b>은 검증된 바가 적고, <b>VR</b>에서도 아직 멀티에이전트 도입으로 이어지지 않았다.</li>
+        </ul>
+      </div>
+
+      <div class="sec">
+        <h2><span class="no">2</span>연구 목적과 질문<span class="ko">Objective &amp; RQ</span></h2>
+        <p class="body" style="margin-bottom:6px"><b class="em">목적</b> — 멀티에이전트의 협업 구조와 사용 환경이 디자이너가 <b class="em">느끼는 창의 지원(주관)</b>과 <b class="em">실제 산출물(객관)</b>에 어떤 차이를 만드는지, 또 그 둘이 일치하는지를 비교·검증한다.</p>
+        <div class="rqg">RQ1 · 협업 구조의 효과 (Study 1)</div>
+        <ul class="kx">
+          <li><b>RQ1-1</b> — 어떤 구조(Centralized/Decentralized)에서 창의 지원을 더 받았다고 느끼는가 (CSI·IMI)</li>
+          <li><b>RQ1-2</b> — 그 느낌이 실제 산출물(다양성·품질)과 일치하는가</li>
+        </ul>
+        <div class="rqg">RQ2 · 환경과 상호작용 (Study 1+2 통합)</div>
+        <ul class="kx">
+          <li><b>RQ2-1</b> — 사용 환경(Chat vs VR)이 창의 지원·산출물에 차이를 만드는가</li>
+          <li><b>RQ2-2</b> — 구조의 효과가 환경에 따라 달라지는가</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="sec">
+        <h2><span class="no">3</span>연구 설계<span class="ko">Design</span></h2>
+        <ul class="kx">
+          <li><b>독립변인</b>
+            <ul>
+              <li><b>협업 구조</b> (피험자 내) — Centralized / Decentralized</li>
+              <li><b>사용 환경</b> (피험자 간) — Chat(웹 인터페이스) / VR</li>
+            </ul>
+          </li>
+          <li><b>종속변인</b> — 창의 지원(CSI) · 내적 동기(IMI) · 산출물 다양성 · 산출물 품질</li>
+          <li>한 참가자는 한 환경에서 <b>두 구조를 차례로</b> 경험하며, 구조 제시 순서는 무작위 배정해 순서 효과를 통제한다.</li>
+        </ul>
+        <div class="dz">
+          <div class="row">
+            <div class="who"><div class="e">Study 1 · Chat</div><div class="n">참가자 30명</div></div>
+            <div class="arr">→</div>
+            <div class="conds">
+              <div class="cond">Centralized</div><div class="plus">+</div><div class="cond">Decentralized</div>
+            </div>
+            <div class="within">한 사람이<br>두 구조 모두<br>(순서 무작위)</div>
+          </div>
+          <div class="row">
+            <div class="who"><div class="e">Study 2 · VR</div><div class="n">신규 30명</div></div>
+            <div class="arr">→</div>
+            <div class="conds">
+              <div class="cond">Centralized</div><div class="plus">+</div><div class="cond">Decentralized</div>
+            </div>
+            <div class="within">한 사람이<br>두 구조 모두<br>(순서 무작위)</div>
+          </div>
+          <div class="note"><b>구조</b>는 같은 사람이 둘 다 경험(피험자 내) · <b>환경(Chat/VR)</b>은 서로 다른 참가자 집단(피험자 간) · 두 Study는 통합 분석</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ft"><span>멀티에이전트 협업 구조·환경에 따른 창의적 지원 비교 연구</span><span>1</span></div>
+</div>
+
+<!-- =================== PAGE 2 · 협업 구조 (full page) =================== -->
+<div class="page">
+  <div class="runhead"><span>멀티에이전트 협업 구조·환경에 따른 창의적 지원 비교 연구</span><span>협업 구조</span></div>
+
+  <div class="sec">
+    <h2><span class="no">4</span>협업 구조 · Centralized vs Decentralized<span class="ko">Collaboration Structure</span></h2>
+    <ul class="kx">
+      <li>세 에이전트(<b>PM · UX/UI · 개발(SW)</b>)는 동일한 LLM에 서로 다른 역할을 부여한 것</li>
+      <li>두 구조에서 <b>에이전트 구성과 프롬프트는 완전히 동일</b>하다</li>
+      <li>AutoGen(AG2)으로 구현하며 <b>발산 → 심화 → 수렴</b> 3페이즈로 진행</li>
+    </ul>
+
+    <div class="structrow">
+      <div class="structcard">
+        <div class="cap">Centralized<span>중앙집중 · 허브형</span></div>
+        <svg width="440" height="220" viewBox="0 0 440 300" xmlns="http://www.w3.org/2000/svg">
+          <rect x="300" y="44" width="118" height="212" rx="14" fill="#f3f6fb" stroke="#b9c6dc" stroke-width="1.5" stroke-dasharray="6 5"/>
+          <text x="359" y="36" text-anchor="middle" font-family="Malgun Gothic" font-size="13" font-weight="700" fill="#7c8aa3">서브에이전트</text>
+          <line x1="62" y1="150" x2="200" y2="150" stroke="#9fb1cf" stroke-width="2.5"/>
+          <line x1="200" y1="150" x2="359" y2="98" stroke="#9fb1cf" stroke-width="2.5"/>
+          <line x1="200" y1="150" x2="359" y2="202" stroke="#9fb1cf" stroke-width="2.5"/>
+          <circle cx="62" cy="150" r="32" fill="#d9831f"/>
+          <circle cx="200" cy="150" r="32" fill="#234a87"/>
+          <circle cx="359" cy="98" r="29" fill="#5b86c4"/>
+          <circle cx="359" cy="202" r="29" fill="#5b86c4"/>
+          <text x="62" y="150" dy="0.35em" text-anchor="middle" font-family="Malgun Gothic" font-size="12.5" font-weight="700" fill="#fff">디자이너</text>
+          <text x="200" y="150" dy="0.35em" text-anchor="middle" font-family="Malgun Gothic" font-size="15" font-weight="700" fill="#fff">PM</text>
+          <text x="359" y="98" dy="0.35em" text-anchor="middle" font-family="Malgun Gothic" font-size="12" font-weight="700" fill="#fff">UX/UI</text>
+          <text x="359" y="202" dy="0.35em" text-anchor="middle" font-family="Malgun Gothic" font-size="13.5" font-weight="700" fill="#fff">개발</text>
+        </svg>
+        <div class="desc">디자이너는 <b>PM을 창구로</b> 소통하고, PM이 서브에이전트(UX/UI·개발)를 종합한다. 서브에이전트 논의는 <b>요약 1문장</b>으로 제시되며, 확장하면 전체 발화를 볼 수 있다.</div>
+      </div>
+      <div class="structcard">
+        <div class="cap">Decentralized<span>분산 · 수평형</span></div>
+        <svg width="440" height="220" viewBox="0 0 440 300" xmlns="http://www.w3.org/2000/svg">
+          <line x1="62" y1="150" x2="220" y2="62" stroke="#9fb1cf" stroke-width="2.5"/>
+          <line x1="62" y1="150" x2="220" y2="238" stroke="#9fb1cf" stroke-width="2.5"/>
+          <line x1="62" y1="150" x2="378" y2="150" stroke="#9fb1cf" stroke-width="2.5"/>
+          <line x1="220" y1="62" x2="378" y2="150" stroke="#9fb1cf" stroke-width="2.5"/>
+          <line x1="220" y1="62" x2="220" y2="238" stroke="#9fb1cf" stroke-width="2.5"/>
+          <line x1="378" y1="150" x2="220" y2="238" stroke="#9fb1cf" stroke-width="2.5"/>
+          <circle cx="62" cy="150" r="32" fill="#d9831f"/>
+          <circle cx="220" cy="62" r="29" fill="#234a87"/>
+          <circle cx="378" cy="150" r="29" fill="#5b86c4"/>
+          <circle cx="220" cy="238" r="29" fill="#5b86c4"/>
+          <text x="62" y="150" dy="0.35em" text-anchor="middle" font-family="Malgun Gothic" font-size="12.5" font-weight="700" fill="#fff">디자이너</text>
+          <text x="220" y="62" dy="0.35em" text-anchor="middle" font-family="Malgun Gothic" font-size="15" font-weight="700" fill="#fff">PM</text>
+          <text x="378" y="150" dy="0.35em" text-anchor="middle" font-family="Malgun Gothic" font-size="12" font-weight="700" fill="#fff">UX/UI</text>
+          <text x="220" y="238" dy="0.35em" text-anchor="middle" font-family="Malgun Gothic" font-size="13.5" font-weight="700" fill="#fff">개발</text>
+        </svg>
+        <div class="desc">디자이너·PM·UX/UI·개발이 <b>위계 없이 직접</b> 주고받는다. 디자이너는 에이전트들의 <b>전체 발화를 그대로</b> 본다.</div>
+      </div>
+    </div>
+    <div class="legend">
+      <span><i class="dot" style="background:#d9831f"></i> 디자이너 (사람)</span>
+      <span><i class="dot" style="background:#234a87"></i> PM 에이전트</span>
+      <span><i class="dot" style="background:#5b86c4"></i> 서브에이전트 (UX/UI · 개발)</span>
+    </div>
+  </div>
+
+  <div class="ft"><span>멀티에이전트 협업 구조·환경에 따른 창의적 지원 비교 연구</span><span>2</span></div>
+</div>
+
+<!-- =================== PAGE 3 · 시스템·과제·절차·측정 =================== -->
+<div class="page tight">
+  <div class="runhead"><span>멀티에이전트 협업 구조·환경에 따른 창의적 지원 비교 연구</span><span>시스템 · 과제 · 절차 · 측정</span></div>
+
+  <div class="sec">
+    <h2><span class="no">5</span>시스템 구조<span class="ko">System</span></h2>
+    <div class="arch">
+      <div class="srvbox">
+        <div class="lbl">서버 · BACKEND</div>
+        <div class="ct">AG2 멀티에이전트 토론 엔진</div>
+        <div class="chips"><span>PM</span><span>UX/UI</span><span>개발</span><span class="ph">· 발산 → 심화 → 수렴 3페이즈</span></div>
+        <div class="cmeta">구조에 따라 라우팅 — <b>Centralized</b>(허브) / <b>Decentralized</b>(순환) &nbsp;→&nbsp; guardrails 발화 정리</div>
+      </div>
+      <div class="ar2"><span class="lab2">발화</span><span class="sym">→</span></div>
+      <div class="clibox">
+        <div class="lbl">클라이언트 · 출력</div>
+        <div class="comp"><b>Chat</b> <span class="st">· Study 1</span> — <span class="proto">WebSocket</span> → 웹 텍스트 UI · 실시간 표시</div>
+        <div class="comp"><b>VR</b> <span class="st">· Study 2</span> — TTS → Audio2Face → <span class="proto">OSC</span> → UE5 MetaHuman 아바타</div>
+      </div>
+    </div>
+    <div class="archnote">↺ 디자이너는 토론을 시작시키지 않으며, 정해진 시점에 <b>선택적으로 개입</b>(발화 주입)할 뿐이다.</div>
+  </div>
+
+  <div class="sec">
+    <h2><span class="no">6</span>실험 과제<span class="ko">Task</span></h2>
+    <ul class="kx">
+      <li>디자이너가 AI 팀과 토론하며 <b>‘자취 청년의 동네 생활 정착을 돕는 서비스’를 주제로 모바일 앱 아이디어를 도출하는 과제</b>를 수행한다.</li>
+      <li>마지막에 <b>핵심 컨셉 1 · 주요 기능 3 · 차별점 1</b>로 정리하며, 이를 산출물 평가에 사용한다. (소요 시간 — Chat 약 80분 / VR 약 100분)</li>
+    </ul>
+  </div>
+
+  <div class="sec">
+    <h2><span class="no">7</span>실험 절차<span class="ko">Procedure</span></h2>
+    <p class="body" style="font-size:13.5px; margin-bottom:2px">한 참가자가 단일 과제로 두 구조를 차례로 경험하며, <span class="em">구조 제시 순서는 무작위 배정</span>한다(순서 효과 통제).</p>
+    <div class="steps">
+      <div class="s"><span class="n">1</span><div class="t">안내<br>튜토리얼</div></div>
+      <div class="arrow">›</div>
+      <div class="s key"><span class="n">2</span><div class="t">과제<br>구조 1</div></div>
+      <div class="arrow">›</div>
+      <div class="s"><span class="n">3</span><div class="t">설문<br>CSI·IMI</div></div>
+      <div class="arrow">›</div>
+      <div class="s"><span class="n">4</span><div class="t">휴식</div></div>
+      <div class="arrow">›</div>
+      <div class="s key"><span class="n">5</span><div class="t">과제<br>구조 2</div></div>
+      <div class="arrow">›</div>
+      <div class="s"><span class="n">6</span><div class="t">설문<br>CSI·IMI</div></div>
+      <div class="arrow">›</div>
+      <div class="s intv"><span class="n">7</span><div class="t">사후<br>인터뷰</div></div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <h2><span class="no">8</span>측정 변수<span class="ko">Measures</span></h2>
+    <div class="grid2">
+      <div class="col">
+        <ul class="kx">
+          <li><b>CSI</b> (Creativity Support Index) — 도구의 창의 지원을 6요인으로 측정 <span class="ref">(Cherry &amp; Latulipe, 2014)</span>
+            <ul><li>탐색(Exploration) · 표현(Expressiveness) · 몰입(Immersion) · 즐거움(Enjoyment) · 노력 대비 결과(Results Worth Effort) · 협업(Collaboration)</li></ul>
+          </li>
+          <li><b>IMI</b> (Intrinsic Motivation Inventory) — 사용자의 내적 동기를 측정
+            <ul><li>흥미/즐거움(Interest/Enjoyment) · 유능감(Perceived Competence) · 노력(Effort/Importance) · 압박/긴장(Pressure/Tension)</li></ul>
+          </li>
+        </ul>
+      </div>
+      <div class="col">
+        <ul class="kx">
+          <li><b>산출물 다양성</b> — 산출물 임베딩 간 거리로 정량화</li>
+          <li><b>산출물 품질</b> — 외부 전문가 2명이 독립 평가, Dean 4차원 적용
+            <ul><li>새로움(Novelty) · 실현가능성(Workability) · 적합성(Relevance) · 구체성(Specificity)</li></ul>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="ft"><span>멀티에이전트 협업 구조·환경에 따른 창의적 지원 비교 연구</span><span>3</span></div>
+</div>
+
+<!-- =================== PAGE 4 · 일정·참가자 =================== -->
+<div class="page">
+  <div class="runhead"><span>멀티에이전트 협업 구조·환경에 따른 창의적 지원 비교 연구</span><span>연구 일정 · 참가자</span></div>
+
+  <div class="sec">
+    <h2><span class="no">9</span>연구 일정<span class="ko">Schedule</span></h2>
+    <div class="miles">실험 설계 완료 · <b>IRB 승인 완료 (2026.05.18)</b> · 현재 <b>자극물 제작</b> 단계 — 이후 일정은 다음과 같다.</div>
+    <div class="gh">
+      <div class="sp"></div>
+      <div class="m">6월</div><div class="m">7월</div><div class="m">8월</div><div class="m">9월</div><div class="m">10월</div><div class="m">11월</div>
+    </div>
+    <div class="grow"><div class="gl">Study 1 자극물 제작</div><div class="gtrack"><div class="gbar cur" style="left:0%; width:16.4%"><span class="tag">현재</span></div></div></div>
+    <div class="grow"><div class="gl">Study 2 자극물 제작</div><div class="gtrack"><div class="gbar" style="left:0%; width:33.0%"></div></div></div>
+    <div class="grow"><div class="gl">Study 1 실험 진행</div><div class="gtrack"><div class="gbar" style="left:16.6%; width:33.0%"></div></div></div>
+    <div class="grow"><div class="gl">Study 2 실험 진행</div><div class="gtrack"><div class="gbar" style="left:33.3%; width:33.0%"></div></div></div>
+    <div class="grow"><div class="gl">결과 분석</div><div class="gtrack"><div class="gbar" style="left:50.0%; width:33.0%"></div></div></div>
+    <div class="grow"><div class="gl">논문 작성</div><div class="gtrack"><div class="gbar" style="left:66.6%; width:33.0%"></div></div></div>
+  </div>
+
+  <div class="sec">
+    <h2><span class="no">10</span>참가자 및 보상<span class="ko">Participants</span></h2>
+    <ul class="kx">
+      <li><b>참가자 조건</b> — 디자인 전공자 또는 디자인·아이데이션 관련 경험이 있는 성인</li>
+      <li><b>참가자 수</b> — 각 Study 30명, 총 60명
+        <ul><li>통계적 신뢰도 확보를 위한 최소 표본 수로 조건당 30명을 설정</li></ul>
+      </li>
+      <li><b>보상</b> — 실험 참여 완료자에게 기프티콘 제공
+        <ul>
+          <li>Chat(Study 1) <b>1만 원</b> / VR(Study 2) <b>1.5만 원</b></li>
+          <li>VR은 HMD 착용·진행 시간(약 100분) 부담을 고려한 차등 <b>(IRB 심의 의견 반영)</b></li>
+        </ul>
+      </li>
+      <li><b>집행</b> — 7~8월 실험 일정에 맞춰 기프티콘 구매 예정 (60명 기준 약 75만 원 규모)</li>
+    </ul>
+  </div>
+
+  <div class="ft"><span>박성훈 · TED 융합디자인학과 (G2025040) · 지도 박재완 교수님</span><span>4</span></div>
+</div>
+
+</body>
+</html>

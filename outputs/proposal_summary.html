@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.11.0/dist/tabler-icons.min.css">
+<style>
+:root{
+--cbg:#ffffff;--csec:#f3f1ec;--ct1:#1c1a17;--ct2:#57534e;--ct3:#8b8882;
+--cbd:#e7e4df;--cbd2:#d7d3cc;
+--ccoral-bg:#faece7;--ccoral-t:#993c1d;--ccoral-bd:#e2a890;
+--cteal-bg:#e1f5ee;--cteal-t:#0f6e56;--cteal-bd:#8fccb6;
+}
+*{box-sizing:border-box;}
+body{margin:0;font-family:"Pretendard Variable",Pretendard,-apple-system,sans-serif;color:var(--ct1);}
+.slide{width:1280px;height:720px;background:var(--csec);padding:32px;display:flex;page-break-after:always;}
+.slide:last-child{page-break-after:auto;}
+.card{width:100%;height:100%;background:var(--cbg);border:0.5px solid var(--cbd);border-radius:12px;padding:24px 36px;display:flex;flex-direction:column;}
+.klabel{font-size:14px;color:var(--ct3);margin-bottom:7px;letter-spacing:0.02em;}
+h2{font-size:27px;font-weight:600;margin:0 0 13px;letter-spacing:-0.01em;}
+.sec{font-size:14px;font-weight:600;margin:0 0 9px;color:var(--ct1);}
+.c2{border:0.5px solid var(--cbd);border-radius:8px;}
+.c-gray circle,.c-gray rect,circle.c-gray,rect.c-gray{fill:#dedcd4;stroke:#5f5e5a;stroke-width:1.5;}
+.c-teal circle,.c-teal rect,circle.c-teal,rect.c-teal{fill:#9fe1cb;stroke:#0f6e56;stroke-width:1.5;}
+.c-coral circle,.c-coral rect,circle.c-coral,rect.c-coral{fill:#f5c4b3;stroke:#993c1d;stroke-width:1.5;}
+.c-coral text{fill:#4a1b0c;}.c-teal text{fill:#04342c;}
+svg text.t{font-family:"Pretendard Variable",Pretendard,sans-serif;}
+.pill{display:inline-block;padding:3px 9px;border-radius:11px;background:#eceae4;color:var(--ct2);font-size:11px;white-space:nowrap;}
+.pill.pm{background:#cdeee2;color:#0f6e56;font-weight:600;}
+.ar{color:var(--ct3);font-size:13px;flex-shrink:0;}
+@page{size:1280px 720px;margin:0;}
+</style>
+</head>
+<body>
+
+<div class="slide"><div class="card">
+  <div class="klabel">연구 요약 · 1 / 2</div>
+  <h2>연구 배경과 질문</h2>
+
+  <div style="display:grid;grid-template-columns:1.3fr 1fr;gap:32px;">
+    <div style="font-size:15px;color:var(--ct2);line-height:1.78;">
+      <b style="color:var(--ct1);">AI 아이데이션</b> 도구는 단일 LLM에서 여러 에이전트가 토론하는 <b style="color:var(--ct1);">멀티에이전트</b>로 발전해 창의를 끌어올렸고 <span style="color:var(--ct3);">(Lu 2024; Su 2025)</span>, 최근엔 VR 환경으로도 확장되고 있다. 그러나 기존 연구는 산출물을 <b style="color:var(--ct1);">자동 평가</b>하는 데 그쳐, 어떤 <b style="color:var(--ct1);">협업 구조</b>가 디자이너의 창의 경험에 무슨 효과를 내는지 <b style="color:var(--ct1);">검증된 주관 척도</b>로 본 연구는 드물다. 멀티에이전트가 쓰는 <b style="color:var(--ct1);">중앙집중·분산</b> 구조는 본래 인간 팀 연구에서 차용한 것인데 <span style="color:var(--ct3);">(Xu 2022; Guo 2024)</span>, AI는 사람과 달리 결과가 수렴·동조·동질화해 <span style="color:var(--ct3);">(Doshi&Hauser 2024; Choi 2025)</span> 그 효과가 같으리란 보장이 없다.
+    </div>
+    <div>
+      <div class="sec" style="text-align:center;">두 협업 구조</div>
+      <div style="display:flex;gap:11px;">
+        <div class="c2" style="flex:1;padding:11px 5px;"><div style="font-size:12.5px;font-weight:600;color:var(--ccoral-t);text-align:center;">Centralized</div><svg viewBox="0 0 240 150" width="100%"><line x1="120" y1="36" x2="120" y2="58" stroke="#1d9e75" stroke-width="1.5"/><line x1="105" y1="82" x2="72" y2="112" stroke="#1d9e75" stroke-width="1.5"/><line x1="135" y1="82" x2="168" y2="112" stroke="#1d9e75" stroke-width="1.5"/><g class="c-coral"><rect x="80" y="8" width="80" height="28" rx="14"/><text class="t" x="120" y="26" text-anchor="middle" font-size="12">디자이너</text></g><g class="c-teal"><rect x="85" y="58" width="70" height="26" rx="13"/><text class="t" x="120" y="75" text-anchor="middle" font-size="12">PM</text></g><g class="c-teal"><rect x="30" y="112" width="76" height="26" rx="13"/><text class="t" x="68" y="129" text-anchor="middle" font-size="11">UX/UI</text></g><g class="c-teal"><rect x="134" y="112" width="76" height="26" rx="13"/><text class="t" x="172" y="129" text-anchor="middle" font-size="11">SW</text></g></svg><div style="font-size:11.5px;color:var(--ct3);text-align:center;">디자이너→PM, PM이 종합</div></div>
+        <div class="c2" style="flex:1;padding:11px 5px;"><div style="font-size:12.5px;font-weight:600;color:var(--cteal-t);text-align:center;">Decentralized</div><svg viewBox="0 0 240 150" width="100%"><line x1="58" y1="22" x2="182" y2="22" stroke="#1d9e75" stroke-width="1.2"/><line x1="58" y1="124" x2="182" y2="124" stroke="#1d9e75" stroke-width="1.2"/><line x1="48" y1="34" x2="48" y2="112" stroke="#1d9e75" stroke-width="1.2"/><line x1="192" y1="34" x2="192" y2="112" stroke="#1d9e75" stroke-width="1.2"/><line x1="58" y1="34" x2="182" y2="112" stroke="#1d9e75" stroke-width="1.2"/><line x1="182" y1="34" x2="58" y2="112" stroke="#1d9e75" stroke-width="1.2"/><g class="c-coral"><rect x="10" y="8" width="76" height="26" rx="13"/><text class="t" x="48" y="25" text-anchor="middle" font-size="11">디자이너</text></g><g class="c-teal"><rect x="154" y="8" width="76" height="26" rx="13"/><text class="t" x="192" y="25" text-anchor="middle" font-size="12">PM</text></g><g class="c-teal"><rect x="10" y="112" width="76" height="26" rx="13"/><text class="t" x="48" y="129" text-anchor="middle" font-size="11">UX/UI</text></g><g class="c-teal"><rect x="154" y="112" width="76" height="26" rx="13"/><text class="t" x="192" y="129" text-anchor="middle" font-size="11">SW</text></g></svg><div style="font-size:11.5px;color:var(--ct3);text-align:center;">넷이 위계 없이 직접</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div style="font-size:15px;color:var(--ct2);line-height:1.65;margin-top:16px;"><b style="color:var(--ct1);">연구 목적</b> &nbsp;두 협업 구조가 디자이너의 창의 지원에 미치는 영향을 채팅·VR에서 비교한다. 디자이너가 <b style="color:var(--ct1);">느낀 창의 지원(주관)</b>과 <b style="color:var(--ct1);">실제 산출물(객관)</b>을 함께 재서, 둘이 서로 어떻게 맞물리는지까지 들여다본다.</div>
+
+  <div class="sec" style="margin-top:18px;">연구 질문 × 설계</div>
+  <div style="display:flex;align-items:stretch;gap:14px;flex:1;">
+    <div class="c2" style="flex:1;padding:16px 20px;border-left:4px solid var(--ccoral-bd);display:flex;flex-direction:column;">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;"><span style="font-size:15px;font-weight:600;">Study 1 · Chat</span><span style="font-size:13px;color:var(--ct3);">디자이너 n=30</span></div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;"><span style="flex:1;text-align:center;background:var(--ccoral-bg);color:var(--ccoral-t);font-size:13px;padding:7px 0;border-radius:6px;">Centralized</span><span style="font-size:15px;color:var(--ct3);flex-shrink:0;">↔</span><span style="flex:1;text-align:center;background:var(--cteal-bg);color:var(--cteal-t);font-size:13px;padding:7px 0;border-radius:6px;">Decentralized</span></div>
+      <div style="font-size:12px;color:var(--ct2);text-align:center;margin-bottom:11px;">한 참가자가 두 구조를 <b>모두</b> 경험 · <b style="color:#185fa5;">within (피험자 내)</b></div>
+      <div style="font-size:13.5px;line-height:1.6;"><b>RQ1-1</b> 어떤 구조(Centralized/Decentralized)에서 창의 지원을 더 받았다고 느끼는가 (CSI)<br><b>RQ1-2</b> 느낌과 실제 산출물이 일치하는가</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:96px;text-align:center;">
+      <span style="font-size:24px;color:#185fa5;line-height:1;">↔</span>
+      <div style="font-size:12px;color:var(--ct2);margin-top:6px;line-height:1.4;">두 Study는<br>서로 다른<br>참가자 집단<br><b style="color:#185fa5;">between<br>(피험자 간)</b></div>
+    </div>
+    <div class="c2" style="flex:1;padding:16px 20px;border-left:4px solid var(--cteal-bd);display:flex;flex-direction:column;">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;"><span style="font-size:15px;font-weight:600;">Study 2 · VR <span style="font-size:12.5px;color:var(--ct3);font-weight:400;">→ Study 1과 통합</span></span><span style="font-size:13px;color:var(--ct3);">신규 n=30</span></div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;"><span style="flex:1;text-align:center;background:var(--ccoral-bg);color:var(--ccoral-t);font-size:13px;padding:7px 0;border-radius:6px;">Centralized</span><span style="font-size:15px;color:var(--ct3);flex-shrink:0;">↔</span><span style="flex:1;text-align:center;background:var(--cteal-bg);color:var(--cteal-t);font-size:13px;padding:7px 0;border-radius:6px;">Decentralized</span></div>
+      <div style="font-size:12px;color:var(--ct2);text-align:center;margin-bottom:11px;">한 참가자가 두 구조를 <b>모두</b> 경험 · <b style="color:#185fa5;">within (피험자 내)</b></div>
+      <div style="font-size:13.5px;line-height:1.6;"><b>RQ2-1</b> 환경(Chat vs VR)이 차이를 만드는가<br><b>RQ2-2</b> 구조의 효과가 환경(Chat/VR)에 따라 달라지는가</div>
+    </div>
+  </div>
+</div></div>
+
+<div class="slide"><div class="card">
+  <div class="klabel">연구 요약 · 2 / 2</div>
+  <h2>실험 설계</h2>
+
+  <div class="sec">시스템 파이프라인 <span style="font-weight:400;color:var(--ct3);font-size:12px;">· 디자이너 입력 → AG2 토론(구조에 따라 다르게) → 환경별 출력</span></div>
+  <div style="display:flex;align-items:stretch;gap:8px;margin-bottom:15px;">
+    <div class="c2" style="padding:10px 11px;text-align:center;font-size:12px;line-height:1.35;display:flex;flex-direction:column;justify-content:center;"><b>디자이너</b><span style="color:var(--ct3);font-size:10.5px;margin-top:2px;">웹·VR 입력<br>토론 중 개입</span></div>
+    <div style="display:flex;align-items:center;"><span class="ar" style="font-size:16px;">→</span></div>
+    <div class="c2" style="padding:10px 11px;text-align:center;font-size:12px;line-height:1.35;display:flex;flex-direction:column;justify-content:center;"><b>web.py</b><span style="color:var(--ct3);font-size:10.5px;margin-top:2px;">WebSocket<br>중계·로깅</span></div>
+    <div style="display:flex;align-items:center;"><span class="ar" style="font-size:16px;">→</span></div>
+    <div style="flex:1;border:1.5px solid var(--ct2);border-radius:10px;background:var(--csec);padding:9px 13px 10px;">
+      <div style="text-align:center;font-size:12.5px;margin-bottom:7px;"><b>AG2 멀티에이전트 토론</b> <span style="color:var(--ct3);font-size:10.5px;">· PM·UX/UI·SW (단일 LLM) · 발산→심화→수렴 3페이즈 · 구조만 다르게</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;">
+        <div style="background:var(--cbg);border:0.5px solid var(--cbd);border-left:3px solid var(--ccoral-bd);border-radius:7px;padding:8px 11px;">
+          <div style="font-size:11.5px;font-weight:600;color:var(--ccoral-t);margin-bottom:7px;">Centralized · 중앙집중 (star)</div>
+          <div style="display:flex;align-items:center;gap:5px;margin-bottom:7px;">
+            <span class="pill pm">PM 라우팅</span><span class="ar">→</span>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><span style="font-size:8.5px;color:var(--ct3);">병렬</span><div style="display:flex;gap:3px;"><span class="pill">UX/UI</span><span class="pill">SW</span></div></div>
+            <span class="ar">→</span><span class="pill pm">PM 종합</span>
+          </div>
+          <div style="font-size:10.5px;color:var(--ct2);line-height:1.65;">
+            <div>· UX/UI·SW는 서로 직접 말 안 함 — <b>PM 거쳐서만</b></div>
+            <div>· 페이즈당 <b>4라운드</b> · 디자이너 <b>2라운드마다</b></div>
+          </div>
+        </div>
+        <div style="background:var(--cbg);border:0.5px solid var(--cbd);border-left:3px solid var(--cteal-bd);border-radius:7px;padding:8px 11px;">
+          <div style="font-size:11.5px;font-weight:600;color:var(--cteal-t);margin-bottom:7px;">Decentralized · 분산 (round-robin)</div>
+          <div style="display:flex;align-items:center;gap:5px;margin-bottom:7px;">
+            <span class="pill">PM</span><span class="ar">→</span><span class="pill">UX/UI</span><span class="ar">→</span><span class="pill">SW</span><span class="ar">→</span><span style="font-size:13px;color:var(--cteal-t);font-weight:600;">↻</span>
+          </div>
+          <div style="font-size:10.5px;color:var(--ct2);line-height:1.65;">
+            <div>· 누구든 서로 <b>직접 호명·반박</b> (PM도 한 명)</div>
+            <div>· 디자이너 <b>6발화마다</b> 개입</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;"><span class="ar" style="font-size:16px;">→</span></div>
+    <div class="c2" style="padding:10px 11px;text-align:center;font-size:12px;line-height:1.35;display:flex;flex-direction:column;justify-content:center;"><b>guardrails</b><span style="color:var(--ct3);font-size:10.5px;margin-top:2px;">발화 정리</span></div>
+    <div style="display:flex;align-items:center;"><span class="ar" style="font-size:16px;">→</span></div>
+    <div style="display:flex;flex-direction:column;gap:7px;width:208px;">
+      <div class="c2" style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:8px 12px;border-left:3px solid var(--ccoral-bd);font-size:11.5px;line-height:1.4;"><b style="color:var(--ccoral-t);">Chat</b> · Study 1<br><span style="color:var(--ct2);">웹 텍스트 UI · 발화 실시간 표시</span></div>
+      <div class="c2" style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:8px 12px;border-left:3px solid var(--cteal-bd);font-size:11px;line-height:1.45;"><b style="color:var(--cteal-t);">VR</b> · Study 2<br><span style="color:var(--ct2);">발화 → <b>TTS</b> 음성합성 → <b>Audio2Face</b> 립싱크·감정표정 → <b>UE5 MetaHuman</b> 아바타가 가상 회의실에서 발화</span></div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:28px;margin-bottom:10px;">
+    <div>
+      <div class="sec">측정 <span style="font-weight:400;color:var(--ct3);font-size:12px;">· 느낀 것과 나온 것이 일치하는가</span></div>
+      <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center;">
+        <div class="c2" style="padding:13px 16px;border-top:3px solid #d85a30;"><div style="font-size:12px;color:var(--ct3);">주관 · 디자이너가 느낀 것</div><div style="font-size:15px;font-weight:600;margin-top:3px;">CSI</div><div style="font-size:11px;color:var(--ct3);">Creativity Support Index · Cherry &amp; Latulipe, 2014</div><div style="font-size:11.5px;color:var(--ct2);margin-top:5px;line-height:1.5;">Exploration · Expressiveness · Immersion · Enjoyment · Results Worth Effort · Collaboration</div></div>
+        <div style="display:flex;flex-direction:column;align-items:center;color:var(--ct1);"><span style="font-size:30px;color:#185fa5;line-height:1;">↔</span><span style="font-size:13px;font-weight:600;margin-top:4px;">일치? 괴리?</span></div>
+        <div class="c2" style="padding:13px 16px;border-top:3px solid #1d9e75;"><div style="font-size:12px;color:var(--ct3);">객관 · 실제로 나온 산출물</div><div style="font-size:14.5px;font-weight:600;margin-top:3px;">산출물 평가</div><div style="font-size:12.5px;color:var(--ct2);margin-top:5px;line-height:1.6;"><b>다양성</b> 임베딩 간 거리<br><b>품질</b> 외부 전문가 2명<br><span style="font-size:11px;color:var(--ct3);">새로움·실현가능성·적합성·구체성</span></div></div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;">
+      <div class="sec">세션 절차 <span style="font-weight:400;color:var(--ct3);font-size:12px;">· Chat 78분 / VR 100분</span></div>
+      <div style="font-size:11.5px;color:var(--ct3);margin-bottom:7px;line-height:1.4;">한 참가자가 두 구조를 차례로 · 과제 A·B 4그룹 무작위</div>
+      <div style="display:flex;flex-direction:column;gap:0;">
+        <div style="display:flex;align-items:center;gap:10px;"><div style="width:24px;height:24px;border-radius:50%;border:1px solid var(--cbd2);display:flex;align-items:center;justify-content:center;font-size:11.5px;flex-shrink:0;">1</div><span style="font-size:12.5px;">안내 · 튜토리얼</span></div>
+        <div style="margin-left:12px;height:4px;border-left:1px solid var(--cbd2);"></div>
+        <div style="display:flex;align-items:center;gap:10px;"><div style="width:24px;height:24px;border-radius:50%;background:var(--ccoral-bg);color:var(--ccoral-t);display:flex;align-items:center;justify-content:center;font-size:11.5px;flex-shrink:0;">2</div><span style="font-size:12.5px;">과제 A · <b style="color:var(--ccoral-t);">구조 1</b></span></div>
+        <div style="margin-left:12px;height:4px;border-left:1px solid var(--cbd2);"></div>
+        <div style="display:flex;align-items:center;gap:10px;"><div style="width:24px;height:24px;border-radius:50%;border:1px solid var(--cbd2);display:flex;align-items:center;justify-content:center;font-size:11.5px;flex-shrink:0;">3</div><span style="font-size:12.5px;">정리 · CSI 설문</span></div>
+        <div style="margin-left:12px;height:4px;border-left:1px solid var(--cbd2);"></div>
+        <div style="display:flex;align-items:center;gap:10px;"><div style="width:24px;height:24px;border-radius:50%;border:1px solid var(--cbd2);display:flex;align-items:center;justify-content:center;font-size:11.5px;flex-shrink:0;">4</div><span style="font-size:12.5px;">휴식</span></div>
+        <div style="margin-left:12px;height:4px;border-left:1px solid var(--cbd2);"></div>
+        <div style="display:flex;align-items:center;gap:10px;"><div style="width:24px;height:24px;border-radius:50%;background:var(--cteal-bg);color:var(--cteal-t);display:flex;align-items:center;justify-content:center;font-size:11.5px;flex-shrink:0;">5</div><span style="font-size:12.5px;">과제 B · <b style="color:var(--cteal-t);">구조 2</b></span></div>
+        <div style="margin-left:12px;height:4px;border-left:1px solid var(--cbd2);"></div>
+        <div style="display:flex;align-items:center;gap:10px;"><div style="width:24px;height:24px;border-radius:50%;border:1px solid var(--cbd2);display:flex;align-items:center;justify-content:center;font-size:11.5px;flex-shrink:0;">6</div><span style="font-size:12.5px;">정리 · CSI · 인터뷰</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">분석 <span style="font-weight:400;color:var(--ct3);font-size:12px;">· 구조 효과를 단계적으로, 두 Study를 통합</span></div>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;flex:1;">
+    <div class="c2" style="padding:11px 14px;"><div style="font-size:12px;color:var(--ct3);margin-bottom:3px;">① Study별 비교</div><div style="font-size:12.5px;color:var(--ct2);line-height:1.5;">두 구조 간 CSI·다양성·품질을 paired t·Wilcoxon + Cohen's d로</div></div>
+    <div class="c2" style="padding:11px 14px;"><div style="font-size:12px;color:var(--ct3);margin-bottom:3px;">② 주관 ↔ 객관</div><div style="font-size:12.5px;color:var(--ct2);line-height:1.5;">느낀 지원(CSI)과 실제 산출물의 상관 분석</div></div>
+    <div class="c2" style="padding:11px 14px;"><div style="font-size:12px;color:var(--ct3);margin-bottom:3px;">③ 품질 채점 신뢰도</div><div style="font-size:12.5px;color:var(--ct2);line-height:1.5;">외부 평가자 2명 · 하위 차원별 <b>Cronbach's α ≥ .70</b> 확보 후 점수 사용</div></div>
+    <div class="c2" style="padding:11px 14px;background:var(--csec);"><div style="font-size:12px;color:var(--ct3);margin-bottom:3px;">④ 통합 (Study 1+2)</div><div style="font-size:12.5px;color:var(--ct2);line-height:1.5;"><b>Mixed ANOVA</b> 환경×구조 주효과·상호작용 + 인터뷰 주제 분석</div></div>
+  </div>
+</div></div>
+
+</body>
+</html>

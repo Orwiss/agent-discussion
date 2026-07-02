@@ -1,0 +1,23 @@
+﻿구분	척도	출처	측정 대상	문항수	신뢰도 α	state/trait	구조차이 가능성	CSI 겹침	오염(품질상관 선행)	원문 통독	판정 · 사유
+현행	Creativity Support Index (CSI)	Cherry & Latulipe 2014, TOCHI	도구의 창의 지원(과정 경험), 6요인	12 (+15 쌍대)	요인 0.28–0.97 불안정; 전체 test-retest .636	state	기준	기준	일부 (Carroll 2012 triangulation)	통독	현행 유지(주관 primary). 2문항이라 신뢰도 취약, Collaboration 최약(r=.238)
+CSI 대체후보	RiCE (Reflection in Creative Experience)	Ford et al. 2023, CHI	창의경험 중 '성찰'	미공개 (EFA n=300)	미보고	state	-	다른 구인	-	스니펫	탈락: 구인 다름, 자기 논문서 'validity not confirmed'
+CSI 대체후보	Creative Process Engagement (CPE)	Zhang & Bartol 2010, AMJ	사람의 창의과정 몰입	11	.94	-	-	-	높음(창의수행 예측)	스니펫	탈락(대체불가): 도구 아닌 '사람' 측정, 조직맥락
+CSI 대체후보	Creativity Factor Evaluation	Carroll et al. 2009, C&C	창의지원(CSI 전신)	-	-	-	-	-	-	스니펫	탈락: CSI로 흡수된 전신
+보조후보	NASA-TLX	Hart & Staveland 1988	작업 부하	6 (+가중)	robust	state	-	-	-	-	탈락: 맥락 불일치(사용자 판단)
+보조후보	Creative Self-Efficacy	Tierney & Farmer 2002, AMJ	창의 자신감(성향)	3	.80–.90+	trait	약함	-	높음	스니펫	탈락: trait라 조건간 안 변함
+보조후보	심리적 소유감(Psychological Ownership)	Van Dyne & Pierce 2004	결과 소유감	7	.87–.91	state 가능	약함	없음	인간-AI 초기	스니펫	탈락: 두 조건 다 위임 수준 → 소유감 차이 안 남
+보조후보	Sense of Agency	Tapal et al. 2017	통제감/주도성	~11–13	.79/.84	기질형	약함	없음	낮음	스니펫	탈락: 주도성 자체가 두 조건서 비슷
+보조후보	Flow Short Scale	Rheinberg et al. 2003	몰입(flow)	~10	.83–.86	state	약함	CSI 몰입/즐거움 겹침	일부(혼재)	스니펫	보류: 신뢰도 좋으나 CSI와 겹침·구조차이 약함
+보조후보	인지적 자극(cognitive stimulation)	Paulus/Nijstad 계열	자극받은 경험	표준 없음	-	state	강함	약간	낮음	스니펫	보류: 검증된 표준 자기보고 척도 없음
+보조후보	지각된 인지 다양성	ATCDS 2021 / Unzueta & Binning 2012	팀 관점 다양성	3~15	.87/.88	state 가능	강함	Exploration 인접	있음(r=.306)	스니펫	보류: 객관 다양성과 인접, 팀과정 측면
+보조후보	신뢰(Trust in automation)	Jian 2000 / Körber 2019	AI 신뢰·의존	12+	robust	state 가능	약함	없음	결론 불명	스니펫	보류: 구조 민감성 약함
+보조후보	Inspiration Scale	Thrash & Elliot 2003, JPSP	영감받는 경험	8 (빈도4+강도4)	.89–.95	trait('평소')	-	없음	사람 수준/특허(나 아님)	통독	탈락: trait라 조건간 안 변함
+보조후보	사회적 실재감(Networked Minds)	Harms & Biocca 2004	함께 있음 느낌	36 (6요인)	.81–.87	state	-	없음	낮음	통독	탈락: 사람-사람 검증, 비슷한 두 조건 구분 실패(저자 데이터)
+보조후보	정보 과부하(Information Overload)	도메인별(암/식이정보 등)	정보 버거움	~8	.77–.92	trait형	강함	없음	낮음	스니펫	탈락 기울: 부하 계열(TLX 제외)+도메인용·만성지각
+보조후보	과업갈등(Jehn task conflict)	Jehn 1995, ASQ	팀 의견 충돌	4~6	robust	state 가능	강함	없음	높음	스니펫	탈락: 협력 discussion인데 'conflict' 라벨 부적합·floor effect
+보조후보	Constructive controversy	Tjosvold 계열	건설적 논쟁(팀과정)	-	.82	state 가능	중	없음	-	스니펫	탈락(표류): 유저 경험 아닌 '팀 과정' 측정
+보조후보	Information elaboration (CEM)	van Knippenberg et al. 2004	정보 정교화(팀과정)	표준 없음	-	-	중	없음	-	스니펫	탈락(표류): 유저 경험 아님 + 표준 척도 없음
+보조후보	상황적 흥미/state engagement	Situational Interest 계열	흥미·몰입 경험	다문항	.78–.95	state	약함	CSI 몰입/즐거움 겹침	-	스니펫	보류: 구조 차이 약함, CSI 겹침
+보조후보	자기평가 창의성(calibration)	표준 척도 없음(자작)	내 산출물 창의성 자기평가	자작	-	state	-	산출물 인접	높음(자기-객관 괴리 기연구)	스니펫	보류: 표준 척도 없음, 오염 높음
+★ 현 추천	IMI 지각된 유능감(Perceived Competence)	Ryan 1982 / McAuley, Duncan & Tammen 1989	'잘했다'는 느낌(수행 유능감)	4 (~5)	.80 → .87	state(사후)	그럴듯(불확실)	없음(보완)	낮음	통독	현 추천: state·신뢰도·각색 정당(설계상 허용)·느낌↔품질 calibration·CSI와 보완. 단 구조차이는 불확실
+(참고)	IMI 기타 하위척도	동상	흥미-즐거움 / 노력 / 긴장-압박	각 4	.78 / .84 / .68	state	-	흥미·즐거움은 CSI 겹침	-	통독	참고: 긴장-압박 α=.68 약함; 흥미·즐거움은 CSI와 겹침

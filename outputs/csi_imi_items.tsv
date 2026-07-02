@@ -1,0 +1,37 @@
+﻿도구	요인 (지표)	번호	원문 (English)	한글 번역	비고
+CSI (평가문항)	Exploration 탐색	E1	It was easy for me to explore many different ideas, options, designs, or outcomes, using this system or tool.	이 시스템/도구를 사용해 다양한 아이디어·선택지·디자인·결과를 탐색하기 쉬웠다.	
+CSI (평가문항)	Exploration 탐색	E2	The system or tool was helpful in allowing me to track different ideas, outcomes, or possibilities.	이 시스템/도구는 여러 아이디어·결과·가능성을 추적하는 데 도움이 되었다.	
+CSI (평가문항)	Expressiveness 표현	X1	I was able to be very creative while doing the activity inside this system or tool.	이 시스템/도구 안에서 활동하는 동안 매우 창의적일 수 있었다.	
+CSI (평가문항)	Expressiveness 표현	X2	The system or tool allowed me to be very expressive.	이 시스템/도구는 내가 매우 풍부하게 표현할 수 있게 해주었다.	
+CSI (평가문항)	Immersion 몰입	I1	My attention was fully tuned to the activity, and I forgot about the system or tool that I was using.	내 주의가 활동에 완전히 집중되어, 사용 중인 시스템/도구를 잊었다.	
+CSI (평가문항)	Immersion 몰입	I2	I became so absorbed in the activity that I forgot about the system or tool that I was using.	활동에 너무 몰입해서 사용 중인 시스템/도구를 잊었다.	
+CSI (평가문항)	Enjoyment 즐거움	N1	I would be happy to use this system or tool on a regular basis.	이 시스템/도구를 평소에도 기꺼이 사용하고 싶다.	
+CSI (평가문항)	Enjoyment 즐거움	N2	I enjoyed using the system or tool.	이 시스템/도구를 사용하는 것이 즐거웠다.	
+CSI (평가문항)	Results Worth Effort 노력대비결과	R1	I was satisfied with what I got out of the system or tool.	이 시스템/도구로 얻은 결과에 만족했다.	
+CSI (평가문항)	Results Worth Effort 노력대비결과	R2	What I was able to produce was worth the effort I had to exert to produce it.	내가 만들어낸 것은 그것을 만들기 위해 들인 노력만큼의 가치가 있었다.	
+CSI (평가문항)	Collaboration 협업	C1	The system or tool allowed other people to work with me easily.	이 시스템/도구는 다른 사람들이 나와 함께 작업하기 쉽게 해주었다.	
+CSI (평가문항)	Collaboration 협업	C2	It was really easy to share ideas and designs with other people inside this system or tool.	이 시스템/도구 안에서 다른 사람들과 아이디어·디자인을 공유하기 정말 쉬웠다.	
+CSI (쌍대비교)	Expressiveness 표현	P1	Be creative and expressive	창의적이고 표현력 있게 하는 것	'이 과제를 할 때 가장 중요한 것은 …할 수 있는 것이다' 15쌍 중 선택
+CSI (쌍대비교)	Immersion 몰입	P2	Become immersed in the activity	활동에 몰입하는 것	동일
+CSI (쌍대비교)	Enjoyment 즐거움	P3	Enjoy using the system or tool	시스템/도구 사용을 즐기는 것	동일
+CSI (쌍대비교)	Exploration 탐색	P4	Explore many different ideas, outcomes, or possibilities	다양한 아이디어·결과·가능성을 탐색하는 것	동일
+CSI (쌍대비교)	Results Worth Effort 노력대비결과	P5	Produce results that are worth the effort I put in	들인 노력만큼 가치 있는 결과를 내는 것	동일
+CSI (쌍대비교)	Collaboration 협업	P6	Work with other people	다른 사람들과 함께 작업하는 것	동일
+IMI	Interest-Enjoyment 흥미-즐거움 (α .78→.80)	1	I enjoyed this activity very much.	나는 이 활동이 매우 즐거웠다.	
+IMI	Interest-Enjoyment 흥미-즐거움 (α .78→.80)	7	This activity was fun.	이 활동은 재미있었다.	
+IMI	Interest-Enjoyment 흥미-즐거움 (α .78→.80)	8	I would describe this activity as very interesting.	이 활동은 매우 흥미로웠다고 말하겠다.	
+IMI	Interest-Enjoyment 흥미-즐거움 (α .78→.80)	13	While doing this activity, I was thinking about how much I enjoyed it.	이 활동을 하는 동안 내가 얼마나 즐기고 있는지 생각했다.	16문항판에서 탈락
+IMI	Interest-Enjoyment 흥미-즐거움 (α .78→.80)	17	This activity did not hold my attention.	이 활동은 내 주의를 끌지 못했다.	역문항(R)
+IMI	Perceived Competence 지각된 유능감 (α .80→.87)  ★보조 채택	2	I think I am pretty good at this activity.	나는 이 활동을 꽤 잘한다고 생각한다.	
+IMI	Perceived Competence 지각된 유능감 (α .80→.87)  ★보조 채택	14	After doing this activity for a while, I felt pretty competent.	이 활동을 한동안 하고 나니 꽤 유능하다고 느꼈다.	
+IMI	Perceived Competence 지각된 유능감 (α .80→.87)  ★보조 채택	16	I am pretty skilled at this activity.	나는 이 활동에 꽤 능숙하다.	
+IMI	Perceived Competence 지각된 유능감 (α .80→.87)  ★보조 채택	18	I couldn't do this activity very well.	나는 이 활동을 잘 하지 못했다.	역문항(R)
+IMI	Perceived Competence 지각된 유능감 (α .80→.87)  ★보조 채택	9	I am satisfied with my performance at this activity.	나는 이 활동에서의 내 수행에 만족한다.	16문항판에서 탈락(요인 적재 낮음 .10)
+IMI	Effort-Importance 노력-중요성 (α .84)	3	I put a lot of effort into this.	나는 이 활동에 많은 노력을 기울였다.	
+IMI	Effort-Importance 노력-중요성 (α .84)	4	It was important to me to do well at this.	이 활동을 잘하는 것이 나에게 중요했다.	
+IMI	Effort-Importance 노력-중요성 (α .84)	6	I tried very hard at this activity.	나는 이 활동에 매우 열심히 임했다.	
+IMI	Effort-Importance 노력-중요성 (α .84)	12	I didn't try very hard at this activity.	나는 이 활동에 별로 열심히 하지 않았다.	역문항(R)
+IMI	Tension-Pressure 긴장-압박 (α .68)	5	I felt tense while doing this activity.	이 활동을 하는 동안 긴장됐다.	
+IMI	Tension-Pressure 긴장-압박 (α .68)	10	I felt pressured while doing this activity.	이 활동을 하는 동안 압박감을 느꼈다.	
+IMI	Tension-Pressure 긴장-압박 (α .68)	11	I was anxious while doing this activity.	이 활동을 하는 동안 불안했다.	
+IMI	Tension-Pressure 긴장-압박 (α .68)	15	I was very relaxed while doing this activity.	이 활동을 하는 동안 매우 편안했다.	역문항(R)

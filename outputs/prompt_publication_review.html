@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>프롬프트, 논문에 실릴 수준인가 — 멀티에이전트 논문 관행 대조 리포트</title>
+<style>
+  :root{--ink:#1a1c1f;--muted:#5c6773;--line:#e3e7ec;--bg:#fbfcfd;
+    --good:#1c6b45;--goodbg:#e5f4ec;--warn:#8a5a00;--warnbg:#fdf4de;--bad:#a12b2b;--badbg:#fbeaea;--blue:#2b5a8c;}
+  *{box-sizing:border-box;}
+  body{font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic","Segoe UI",sans-serif;
+    color:var(--ink);background:var(--bg);line-height:1.65;max-width:980px;margin:0 auto;padding:44px 24px 90px;font-size:15px;}
+  h1{font-size:23px;margin:0 0 4px;} .sub{color:var(--muted);font-size:13.5px;margin:0 0 20px;}
+  h2{font-size:19px;margin:34px 0 10px;padding:14px 0 0;border-top:2px solid var(--line);}
+  h3{font-size:15px;margin:20px 0 6px;color:#33404c;}
+  p{margin:8px 0;} .lead{font-size:14.5px;color:#33404c;}
+  .verdict{background:#fff;border:1px solid var(--line);border-left:5px solid var(--blue);border-radius:8px;padding:16px 20px;margin:10px 0 8px;}
+  .verdict b{color:var(--blue);}
+  table{border-collapse:collapse;width:100%;margin:10px 0;font-size:13.3px;}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top;}
+  th{background:#f2f5f8;font-weight:700;}
+  .pill{font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap;}
+  .p-good{background:var(--goodbg);color:var(--good);border:1px solid #bfe2cf;}
+  .p-warn{background:var(--warnbg);color:var(--warn);border:1px solid #e9d29a;}
+  .p-bad{background:var(--badbg);color:var(--bad);border:1px solid #e6bcbc;}
+  ul{margin:8px 0;padding-left:22px;} li{margin:5px 0;}
+  code{background:#eef2f5;padding:1px 5px;border-radius:4px;font-size:12.5px;font-family:Consolas,monospace;}
+  .box{background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:8px 0;}
+  .chk{list-style:none;padding-left:0;} .chk li{padding-left:26px;position:relative;margin:7px 0;}
+  .chk li::before{content:"☐";position:absolute;left:0;font-size:15px;color:var(--warn);}
+  .src{font-size:12px;color:var(--muted);}
+  .foot{color:var(--muted);font-size:12px;margin-top:26px;}
+  a{color:var(--blue);}
+</style>
+</head>
+<body>
+
+<h1>우리 프롬프트, 논문에 실릴 수준인가?</h1>
+<p class="sub">멀티에이전트 LLM 논문들의 프롬프트 보고 관행(근거·공개범위·형식)과 대조 · 2026-07-01</p>
+
+<div class="verdict">
+<b>판정.</b> <b>근거(grounding)는 오히려 상위권</b>(우리는 프롬프트를 이론에 명시적으로 인용 — 대부분 논문은 "역할을 이렇게 줬다" 서술뿐). <b>공개 가능성도 높음</b>(전부 코드에 있어 100% 공개 가능). <b>하지만 "지금 이 상태 그대로"는 아직 논문 수준이 아니다</b> — 세 가지 갭 때문: ① <b>숨은 후처리 파이프라인 미공개</b>(guardrails·재시도·요약기가 산출물을 실제로 변형), ② <b>부록 미정리 + 한국어</b>, ③ <b>프롬프트 조립 복잡도</b>(페르소나+공통규칙+조건블록+런타임+phase가 조립·조건분기). 이 셋을 메우면 <b>평균 이상</b>이 된다.
+</div>
+
+<h2>1. 멀티에이전트 논문은 프롬프트를 어떻게 싣나 (관행)</h2>
+
+<h3>공개 범위 — 신흥 표준 = "전체 프롬프트를 부록 또는 공개 레포"</h3>
+<ul>
+<li><b>Generative Agents</b> (Park et al., UIST 2023): 부록에 프롬프트 템플릿 전문 + GitHub 레포(<code>joonspk-research/generative_agents</code>). HCI(UIST)에서 사실상 기준선.</li>
+<li><b>MetaGPT</b> (Hong et al., ICLR 2024): 역할별 프롬프트 prefix + 레포 공개.</li>
+<li><b>PartnerMAS·STAC·TASTE</b> 등 최근 arXiv: 부록(App G / App A·B / App D)에 <b>재현에 필요한 전체 프롬프트</b>를 그대로 첨부.</li>
+<li>단, 감사 논문(아래)은 <b>"실제로 전체 프롬프트를 공개하는 논문은 드물다"</b>고 지적 → 제대로 공개하면 그 자체로 상위권.</li>
+</ul>
+
+<h3>근거(grounding) — 프레임워크마다 다르고, 대개 "이론 인용"은 약함</h3>
+<ul>
+<li><b>MetaGPT</b>: 인간 협업의 <b>표준작업절차(SOP)</b>를 프롬프트 시퀀스로 인코딩 — "워크플로를 근거로"</li>
+<li><b>Generative Agents</b>: <b>believable behavior</b>(사회과학적 그럴듯함)를 근거로 페르소나 설계</li>
+<li><b>CAMEL</b>: role-playing / inception prompting — 역할 배정 자체가 근거</li>
+<li>→ 대부분 "이런 역할을 줬다"는 <b>서술</b> 수준. <b>협업 이론을 직접 인용해 프롬프트를 정당화하는 논문은 드물다.</b></li>
+</ul>
+
+<h3>공개도 체크리스트 (감사 논문의 rubric)</h3>
+<p class="src">"What Twelve LLM Agent Benchmark Papers Disclose About Themselves" (arXiv 2605.21404) — 에이전트 논문이 공개해야 할 항목을 점수화.</p>
+<table>
+<tr><th>범주</th><th>공개해야 할 것</th></tr>
+<tr><td>Model &amp; Config</td><td>모델명·버전, temperature·샘플링, max token 등 하이퍼파라미터</td></tr>
+<tr><td>Prompting</td><td>system 프롬프트 전문, task 프롬프트, few-shot 예시</td></tr>
+<tr><td>Execution / 재현</td><td>random seed, 반복 횟수, <b>멀티스텝 orchestration 로직</b></td></tr>
+<tr><td>Post-Processing</td><td><b>답변 추출·필터·클리닝 단계</b>, 출력 파싱 방식</td></tr>
+</table>
+
+<h2>2. 우리 프롬프트를 이 기준에 대입하면</h2>
+<table>
+<tr><th>항목</th><th>우리 상태</th><th>판정</th></tr>
+<tr><td><b>근거(grounding)</b></td><td>페르소나·행동을 이론에 명시 인용 — TWQ(Hoegl&amp;Gemuenden), Mumford 리더십, Weinberger&amp;Fischer, Lu 2024 COLM, Park 2023. 조건 조작도 인간팀 문헌(Keum&amp;See·Leavitt·Kim&amp;Zhong 등)으로 근거화 중.</td><td><span class="pill p-good">강점 · 상위권</span></td></tr>
+<tr><td><b>공개 가능성</b></td><td>모든 프롬프트가 코드에 하드코딩 → 전문 공개 가능. 단 아직 부록으로 정리 안 됨.</td><td><span class="pill p-warn">가능하나 미정리</span></td></tr>
+<tr><td><b>언어</b></td><td>프롬프트 전부 한국어. 영문 논문엔 원문(KR)+번역(EN) 병기 필요.</td><td><span class="pill p-warn">번역 필요</span></td></tr>
+<tr><td><b>형식/구조</b></td><td>system message가 <code>페르소나+공통규칙+주제+조건블록</code>으로 조립되고 phase마다 prefix 주입, centralized는 런타임 트리거 추가. 그대로 나열하면 난독.</td><td><span class="pill p-warn">표·그림 필요</span></td></tr>
+<tr><td><b>Post-processing 공개</b></td><td><code>guardrails.py</code>가 출력을 실제로 변형: &lt;think&gt; 제거, CJK 치환·삭제, 마크다운(**볼드**·헤더) 제거, 중복 차단, 브리프 에코 차단. + centralized의 truncation 재시도(<code>_looks_truncated</code>), 접힘용 <b>요약기 에이전트</b>(Summarizer), <code>collapse_blank_lines</code>, <code>DedupGroupChat</code>.</td><td><span class="pill p-bad">가장 취약 · 필수 공개</span></td></tr>
+<tr><td><b>Model &amp; Config</b></td><td>모델·temperature·max token·seed는 <code>llm_config</code>에 있으나 <b>이 리뷰에선 미확인</b> — 논문 표로 뽑아야 함.</td><td><span class="pill p-warn">확인·명시 필요</span></td></tr>
+<tr><td><b>Orchestration 로직</b></td><td>centralized 라운드 구조(<code>a_initiate_chats</code>), round-robin speaker selection, phase별 라운드 수(<code>ROUNDS_PER_PHASE=4</code>, <code>PHASE_MAX_ROUNDS</code>), user turn 간격 — 재현에 필요.</td><td><span class="pill p-warn">보고 필요</span></td></tr>
+</table>
+
+<h2>3. 우리 vs 관행 — 핵심 차이</h2>
+<table>
+<tr><th>차원</th><th>관행(멀티에이전트 논문)</th><th>우리</th></tr>
+<tr><td>근거</td><td>대개 "역할을 이렇게 줬다" 서술. 이론 인용 드묾.</td><td><span class="pill p-good">더 강함</span> — 협업 이론을 직접 인용. 논문의 "Prompt design rationale" 절로 쓰기 좋음.</td></tr>
+<tr><td>공개</td><td>전체 프롬프트를 부록/레포에(단 실제론 드묾).</td><td>가능하나 <b>아직 안 함</b> — 부록화+번역 남음.</td></tr>
+<tr><td>후처리 공개</td><td>rubric이 요구하나 많은 논문이 부실.</td><td><span class="pill p-bad">현재 미공개</span> — 우리는 후처리가 <b>많고 산출물을 바꿈</b> → 안 밝히면 재현성·타당성 공격 표적.</td></tr>
+<tr><td>조작(manipulation) 노출</td><td>조작을 verbatim으로 보여줘야 신뢰됨.</td><td>이미 초안 있음 — <a href="prompt_comparison.html">prompt_comparison.html</a>이 사실상 조작 공개 부록의 초안.</td></tr>
+</table>
+
+<h2>4. 논문 수준으로 만들기 — 체크리스트</h2>
+<div class="box">
+<ul class="chk">
+<li><b>전체 프롬프트 부록 표</b> — 조건(Cen/Dec) × 역할(PM/D/E) × phase, 한국어 원문 + 영어 번역 병기.</li>
+<li><b>조립 구조 다이어그램</b> — <code>페르소나+공통규칙+주제+조건블록 → phase prefix → (Cen)런타임 트리거</code>.</li>
+<li><b>후처리 파이프라인 명시</b> — guardrails(제거·치환·중복차단), truncation 재시도, 요약기 에이전트, blank-line collapse를 "산출물에 적용한 자동 처리"로 보고. <span class="pill p-bad">최우선</span></li>
+<li><b>Model/Config 표</b> — 모델명·버전·temperature·max token·seed·반복 횟수(<code>web.py</code>/config에서 추출).</li>
+<li><b>Orchestration 보고</b> — 라운드 수·speaker selection·user turn 간격·종료 조건.</li>
+<li><b>Prompt design rationale 절</b> — 이미 근거 보유(이게 우리 강점). 이론→프롬프트 매핑을 명시.</li>
+<li><b>조작 노출 부록</b> — <a href="prompt_comparison.html">prompt_comparison.html</a>의 "조건별 블록 verbatim"을 논문 부록으로.</li>
+</ul>
+</div>
+
+<h2>5. 한 줄 결론</h2>
+<p class="lead"><b>근거와 공개-가능성은 이미 논문 상위권 잠재력.</b> 실제로 실릴 수준이 되려면 남은 건 "쓰기 작업" 성격 — <b>부록화·번역·조립도·후처리 명시</b>. 이 중 <b>후처리 파이프라인 공개가 가장 시급</b>하다(산출물을 바꾸는데 안 밝히면 재현성 공격의 정확한 표적). 나머지는 이미 가진 재료를 정리하는 일이다.</p>
+
+<p class="foot">근거: 웹검색으로 확인한 논문 관행(Park 2023 UIST 부록+레포, MetaGPT SOP, CAMEL role-play, PartnerMAS/STAC/TASTE 부록 공개) + 감사 논문 rubric(<a href="https://arxiv.org/pdf/2605.21404">arXiv 2605.21404</a>, 본문 fetch). 우리 측 사실은 읽은 코드(simple_agents.py·common.py·centralized.py·guardrails.py) 기준. Model/temp/seed는 미확인 — 별도 확인 필요.</p>
+
+</body>
+</html>

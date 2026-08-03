@@ -224,8 +224,12 @@ class ExperimentSession:
         return entry
 
     def record_intervention_wait_start(self) -> None:
-        """참가자 입력 대기 시작 — SessionIOStream.input()이 참가자에게 차례를 넘길 때 호출."""
+        """참가자 입력 대기 시작 — 프론트에서 렌더 큐가 밀린 발화를 다 타이핑해서
+        입력창을 실제로 여는 순간(input-ready 신호) 호출된다. 같은 개입 기회에
+        신호가 중복으로 와도(새로고침 등) 이미 대기 중이면 시작 시각을 안 덮어쓴다."""
         with self._state_lock:
+            if self._pending_intervention_monotonic is not None:
+                return
             now = time.monotonic()
             if self._last_response_monotonic is None:
                 self.first_intervention_wait_s = round(now - self._session_start_monotonic, 3)
@@ -387,7 +391,10 @@ class SessionIOStream(IOStream):
 
     def input(self, prompt: str = "", *, password: bool = False) -> str:
         del password
-        self.session.record_intervention_wait_start()
+        # 대기 시작 시각은 여기서 안 재고 프론트의 input-ready 신호(POST
+        # /api/sessions/{id}/input-ready)로 기록한다 — 렌더 큐가 밀린 발화를
+        # 다 타이핑하기 전까지는 입력창이 실제로 안 열리므로, 여기서 재면
+        # "화면에 다 뜨길 기다린 시간"까지 참가자 응답 시간에 섞여 들어간다.
         self.session.set_status("waiting_input")
         self.session.emit(
             {

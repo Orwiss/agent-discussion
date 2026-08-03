@@ -1000,6 +1000,13 @@ function addMsg(type, content, sender, summary) {
   }, sender);
 }
 
+function notifyInputReady() {
+  // 렌더 큐가 밀린 발화들을 다 타이핑해서 입력창이 실제로 열리는 이 순간을,
+  // 서버가 input_request를 쏜 시점 대신 "참가자 대기 시작"으로 기록하기 위한 신호.
+  if (!sessionId) return;
+  apiRequest(`/api/sessions/${sessionId}/input-ready`, { method: 'POST', body: JSON.stringify({}) }).catch(() => {});
+}
+
 function enableInput() {
   waitingForInput = true;
   msgInput.disabled = false;
@@ -1119,7 +1126,7 @@ function handleServerMessage(data) {
     if (clean) addMsg('agent', clean, sender, summary);
   } else if (t === 'input_request') {
     addMsg('waiting', '당신의 차례입니다. (빈칸 = 넘기기)');
-    enqueue((done) => { enableInput(); done(); });
+    enqueue((done) => { enableInput(); notifyInputReady(); done(); });
   } else if (t === 'tool_response') {
     // tool 결과는 화면에 안 표시 (D/E 답은 별도 메커니즘으로 흘러야 함)
     return;
@@ -1770,6 +1777,11 @@ class FrontendHandler(http.server.SimpleHTTPRequestHandler):
                     if not isinstance(message, str) or len(message) > 10_000:
                         raise ValueError("메시지는 10,000자 이하 문자열이어야 합니다.")
                     session.submit_message(message)
+                    self._send_json(202, {"accepted": True})
+                    return
+                if parts[3] == "input-ready":
+                    if not isinstance(session, PersistedExperimentSession):
+                        session.record_intervention_wait_start()
                     self._send_json(202, {"accepted": True})
                     return
                 if parts[3] == "idea":

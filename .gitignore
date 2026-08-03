@@ -180,10 +180,12 @@ cython_debug/
 .cursorignore
 .cursorindexingignore
 /.omc
+.omc/
 /data
 *.jsonl
 /.claude
 /logs
+/secrets
 
 # Scratch / throwaway experiment files (prefix with _)
 _*.py

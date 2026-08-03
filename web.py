@@ -17,24 +17,57 @@
 """
 import asyncio
 import csv
+import html
 import json
 import os
+import sys
 import http.server
 import datetime
+import threading
+import time
+import traceback
+import urllib.parse
+import mimetypes
 import autogen
-import autogen.runtime_logging as logging
-from autogen.io.websockets import IOWebsockets
+import autogen.runtime_logging as runtime_logging
+from autogen.io import IOStream
+
+from experiment_runtime import (
+    ExperimentSession,
+    ExperimentSessionRegistry,
+    SessionCancelled,
+    SessionIOStream,
+    current_session,
+    session_scope,
+)
+from study_store import PersistedExperimentSession, StoreError, StudyStore
+from runtime_llm_logger import ContextRuntimeLogger
+from researcher_auth import (
+    AuthConfigurationError,
+    ResearcherAccessDenied,
+    ResearcherAuth,
+)
 
 from config_uniform import (
     llm_config_pm, llm_config_designer, llm_config_engineer,
 )
 from agents.simple_agents import create_pm, create_designer, create_engineer
-from meeting.centralized import run_centralized_discussion
+from meeting.centralized import (
+    run_centralized_discussion, reset_summarizer_usage, get_extra_usage_agents,
+)
 from meeting.decentralized import run_decentralized_discussion
 from meeting.guardrails import clean_message_hook, clean_history_hook
+from autogen.agentchat.contrib.capabilities.transform_messages import TransformMessages
+from autogen.agentchat.contrib.capabilities.transforms import MessageHistoryLimiter
 
 LOG_DIR = os.path.join(os.path.dirname(__file__), "logs", "experiment")
 os.makedirs(LOG_DIR, exist_ok=True)
+SURVEY_DIST_DIR = os.getenv(
+    "SURVEY_DIST_DIR",
+    os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "..", "agent-web-survey", "dist")
+    ),
+)
 
 BRIEFS = {
     "A": "대학 신입생이 학교생활에 적응하도록 돕는 모바일 앱의 핵심 컨셉과 주요 기능을 제안하라.",
@@ -46,253 +79,280 @@ FORM_REQUEST_MARKER = "[FORM_REQUEST]"
 # 주제(brief)를 헤더로 보내는 마커 (채팅에 시스템 메시지로 안 띄움)
 TOPIC_MARKER = "[TOPIC]"
 
-# === 세션 상태 (파일 핸들·메타) ===
-_log_file = None
-_msg_file = None
-_session_meta = None
-
 # === 누적 CSV ===
 MESSAGES_CSV = os.path.join(LOG_DIR, "messages.csv")
 IDEAS_CSV = os.path.join(LOG_DIR, "ideas.csv")
 SESSIONS_CSV = os.path.join(LOG_DIR, "sessions.csv")
+_CSV_LOCK = threading.RLock()
+SESSION_REGISTRY = ExperimentSessionRegistry(
+    log_dir=LOG_DIR,
+    max_active_sessions=int(os.getenv("MAX_ACTIVE_SESSIONS", "3")),
+)
+STUDY_STORE = StudyStore()
+RESEARCHER_AUTH = ResearcherAuth()
+
+# === 간단한 IP당 레이트리밋 (봇/스크립트 방어용) ===
+_RATE_LIMIT_WINDOW_SECONDS = float(os.getenv("RATE_LIMIT_WINDOW_SECONDS", "60"))
+_RATE_LIMIT_MAX_REQUESTS = int(os.getenv("RATE_LIMIT_MAX_REQUESTS", "120"))
+_RATE_LIMIT_LOCK = threading.Lock()
+_RATE_LIMIT_BUCKETS: dict[str, tuple[float, int]] = {}
 
 
-def _init_session_files(participant_id, condition, task):
-    global _log_file, _msg_file, _session_meta
-    ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    base = f"P{participant_id}_{condition}_task{task}_{ts}"
-    _log_file = open(os.path.join(LOG_DIR, f"{base}_log.jsonl"), "w", encoding="utf-8")
-    _msg_file = open(os.path.join(LOG_DIR, f"{base}_messages.jsonl"), "w", encoding="utf-8")
-    _session_meta = {
-        "participant_id": participant_id,
-        "condition": condition,
-        "task": task,
-        "started_at": datetime.datetime.now().isoformat(),
-        "base": base,
-        "phase": None,
-        "utterances_total": 0,
-        "by_speaker": {},
-        "interventions": 0,
-    }
-    return base
+def is_current_session(token):
+    """해당 세션만 아직 실행 중인지 확인한다."""
+    session = SESSION_REGISTRY.get(str(token))
+    return session is not None and session.is_current
 
 
 def log_event(event_type, data):
-    """전체 이벤트 jsonl 로그."""
-    entry = {
-        "time": datetime.datetime.now().isoformat(),
-        "event": event_type,
-        "data": data,
-    }
+    """현재 작업 스레드의 세션에 이벤트를 기록한다."""
     print(f"  [{event_type}] {data}")
-    if _log_file:
-        _log_file.write(json.dumps(entry, ensure_ascii=False) + "\n")
-        _log_file.flush()
-    # phase 이벤트는 세션 메타에도 반영
-    if event_type == "phase_start" and _session_meta and isinstance(data, dict):
-        _session_meta["phase"] = data.get("phase")
+    session = current_session()
+    if session is not None:
+        session.record_event(event_type, data)
+        STUDY_STORE.record_event(session, event_type, data)
 
 
 def log_message(speaker, content):
-    """대화 jsonl 로그 (분석 직행용)."""
-    if not _msg_file:
-        return
-    entry = {
-        "time": datetime.datetime.now().isoformat(),
-        "speaker": speaker,
-        "content": content,
-        "phase": _session_meta.get("phase") if _session_meta else None,
-    }
-    _msg_file.write(json.dumps(entry, ensure_ascii=False) + "\n")
-    _msg_file.flush()
-    if _session_meta:
-        if speaker == "Participant":
-            _session_meta["interventions"] += 1
-        else:
-            _session_meta["utterances_total"] += 1
-            _session_meta["by_speaker"][speaker] = _session_meta["by_speaker"].get(speaker, 0) + 1
+    """현재 작업 스레드의 세션에 대화를 기록한다."""
+    session = current_session()
+    if session is not None:
+        session.record_message(speaker, content)
+        STUDY_STORE.record_message(session, speaker, content)
 
 
 def _append_messages_csv(speaker, content):
     """누적 messages.csv에 한 줄 추가."""
-    if not _session_meta:
+    session = current_session()
+    if session is None:
         return
-    new_file = not os.path.exists(MESSAGES_CSV)
-    with open(MESSAGES_CSV, "a", encoding="utf-8", newline="") as f:
-        w = csv.writer(f)
-        if new_file:
-            w.writerow(["participant_id", "condition", "task", "phase", "speaker", "time", "content"])
-        w.writerow([
-            _session_meta["participant_id"],
-            _session_meta["condition"],
-            _session_meta["task"],
-            _session_meta.get("phase") or "",
-            speaker,
-            datetime.datetime.now().isoformat(),
-            content,
-        ])
+    with _CSV_LOCK:
+        new_file = not os.path.exists(MESSAGES_CSV)
+        with open(MESSAGES_CSV, "a", encoding="utf-8", newline="") as f:
+            w = csv.writer(f)
+            if new_file:
+                w.writerow(["session_id", "participant_id", "condition", "task", "phase", "speaker", "time", "content"])
+            w.writerow([
+                session.id,
+                session.participant_id,
+                session.condition,
+                session.task,
+                session.phase or "",
+                speaker,
+                datetime.datetime.now().isoformat(),
+                content,
+            ])
 
 
-def _append_ideas_csv(form_data):
-    if not _session_meta or not form_data:
+def _append_ideas_csv(form_data, session=None):
+    session = session or current_session()
+    if session is None or not form_data:
         return
-    new_file = not os.path.exists(IDEAS_CSV)
-    with open(IDEAS_CSV, "a", encoding="utf-8", newline="") as f:
-        w = csv.writer(f)
-        if new_file:
-            w.writerow(["participant_id", "condition", "task", "concept",
-                        "feature_1", "feature_2", "feature_3", "differentiator", "filled_at"])
-        features = (form_data.get("features") or []) + ["", "", ""]
-        features = features[:3]
-        w.writerow([
-            _session_meta["participant_id"],
-            _session_meta["condition"],
-            _session_meta["task"],
-            form_data.get("concept", ""),
-            features[0], features[1], features[2],
-            form_data.get("differentiator", ""),
-            form_data.get("filled_at", ""),
-        ])
+    with _CSV_LOCK:
+        new_file = not os.path.exists(IDEAS_CSV)
+        with open(IDEAS_CSV, "a", encoding="utf-8", newline="") as f:
+            w = csv.writer(f)
+            if new_file:
+                w.writerow(["session_id", "participant_id", "condition", "task", "concept",
+                            "feature_1", "feature_2", "feature_3", "differentiator", "filled_at"])
+            features = (form_data.get("features") or []) + ["", "", ""]
+            features = features[:3]
+            w.writerow([
+                session.id,
+                session.participant_id,
+                session.condition,
+                session.task,
+                form_data.get("concept", ""),
+                features[0], features[1], features[2],
+                form_data.get("differentiator", ""),
+                form_data.get("filled_at", ""),
+            ])
+
+
+def _summarize_token_usage(usage):
+    """autogen.gather_usage_summary() 결과를 세션 요약용으로 정리.
+    비용(cost)은 OpenRouter 모델명이 AG2 내장 가격표에 없어 항상 0으로 나오므로
+    제외하고 토큰 수만 집계. cache_seed=None(캐시 미사용)이라 실제 사용량과
+    캐시 포함 사용량이 같아 usage_excluding_cached_inference만 쓴다."""
+    by_model = {}
+    total_prompt = total_completion = total_tokens = 0
+    for model, data in usage.get("usage_excluding_cached_inference", {}).items():
+        if model == "total_cost":
+            continue
+        by_model[model] = {
+            "prompt_tokens": data.get("prompt_tokens", 0),
+            "completion_tokens": data.get("completion_tokens", 0),
+            "total_tokens": data.get("total_tokens", 0),
+        }
+        total_prompt += data.get("prompt_tokens", 0)
+        total_completion += data.get("completion_tokens", 0)
+        total_tokens += data.get("total_tokens", 0)
+    return {
+        "total_prompt_tokens": total_prompt,
+        "total_completion_tokens": total_completion,
+        "total_tokens": total_tokens,
+        "by_model": by_model,
+    }
 
 
 def _append_sessions_csv(summary):
-    new_file = not os.path.exists(SESSIONS_CSV)
-    with open(SESSIONS_CSV, "a", encoding="utf-8", newline="") as f:
-        w = csv.writer(f)
-        if new_file:
-            w.writerow(["participant_id", "condition", "task", "started_at", "ended_at",
-                        "utterances_total", "interventions", "PM", "Designer", "Engineer"])
-        m = summary["meta"]
-        c = summary["counts"]
-        by = c.get("by_speaker", {})
-        w.writerow([
-            m["participant_id"], m["condition"], m["task"],
-            m["started_at"], m["ended_at"],
-            c["utterances_total"], c["interventions"],
-            by.get("PM", 0), by.get("Designer", 0), by.get("Engineer", 0),
-        ])
-
-
-def _close_session_files(form_data=None):
-    global _log_file, _msg_file, _session_meta
-    if not _session_meta:
-        return
-    base = _session_meta["base"]
-
-    # idea.json + 누적
-    if form_data:
-        idea_path = os.path.join(LOG_DIR, f"{base}_idea.json")
-        with open(idea_path, "w", encoding="utf-8") as f:
-            json.dump(form_data, f, ensure_ascii=False, indent=2)
-        _append_ideas_csv(form_data)
-
-    # summary.json + 누적
-    _session_meta["ended_at"] = datetime.datetime.now().isoformat()
-    summary = {
-        "meta": {k: _session_meta[k] for k in
-                 ("participant_id", "condition", "task", "started_at", "ended_at", "base")},
-        "counts": {
-            "utterances_total": _session_meta["utterances_total"],
-            "by_speaker": _session_meta["by_speaker"],
-            "interventions": _session_meta["interventions"],
-        },
-        "form": form_data,
-    }
-    summary_path = os.path.join(LOG_DIR, f"{base}_summary.json")
-    with open(summary_path, "w", encoding="utf-8") as f:
-        json.dump(summary, f, ensure_ascii=False, indent=2)
-    _append_sessions_csv(summary)
-
-    if _log_file:
-        _log_file.close()
-        _log_file = None
-    if _msg_file:
-        _msg_file.close()
-        _msg_file = None
-    _session_meta = None
+    with _CSV_LOCK:
+        new_file = not os.path.exists(SESSIONS_CSV)
+        with open(SESSIONS_CSV, "a", encoding="utf-8", newline="") as f:
+            w = csv.writer(f)
+            if new_file:
+                w.writerow(["session_id", "participant_id", "condition", "task", "started_at", "ended_at",
+                            "status", "utterances_total", "interventions", "PM", "Designer", "Engineer",
+                            "prompt_tokens", "completion_tokens", "total_tokens"])
+            m = summary["meta"]
+            c = summary["counts"]
+            by = c.get("by_speaker", {})
+            tu = summary.get("token_usage") or {}
+            w.writerow([
+                m.get("session_id", ""), m["participant_id"], m["condition"], m["task"],
+                m["started_at"], m["ended_at"], m.get("status", ""),
+                c["utterances_total"], c["interventions"],
+                by.get("PM", 0), by.get("Designer", 0), by.get("Engineer", 0),
+                tu.get("total_prompt_tokens", 0), tu.get("total_completion_tokens", 0),
+                tu.get("total_tokens", 0),
+            ])
 
 
 # === 메시지 캡처 hook — 모든 발화를 messages 로그에 기록 ===
-def _capture_msg_hook(sender, message, recipient, silent):
-    content = ""
-    if isinstance(message, str):
-        content = message
-    elif isinstance(message, dict):
-        content = message.get("content", "") or ""
-    name = getattr(sender, "name", str(sender))
-    if content and content.strip():
-        log_message(name, content.strip())
-        _append_messages_csv(name, content.strip())
-    return message
+def _make_capture_msg_hook(token):
+    """세션 ID를 클로저로 잡아 해당 참가자의 발화만 기록한다."""
+    call_count = {"n": 0}
+
+    def _hook(sender, message, recipient, silent):
+        call_count["n"] += 1
+        idx = call_count["n"]
+        name = getattr(sender, "name", str(sender))
+        content = ""
+        if isinstance(message, str):
+            content = message
+        elif isinstance(message, dict):
+            content = message.get("content", "") or ""
+        preview = content.strip()[:40].replace("\n", " ")
+
+        # 진단 로깅 — decentralized 세션에서 phase 전환 시 이전 phase 전체가 DB에
+        # 통째로 재기록되던 버그(44행, P01 세션에서 확인)의 원인을 로컬/프로덕션
+        # 재현으로도 못 찾아서, hook이 실제로 몇 번 호출되고 매번 silent 값이
+        # 뭔지 계속 지켜보는 중이다. 방어적 dedup 필터는 시도했다가 진짜 참가자
+        # 발화(우연히 같은 문장을 두 번 말한 경우)를 잘못 삭제하는 게 실측으로
+        # 확인돼서 뺐다 — 데이터를 지우느니 가끔 중복이 남는 게 낫다는 판단.
+        log_event("hook_diag", {
+            "idx": idx, "sender": name, "silent": bool(silent),
+            "recipient": getattr(recipient, "name", str(recipient)),
+            "len": len(content), "preview": preview,
+        })
+
+        if silent:
+            # GroupChatManager.resume()이 phase 전환마다 이전 대화 전체를 각 에이전트에게
+            # agent.send(..., silent=True)로 재생하는데, silent=True는 AG2가 콘솔에
+            # "출력"만 안 할 뿐 이 hook은 그대로 호출한다 — 걸러주지 않으면 이전 phase
+            # 전체가 로그에 통째로 다시 기록된다(확인된 버그).
+            return message
+        if not is_current_session(token):
+            return message
+        stripped = content.strip() if content else ""
+        if stripped:
+            log_message(name, stripped)
+            _append_messages_csv(name, stripped)
+        return message
+    return _hook
 
 
-def on_connect(iostream: IOWebsockets) -> None:
-    """클라이언트 연결 시 단일 세션 실행."""
-    original_send = iostream._websocket.send
-
-    def logging_send(data):
-        try:
-            parsed = json.loads(data) if isinstance(data, str) else data
-            log_event("ws_send", parsed if isinstance(parsed, dict) else data)
-        except (json.JSONDecodeError, TypeError):
-            log_event("ws_send", data)
-        return original_send(data)
-    iostream._websocket.send = logging_send
-
-    # 설정 수신
-    try:
-        first_msg = iostream._websocket.recv()
-        settings = json.loads(first_msg)
-        participant_id = settings.get("participant_id", "unknown")
-        condition = settings.get("condition", "decentralized")
-        task = settings.get("task", "A")
-    except Exception:
-        participant_id = "unknown"
-        condition = "decentralized"
-        task = "A"
-
-    if condition not in ("centralized", "decentralized"):
-        condition = "decentralized"
-
-    brief = BRIEFS.get(task, BRIEFS["A"])
-    base = _init_session_files(participant_id, condition, task)
-    log_event("session_start", {
-        "participant_id": participant_id,
-        "condition": condition,
-        "task": task,
-        "base": base,
-    })
-
-    session_log_path = os.path.join(LOG_DIR, f"{base}_ag2.log")
-    _ag2_logging_active = False
-    try:
-        logging.start(logger_type="file", config={"filename": session_log_path})
-        _ag2_logging_active = True
-    except Exception as e:
-        # AG2 runtime_logging이 cwd 권한 문제 등으로 실패해도 세션은 진행
-        log_event("ag2_logging_skip", {"error": str(e)})
-
-    iostream.print(f"{TOPIC_MARKER}{brief}")  # 주제는 헤더로 (채팅엔 안 띄움)
-
+def _session_worker(session: ExperimentSession) -> None:
+    """한 참가자의 AG2 실행을 독립 스레드와 독립 IO 큐에서 수행한다."""
+    iostream = SessionIOStream(session)
     form_data = None
+    final_status = "completed"
+    error_message = None
+
+    with session_scope(session), IOStream.set_default(iostream):
+        session.set_status("running")
+        log_event("session_start", {
+            "session_id": session.id,
+            "participant_id": session.participant_id,
+            "condition": session.condition,
+            "task": session.task,
+            "base": session.base,
+        })
+        iostream.print(f"{TOPIC_MARKER}{session.brief}")
+        try:
+            _run_session(
+                iostream,
+                session.condition,
+                session.brief,
+                session.id,
+            )
+            session.record_discussion_end()
+            form_data = _collect_form(iostream)
+        except SessionCancelled:
+            final_status = "cancelled"
+            log_event("session_cancelled", {})
+        except Exception as error:
+            final_status = "error"
+            error_message = str(error)
+            iostream.print(f"[오류] {error_message}")
+            log_event("error", {
+                "message": error_message,
+                "traceback": traceback.format_exc(),
+            })
+        finally:
+            if final_status == "completed":
+                iostream.print("\n[시스템] 세션이 종료되었습니다.")
+            log_event("session_end", {"status": final_status})
+            if form_data:
+                _append_ideas_csv(form_data, session=session)
+                STUDY_STORE.record_idea(session, form_data)
+            session.finish(
+                final_status,
+                idea=form_data,
+                token_usage=session.token_usage,
+                error=error_message,
+            )
+            _append_sessions_csv(session.summary())
+            STUDY_STORE.record_session_end(session)
+
+
+def start_session(
+    participant_id: str,
+    condition: str,
+    task: str,
+    researcher_email: str,
+) -> ExperimentSession:
+    participant_id = (participant_id or "").strip().upper() or "P99"
+    if len(participant_id) > 64:
+        raise ValueError("참가자 번호를 1~64자로 입력해 주세요.")
+    if condition not in ("centralized", "decentralized"):
+        raise ValueError("올바르지 않은 실험 조건입니다.")
+    if task not in BRIEFS:
+        raise ValueError("올바르지 않은 태스크입니다.")
+
+    session = SESSION_REGISTRY.create(
+        participant_id=participant_id,
+        condition=condition,
+        task=task,
+        brief=BRIEFS[task],
+        researcher_email=researcher_email,
+    )
     try:
-        _run_session(iostream, condition, brief)
-        form_data = _collect_form(iostream)
-    except Exception as e:
-        iostream.print(f"[오류] {str(e)}")
-        log_event("error", {"message": str(e)})
-    finally:
-        if _ag2_logging_active:
-            try:
-                logging.stop()
-            except Exception:
-                pass
-        iostream.print("\n[시스템] 세션이 종료되었습니다.")
-        log_event("session_end", {})
-        _close_session_files(form_data)
+        STUDY_STORE.record_session_start(session)
+    except Exception:
+        session.cancel()
+        raise
+    session.thread = threading.Thread(
+        target=_session_worker,
+        args=(session,),
+        name=f"experiment-{session.id[:8]}",
+        daemon=True,
+    )
+    session.thread.start()
+    return session
 
 
-def _run_session(iostream, condition, brief):
+def _run_session(iostream, condition, brief, token):
     """토론 단계 — Centralized면 async, Decentralized면 sync."""
     user = autogen.UserProxyAgent(
         name="Participant",
@@ -307,20 +367,39 @@ def _run_session(iostream, condition, brief):
     engineer = create_engineer(llm_config_engineer, brief=brief, condition=condition)
     agents = [pm, designer, engineer]
 
+    # 세션을 에이전트 객체에 직접 태깅 — LLM 로거가 여기서 읽는다. contextvars와
+    # 달리 스레드 경계(centralized의 run_in_executor)를 넘어가도 안 사라진다.
+    session = current_session()
+    for agent in agents:
+        agent.session = session
+
     # 가드레일 (양 조건 공통)
     for agent in agents:
         agent.register_hook("process_message_before_send", clean_message_hook)
         agent.register_hook("process_all_messages_before_reply", clean_history_hook)
 
     if condition == "centralized":
+        # 디자이너·엔지니어 개인 sub-chat 히스토리(PM과의 1:1 대화, clear_history=False라
+        # 라운드마다 계속 누적됨)에 슬라이딩 윈도우를 건다 — 예전엔 이 제한이 아예 없어서
+        # 3phase 내내 무제한으로 쌓였다. meeting.centralized.HISTORY_WINDOW와 동일하게 맞춤.
+        TransformMessages(transforms=[MessageHistoryLimiter(max_messages=50)]).add_to_agent(designer)
+        TransformMessages(transforms=[MessageHistoryLimiter(max_messages=50)]).add_to_agent(engineer)
         # Centralized: _log_msg로 직접 로깅 (캡처 hook 미사용 — 내부 트리거 발화 오염 방지)
-        asyncio.run(run_centralized_discussion(pm, designer, engineer, user, brief))
+        asyncio.run(run_centralized_discussion(pm, designer, engineer, user, brief, token=token))
+        usage_agents = agents + get_extra_usage_agents(pm)  # 이 세션의 접힘 요약기만 포함
     else:
         # Decentralized: groupchat이라 발화 캡처를 hook으로 처리
+        capture_hook = _make_capture_msg_hook(token)
         for agent in agents:
-            agent.register_hook("process_message_before_send", _capture_msg_hook)
-        user.register_hook("process_message_before_send", _capture_msg_hook)
-        run_decentralized_discussion(agents, user, brief, iostream=iostream)
+            agent.register_hook("process_message_before_send", capture_hook)
+        user.register_hook("process_message_before_send", capture_hook)
+        run_decentralized_discussion(agents, user, brief, iostream=iostream, token=token)
+        usage_agents = agents
+
+    session = current_session()
+    if session is not None:
+        usage = autogen.gather_usage_summary(usage_agents)
+        session.token_usage = _summarize_token_usage(usage)
 
 
 def _collect_form(iostream):
@@ -328,10 +407,14 @@ def _collect_form(iostream):
     프론트에 FORM_REQUEST_MARKER 보내면 UI 분할 → 양식 표시.
     사용자가 제출하면 JSON 문자열로 한 줄 응답."""
     iostream.print(FORM_REQUEST_MARKER)
+    session = current_session()
+    if session is None:
+        return None
+    session.set_status("awaiting_form")
     try:
-        raw = iostream._websocket.recv()
-        form = json.loads(raw)
+        form = session.next_form()
         form["filled_at"] = datetime.datetime.now().isoformat()
+        session.record_form_submitted()
         log_event("final_form", form)
         return form
     except Exception as e:
@@ -345,7 +428,8 @@ HTML_PAGE = r"""<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>디자인 아이디에이션 실험</title>
+<title>서비스 아이디에이션 세션</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHJ4PSI3IiBmaWxsPSIjMEIwQjBDIi8+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMi41LDIuNSkgc2NhbGUoMS4xNDU4KSI+PHBhdGggZmlsbD0iI2ZmZiIgZD0iTTEyIDJhMiAyIDAgMCAxIDEgMy43M1Y2aDNhNCA0IDAgMCAxIDQgNHYuMDVhMi41MDEgMi41MDEgMCAwIDEgMCA0LjlWMTZhNCA0IDAgMCAxLTQgNEg4YTQgNCAwIDAgMS00LTR2LTEuMDVhMi41IDIuNSAwIDAgMSAwLTQuOVYxMGE0IDQgMCAwIDEgNC00aDN2LS4yN0EyIDIgMCAwIDEgMTIgMm0tMyA5YTEgMSAwIDAgMC0xIDF2MmExIDEgMCAxIDAgMiAwdi0yYTEgMSAwIDAgMC0xLTFtNiAwYTEgMSAwIDAgMC0xIDF2MmExIDEgMCAxIDAgMiAwdi0yYTEgMSAwIDAgMC0xLTEiLz48L2c+PC9zdmc+">
 <style>
   @font-face { font-family: 'LineSeed'; src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_11-01@1.0/LINESeedKR-Th.woff2') format('woff2'); font-weight: 100; font-display: swap; }
   @font-face { font-family: 'LineSeed'; src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_11-01@1.0/LINESeedKR-Rg.woff2') format('woff2'); font-weight: 400; font-display: swap; }
@@ -416,6 +500,54 @@ HTML_PAGE = r"""<!DOCTYPE html>
   }
   #start-page button:hover { background: var(--accent-hover); }
   #start-page button:active { transform: translateY(1px); }
+  #start-page .secondary-link-button {
+    display: inline-block; padding: 13px 40px; margin-top: 4px;
+    background: transparent; color: var(--accent); border: 1px solid var(--accent);
+    border-radius: var(--radius-sm); cursor: pointer; font-size: 15px; font-weight: 600;
+    text-decoration: none; transition: background .15s, transform .05s;
+  }
+  #start-page .secondary-link-button:hover { background: rgba(79,70,229,0.08); }
+  #start-page .secondary-link-button:active { transform: translateY(1px); }
+  #researcher-bar {
+    position: fixed; top: 16px; right: 20px; z-index: 20;
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 12px; border: 1px solid var(--border);
+    border-radius: 999px; background: rgba(255,255,255,.94);
+    box-shadow: var(--shadow); color: var(--muted); font-size: 12px;
+  }
+  #researcher-bar button {
+    border: 0; background: transparent; color: var(--accent);
+    font: inherit; font-weight: 700; cursor: pointer; padding: 0; margin: 0;
+  }
+
+  /* ===== 안내 모달 ===== */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(27,35,48,0.55);
+    align-items: center; justify-content: center; z-index: 50; padding: 20px;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal-box {
+    background: var(--panel); border-radius: var(--radius); padding: 32px;
+    max-width: 600px; width: 100%; box-shadow: var(--shadow);
+  }
+  .modal-box h2 { font-size: 20px; font-weight: 700; margin-bottom: 18px; }
+  .modal-box .modal-topic-block {
+    background: var(--bg-2); border-radius: var(--radius-sm); padding: 18px 20px; margin-bottom: 22px;
+  }
+  .modal-box .modal-topic-label {
+    display: block; font-size: 12px; font-weight: 700; color: var(--accent);
+    letter-spacing: 0.04em; margin-bottom: 6px;
+  }
+  .modal-box .modal-topic-text { font-size: 19px; font-weight: 600; color: var(--text); line-height: 1.5; }
+  .modal-box .modal-steps p { color: var(--muted); font-size: 14.5px; line-height: 1.7; margin-bottom: 10px; }
+  .modal-box .modal-steps p:last-child { margin-bottom: 0; }
+  .modal-box button {
+    display: block; margin: 26px auto 0; padding: 13px 40px; background: var(--accent);
+    color: #fff; border: none; border-radius: var(--radius-sm); cursor: pointer;
+    font-size: 16px; font-weight: 600; transition: background .15s, transform .05s;
+  }
+  .modal-box button:hover { background: var(--accent-hover); }
+  .modal-box button:active { transform: translateY(1px); }
 
   /* ===== 실험 화면 ===== */
   #experiment-page { flex: 1; display: none; flex-direction: column; overflow: hidden; }
@@ -437,6 +569,13 @@ HTML_PAGE = r"""<!DOCTYPE html>
     font-size: 14px; color: var(--muted); background: var(--panel);
     padding: 7px 14px; border-radius: 999px; border: 1px solid var(--border);
   }
+  .header-right { display: flex; align-items: center; gap: 10px; }
+  #reset-btn {
+    font-size: 13px; color: var(--muted); background: var(--panel);
+    padding: 7px 14px; border-radius: 999px; border: 1px solid var(--border);
+    cursor: pointer; transition: background .15s, color .15s;
+  }
+  #reset-btn:hover { background: var(--bg-2); color: var(--text); }
 
   #discussion-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
   #chat {
@@ -445,7 +584,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
   }
   @keyframes msgIn { from { opacity: 0; } to { opacity: 1; } }
   .msg {
-    max-width: 78%; padding: 16px 20px; border-radius: var(--radius);
+    max-width: min(78%, 960px); padding: 16px 20px; border-radius: var(--radius);
     font-size: 17px; line-height: 1.85; white-space: pre-wrap;
     word-break: keep-all; overflow-wrap: anywhere; letter-spacing: -0.005em;
     animation: msgIn .2s ease both;
@@ -461,55 +600,57 @@ HTML_PAGE = r"""<!DOCTYPE html>
   }
   .msg.agent {
     align-self: flex-start; background: var(--panel); border: 1px solid var(--border);
-    border-bottom-left-radius: 5px; box-shadow: var(--shadow);
+    border-top-left-radius: 5px; box-shadow: var(--shadow); max-width: 100%;
   }
-  /* Centralized 조건: 디자이너·엔지니어는 PM 아래 보조 발화로 (들여쓰기 + 연하게) */
-  .msg.agent.subagent {
-    position: relative;
-    margin-left: 56px; max-width: 64%; font-size: 16px;
-    background: var(--bg-2); border: 1px solid var(--border-soft); box-shadow: none;
+  /* 발화자별 아바타 + 이름을 말풍선 밖에 배치 (이름·본문 뭉개지지 않게, 정체성 신호 강화) */
+  .msg-row {
+    display: flex; align-items: flex-start; gap: 12px;
+    max-width: min(78%, 960px); align-self: flex-start;
   }
-  /* PM 말풍선에서 내려오는 스레드 레일 (유튜브 답글 스타일) */
-  .msg.agent.subagent::before {
-    content: ''; position: absolute; left: -24px; top: -14px;
-    width: 2px; height: 28px; background: #b3bccb;
+  .msg-row .avatar {
+    width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 17px; color: #fff; margin-top: 2px;
   }
-  /* 뒤에 보조 발화가 더 있으면 레일을 아래까지 이어줌 (연속된 한 줄로) */
-  .msg.agent.subagent:has(+ .subagent)::before {
-    height: calc(100% + 28px);
+  .avatar.pm { background: var(--pm); }
+  .avatar.designer { background: var(--designer); }
+  .avatar.engineer { background: var(--engineer); }
+  .msg-col { display: flex; flex-direction: column; gap: 5px; min-width: 0; flex: 1; }
+  .msg-name {
+    font-weight: 700; font-size: 14px; letter-spacing: 0.01em;
   }
-  /* 레일에서 말풍선으로 꺾여 들어가는 가지 */
-  .msg.agent.subagent::after {
-    content: ''; position: absolute; left: -24px; top: 14px;
-    width: 22px; height: 14px;
-    border-left: 2px solid #b3bccb; border-bottom: 2px solid #b3bccb;
-    border-bottom-left-radius: 10px;
+  .msg-name.pm { color: var(--pm); }
+  .msg-name.designer { color: var(--designer); }
+  .msg-name.engineer { color: var(--engineer); }
+  /* Centralized: 디자이너·엔지니어 발화는 PM 아래 작은 아바타+이름(박스 밖) + 박스 안엔
+     PM 질문 인용 + 요약. 클릭 인터랙션 없이 항상 이 형태로 고정. */
+  .sub-row {
+    display: flex; gap: 9px; margin-left: 50px; max-width: min(64%, 860px);
   }
-  /* 클로드코드식: 보조 발화는 접힌 채로, 클릭하면 펼쳐짐 */
-  .subagent .sub-head { display: flex; align-items: center; gap: 9px; cursor: pointer; }
-  .subagent .sub-head .name { margin-bottom: 0; flex-shrink: 0; }
-  .subagent .sub-gist {
-    flex: 1; min-width: 0; color: var(--muted); font-size: 14px; font-weight: 400;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  .sub-row .avatar {
+    width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; color: #fff; margin-top: 2px;
   }
-  .subagent .sub-chevron {
-    flex-shrink: 0; color: var(--muted-2); font-size: 10px; transition: transform .15s ease;
+  .sub-col { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1; }
+  .sub-name { font-weight: 700; font-size: 15px; }
+  .sub-name.designer { color: var(--designer); }
+  .sub-name.engineer { color: var(--engineer); }
+  .sub-box {
+    background: var(--bg-2); border: 1px solid var(--border-soft); border-radius: 10px;
+    padding: 12px 16px;
   }
-  .subagent:not(.collapsed) .sub-chevron { transform: rotate(90deg); }
-  .subagent:not(.collapsed) .sub-gist { display: none; }
-  .subagent .sub-full { margin-top: 9px; }
-  .subagent.collapsed .sub-full { display: none; }
-  .msg .name {
-    font-weight: 700; font-size: 14px; margin-bottom: 6px;
-    display: flex; align-items: center; gap: 7px; letter-spacing: 0.01em;
+  .sub-quote {
+    display: flex; gap: 5px; min-width: 0;
+    border-left: 2px solid #a49bee; padding-left: 7px; margin-bottom: 8px;
   }
-  .msg .name::before {
-    content: ''; width: 8px; height: 8px; border-radius: 50%;
-    background: currentColor; display: inline-block;
+  .sub-quote .sub-quote-name { font-weight: 700; font-size: 13px; color: var(--pm); flex-shrink: 0; }
+  .sub-quote .sub-quote-text {
+    display: block; min-width: 0; max-width: 50%; overflow: hidden;
+    text-overflow: ellipsis; white-space: nowrap;
+    font-size: 13px; color: var(--muted-2);
   }
-  .name.pm { color: var(--pm); }
-  .name.designer { color: var(--designer); }
-  .name.engineer { color: var(--engineer); }
+  .sub-gist { font-size: 16px; color: var(--muted); line-height: 1.6; }
   .msg.waiting {
     align-self: center; background: rgba(79,70,229,0.10);
     border: 1px solid rgba(79,70,229,0.35); color: var(--accent-hover);
@@ -520,13 +661,14 @@ HTML_PAGE = r"""<!DOCTYPE html>
     border-top: 1px solid var(--border); box-shadow: 0 -2px 8px rgba(16,24,40,0.07); z-index: 2;
     display: flex; gap: 12px; flex-shrink: 0;
   }
-  #input-area input {
+  #input-area textarea {
     flex: 1; padding: 14px 18px; background: var(--panel); border: 1px solid var(--border);
     border-radius: var(--radius-sm); color: var(--text); font-size: 17px; outline: none;
+    font-family: inherit; resize: none; max-height: 140px; overflow-y: auto;
     transition: border-color .15s, box-shadow .15s;
   }
-  #input-area input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,70,229,0.15); }
-  #input-area input:disabled { opacity: 0.55; }
+  #input-area textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,70,229,0.15); }
+  #input-area textarea:disabled { opacity: 0.55; }
   #input-area button {
     padding: 14px 28px; background: var(--accent); color: #fff; border: none;
     border-radius: var(--radius-sm); cursor: pointer; font-size: 17px; font-weight: 600;
@@ -587,11 +729,17 @@ HTML_PAGE = r"""<!DOCTYPE html>
 <body>
 
 <div id="start-page">
+  <div id="researcher-bar">
+    <span>__RESEARCHER_EMAIL__</span>
+    <button type="button" onclick="logoutResearcher()">로그아웃</button>
+  </div>
   <h1>디자인 아이디에이션 실험</h1>
   <p>PM · UX/UI Designer · SW Engineer와 함께 모바일 앱 아이디어를 발전시킵니다.</p>
   <div class="form-group">
     <label>참가자 번호</label>
-    <input id="participant-id" type="text" placeholder="예: 01">
+    <input id="participant-id" type="text" placeholder="예: P99"
+           autocapitalize="characters" spellcheck="false"
+           oninput="this.value = this.value.toUpperCase()">
   </div>
   <div class="form-group">
     <label>조건</label>
@@ -602,12 +750,29 @@ HTML_PAGE = r"""<!DOCTYPE html>
   </div>
   <div class="form-group">
     <label>태스크</label>
-    <select id="task-mode">
-      <option value="A">태스크 A</option>
+    <select id="task-mode" disabled>
+      <option value="A" selected>태스크 A</option>
       <option value="B">태스크 B</option>
     </select>
   </div>
-  <button onclick="startExperiment()">세션 시작</button>
+  <button onclick="openBriefModal()">세션 시작</button>
+  <a class="secondary-link-button" href="/survey/">설문으로 이동</a>
+</div>
+
+<div id="brief-modal" class="modal-overlay">
+  <div class="modal-box">
+    <h2>세션 안내</h2>
+    <div class="modal-topic-block">
+      <span class="modal-topic-label">오늘의 주제</span>
+      <span id="modal-topic-text" class="modal-topic-text"></span>
+    </div>
+    <div class="modal-steps">
+      <p>위 주제로 PM · UX/UI Designer · SW Engineer 세 전문가와 함께 회의하며 서비스 아이디어를 발전시켜 나갑니다.</p>
+      <p>회의 중간중간 의견을 남겨 대화 흐름에 개입하실 수 있고, 특별히 하실 말씀이 없다면 엔터만 눌러 넘어가시면 됩니다.</p>
+      <p>회의가 끝나면 지금까지 논의된 내용 중 마음에 드는 부분을 참고하여 핵심 컨셉·주요 기능·차별점으로 아이디어를 발전시켜 제출하는 것으로 세션이 마무리됩니다.</p>
+    </div>
+    <button onclick="confirmStart()">시작하기</button>
+  </div>
 </div>
 
 <div id="experiment-page">
@@ -616,14 +781,17 @@ HTML_PAGE = r"""<!DOCTYPE html>
       <h1>디자인 아이디에이션</h1>
       <p id="topic"><span class="topic-label">주제</span><span id="topic-text"></span></p>
     </div>
-    <div class="info" id="session-info"></div>
+    <div class="header-right">
+      <div class="info" id="session-info"></div>
+      <button id="reset-btn" onclick="resetToStart()" title="처음으로 되돌리기">처음으로</button>
+    </div>
   </header>
 
   <div id="discussion-area">
     <div id="chat"></div>
     <div id="status">대기 중...</div>
     <div id="input-area">
-      <input id="msg" type="text" placeholder="의견을 입력하세요 (Enter 전송, 빈칸 = 넘기기)" disabled>
+      <textarea id="msg" rows="1" placeholder="의견을 입력하세요 (Enter 전송, Shift+Enter 줄바꿈, 빈칸 = 넘기기)" disabled></textarea>
       <button id="send" disabled onclick="sendMessage()">전송</button>
     </div>
   </div>
@@ -661,17 +829,22 @@ HTML_PAGE = r"""<!DOCTYPE html>
 <script>
 const FORM_REQUEST_MARKER = '__FORM_REQUEST_MARKER__';
 const TOPIC_MARKER = '__TOPIC_MARKER__';
+const BRIEF_TEXT = __BRIEFS_JSON__;
 const chat = document.getElementById('chat');
 const msgInput = document.getElementById('msg');
 const sendBtn = document.getElementById('send');
 const statusEl = document.getElementById('status');
-let ws = null;
+let sessionId = null;
+let sessionSecret = null;
+let pollActive = false;
+let lastEventSequence = 0;
 let waitingForInput = false;
 let lastMsgHash = '';
 let currentCondition = 'centralized';
+let lastPmText = '';  // 서브에이전트 인용문에 쓸, 가장 최근 PM 발화
 
 // 발화 렌더 큐 — 메시지가 겹치지 않게 한 번에 하나씩 타이핑(타자기 효과)
-const TYPE_SPEED_MS = 30;
+const TYPE_SPEED_MS = 38;
 const MESSAGE_GAP_MS = 1200;  // 발화자가 바뀔 때 텍스트 시작 전 텀
 let renderQueue = [];
 let rendering = false;
@@ -682,8 +855,8 @@ function processQueue() {
   if (!item) return;
   rendering = true;
   const run = () => item.fn(() => { lastRenderSender = item.sender; rendering = false; processQueue(); });
-  if (item.sender && lastRenderSender !== null && item.sender !== lastRenderSender) {
-    setTimeout(run, MESSAGE_GAP_MS);  // 발화자 전환 시 잠깐 텀
+  if (item.sender && lastRenderSender !== null) {
+    setTimeout(run, MESSAGE_GAP_MS);  // 발화자 전환 시(같은 발화자 연속 포함) 잠깐 텀
   } else {
     run();
   }
@@ -731,6 +904,8 @@ function stripThink(text) {
   return text.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
 }
 
+const ROLE_ICONS = { 'PM': '🧑‍💼', 'Designer': '🎨', 'Engineer': '🛠️' };
+
 function gistOf(text) {
   // 첫 문장을 미리보기로. 너무 길면 단어 경계에서 자름(단어 중간 X).
   let s = (text.trim().split(/(?<=[.!?。])\s+/)[0]) || text.trim();
@@ -748,53 +923,75 @@ function addMsg(type, content, sender, summary) {
   if (hash === lastMsgHash) return;
   lastMsgHash = hash;
   const displayName = (sender && DISPLAY_NAMES[sender]) || sender;
-  const isSubAgent = (
+  // Centralized 조건: 디자이너·엔지니어 발화는 PM을 거쳐 요약된 형태로만 노출 (원문 비공개,
+  // 클릭으로 펼치는 기능 없음 — PM이 정보를 필터링한다는 걸 고정된 형태로 보여줌).
+  const isSummaryOnly = (
     type === 'agent' && currentCondition === 'centralized' &&
     (sender === 'Designer' || sender === 'Engineer')
   );
   enqueue((done) => {
-    const div = document.createElement('div');
-    div.className = 'msg ' + type;
-    if (isSubAgent) {
-      // 클로드코드식: 접힌 헤더(이름 + 한 줄 요약 + 화살표), 클릭하면 전문 펼침
-      div.classList.add('subagent', 'collapsed');
-      const head = document.createElement('div');
-      head.className = 'sub-head';
-      const nameSpan = document.createElement('span');
-      nameSpan.className = 'name ' + nameClass(sender);
-      nameSpan.textContent = displayName;
-      const gistSpan = document.createElement('span');
-      gistSpan.className = 'sub-gist';
-      gistSpan.textContent = summary || gistOf(content);
-      const chev = document.createElement('span');
-      chev.className = 'sub-chevron';
-      chev.textContent = '▶';
-      head.appendChild(nameSpan);
-      head.appendChild(gistSpan);
-      head.appendChild(chev);
-      const full = document.createElement('div');
-      full.className = 'sub-full';
-      full.textContent = content;
-      head.addEventListener('click', () => {
-        div.classList.toggle('collapsed');
-        chat.scrollTop = chat.scrollHeight;
-      });
-      div.appendChild(head);
-      div.appendChild(full);
-      chat.appendChild(div);
+    if (isSummaryOnly) {
+      // PM 아래 — 작은 아바타+이름은 박스 밖, 박스 안엔 PM 질문 인용 + 요약
+      const row = document.createElement('div');
+      row.className = 'sub-row';
+      const avatar = document.createElement('div');
+      avatar.className = 'avatar ' + nameClass(sender);
+      avatar.textContent = ROLE_ICONS[sender] || displayName[0];
+      const col = document.createElement('div');
+      col.className = 'sub-col';
+      const nameEl = document.createElement('div');
+      nameEl.className = 'sub-name ' + nameClass(sender);
+      nameEl.textContent = displayName;
+      const box = document.createElement('div');
+      box.className = 'sub-box';
+      if (lastPmText) {
+        const quote = document.createElement('div');
+        quote.className = 'sub-quote';
+        const qName = document.createElement('span');
+        qName.className = 'sub-quote-name';
+        qName.textContent = 'PM';
+        const qText = document.createElement('span');
+        qText.className = 'sub-quote-text';
+        qText.textContent = lastPmText;
+        quote.appendChild(qName);
+        quote.appendChild(qText);
+        box.appendChild(quote);
+      }
+      const gist = document.createElement('div');
+      gist.className = 'sub-gist';
+      gist.textContent = summary || gistOf(content);
+      box.appendChild(gist);
+      col.appendChild(nameEl);
+      col.appendChild(box);
+      row.appendChild(avatar);
+      row.appendChild(col);
+      chat.appendChild(row);
       chat.scrollTop = chat.scrollHeight;
       done();
     } else if (type === 'agent' && sender) {
-      const nameSpan = document.createElement('span');
-      nameSpan.className = 'name ' + nameClass(sender);
-      nameSpan.textContent = displayName;
-      div.appendChild(nameSpan);
-      const textNode = document.createElement('span');
-      div.appendChild(textNode);
-      chat.appendChild(div);
+      if (sender === 'PM') lastPmText = content;
+      const row = document.createElement('div');
+      row.className = 'msg-row';
+      const avatar = document.createElement('div');
+      avatar.className = 'avatar ' + nameClass(sender);
+      avatar.textContent = ROLE_ICONS[sender] || displayName[0];
+      const col = document.createElement('div');
+      col.className = 'msg-col';
+      const nameEl = document.createElement('div');
+      nameEl.className = 'msg-name ' + nameClass(sender);
+      nameEl.textContent = displayName;
+      const bubble = document.createElement('div');
+      bubble.className = 'msg agent';
+      col.appendChild(nameEl);
+      col.appendChild(bubble);
+      row.appendChild(avatar);
+      row.appendChild(col);
+      chat.appendChild(row);
       chat.scrollTop = chat.scrollHeight;
-      typeText(textNode, content, done);  // 에이전트 발화는 한 글자씩
+      typeText(bubble, content, done);  // 에이전트 발화는 한 글자씩
     } else {
+      const div = document.createElement('div');
+      div.className = 'msg ' + type;
       div.textContent = content;          // 시스템·사용자 발화는 즉시
       chat.appendChild(div);
       chat.scrollTop = chat.scrollHeight;
@@ -820,17 +1017,40 @@ function disableInput() {
   statusEl.classList.remove('active');
 }
 
-function sendMessage() {
-  if (!waitingForInput || !ws) return;
+async function apiRequest(path, options = {}) {
+  const headers = {'Content-Type': 'application/json', ...(options.headers || {})};
+  if (sessionSecret) headers['X-Session-Token'] = sessionSecret;
+  const response = await fetch(path, {...options, headers});
+  let body = {};
+  try { body = await response.json(); } catch (e) {}
+  if (!response.ok) {
+    const error = new Error(body.error || `요청 실패 (${response.status})`);
+    error.status = response.status;
+    error.body = body;
+    throw error;
+  }
+  return body;
+}
+
+async function sendMessage() {
+  if (!waitingForInput || !sessionId) return;
   const text = msgInput.value;
-  ws.send(text);
   if (text) addMsg('user', text, 'Participant');
   msgInput.value = '';
   disableInput();
+  try {
+    await apiRequest(`/api/sessions/${sessionId}/messages`, {
+      method: 'POST',
+      body: JSON.stringify({message: text}),
+    });
+  } catch (error) {
+    addMsg('system', error.message);
+    enableInput();
+  }
 }
 
 msgInput.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') { e.preventDefault(); sendMessage(); }
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
 });
 
 function showForm() {
@@ -842,7 +1062,7 @@ function showForm() {
   dst.scrollTop = dst.scrollHeight;
 }
 
-function submitForm() {
+async function submitForm() {
   const f = {
     concept: document.getElementById('f-concept').value.trim(),
     features: [
@@ -856,22 +1076,23 @@ function submitForm() {
     alert('모든 항목을 채워주세요.');
     return;
   }
-  ws.send(JSON.stringify(f));
-  document.getElementById('form-submit').disabled = true;
-  document.getElementById('form-submit').textContent = '제출됨';
+  const button = document.getElementById('form-submit');
+  button.disabled = true;
+  button.textContent = '제출 중...';
+  try {
+    await apiRequest(`/api/sessions/${sessionId}/idea`, {
+      method: 'POST',
+      body: JSON.stringify(f),
+    });
+    button.textContent = '제출됨';
+  } catch (error) {
+    button.disabled = false;
+    button.textContent = '제출';
+    alert(error.message);
+  }
 }
 
-function handleWsMessage(raw) {
-  let data;
-  try { data = JSON.parse(raw); } catch {
-    if (raw.includes('Provide feedback') || raw.includes('Replying as')) {
-      addMsg('waiting', '당신의 차례입니다. (빈칸 = 넘기기)');
-      enqueue((done) => { enableInput(); done(); });  // 앞 발화 타이핑 끝난 뒤 입력 활성화
-    } else if (raw.trim()) {
-      addMsg('system', raw);
-    }
-    return;
-  }
+function handleServerMessage(data) {
   const t = data.type;
   const c = data.content;
   if (t === 'print') {
@@ -896,54 +1117,729 @@ function handleWsMessage(raw) {
     let clean = content.replace(/\s*TERMINATE\s*/g, '').trim();
     clean = stripThink(clean);
     if (clean) addMsg('agent', clean, sender, summary);
+  } else if (t === 'input_request') {
+    addMsg('waiting', '당신의 차례입니다. (빈칸 = 넘기기)');
+    enqueue((done) => { enableInput(); done(); });
   } else if (t === 'tool_response') {
     // tool 결과는 화면에 안 표시 (D/E 답은 별도 메커니즘으로 흘러야 함)
     return;
   }
 }
 
-function startExperiment() {
-  const pid = document.getElementById('participant-id').value.trim();
-  if (!pid) { alert('참가자 번호를 입력해주세요.'); return; }
+let pendingStart = null;
+
+function openBriefModal() {
+  const participantInput = document.getElementById('participant-id');
+  const pid = participantInput.value.trim().toUpperCase() || 'P99';
+  participantInput.value = pid;
   const condition = document.getElementById('condition-mode').value;
-  currentCondition = condition;
   const task = document.getElementById('task-mode').value;
+  pendingStart = { pid, condition, task };
+  document.getElementById('modal-topic-text').textContent = BRIEF_TEXT[task] || '';
+  document.getElementById('brief-modal').classList.add('show');
+}
+
+async function resetToStart() {
+  const btn = document.getElementById('reset-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '종료 중...'; }
+  pollActive = false;
+  if (sessionId) {
+    try { await apiRequest(`/api/sessions/${sessionId}`, {method: 'DELETE'}); } catch (e) {}
+  }
+  location.reload();
+}
+
+async function logoutResearcher() {
+  pollActive = false;
+  try {
+    await fetch('/api/auth/logout', {method: 'POST'});
+  } finally {
+    location.replace('/login');
+  }
+}
+
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function pollEvents() {
+  pollActive = true;
+  while (pollActive && sessionId) {
+    try {
+      const result = await apiRequest(
+        `/api/sessions/${sessionId}/events?after=${lastEventSequence}&wait=20`,
+        {method: 'GET'}
+      );
+      for (const event of result.events || []) {
+        lastEventSequence = Math.max(lastEventSequence, event.seq);
+        handleServerMessage(event.payload);
+      }
+      if (['completed', 'cancelled', 'error'].includes(result.status)) {
+        pollActive = false;
+        disableInput();
+        statusEl.textContent = result.status === 'completed' ? '세션 종료' : '세션 중단';
+        if (result.status === 'error') addMsg('system', result.error || '세션 실행 중 오류가 발생했습니다.');
+      }
+    } catch (error) {
+      if (!pollActive) break;
+      if (error.status === 410) {
+        pollActive = false;
+        disableInput();
+        statusEl.textContent = '서버 재시작 감지 · 아이디어 제출 가능';
+        addMsg('system', error.message);
+        break;
+      }
+      statusEl.textContent = '연결 재시도 중...';
+      await delay(1200);
+    }
+  }
+}
+
+async function confirmStart() {
+  document.getElementById('brief-modal').classList.remove('show');
+  const { pid, condition, task } = pendingStart;
+  currentCondition = condition;
   const condLabel = condition === 'centralized' ? '조건 1' : '조건 2';
 
-  document.getElementById('start-page').style.display = 'none';
-  document.getElementById('experiment-page').style.display = 'flex';
-  document.getElementById('session-info').textContent = `P${pid} / ${condLabel} / 태스크 ${task}`;
-
   statusEl.textContent = '서버에 연결 중...';
-  ws = new WebSocket('ws://127.0.0.1:8765');
-  ws.onopen = () => {
-    ws.send(JSON.stringify({participant_id: pid, condition: condition, task: task}));
+  try {
+    const result = await apiRequest('/api/sessions', {
+      method: 'POST',
+      body: JSON.stringify({
+        participant_id: pid,
+        condition,
+        task,
+      }),
+    });
+    sessionId = result.session_id;
+    sessionSecret = result.session_token;
+    lastEventSequence = 0;
+    document.getElementById('start-page').style.display = 'none';
+    document.getElementById('experiment-page').style.display = 'flex';
+    const resolvedParticipantId = result.participant_id || pid || 'P99';
+    document.getElementById('session-info').textContent =
+      `${resolvedParticipantId} / ${condLabel} / 태스크 ${task}`;
     statusEl.textContent = '연결됨 — 세션 시작';
-  };
-  ws.onmessage = (event) => handleWsMessage(event.data);
-  ws.onclose = () => { statusEl.textContent = '세션 종료'; disableInput(); addMsg('system', '세션이 종료되었습니다.'); };
-  ws.onerror = () => { statusEl.textContent = '연결 오류'; addMsg('system', '서버 연결에 실패했습니다.'); };
+    pollEvents();
+  } catch (error) {
+    alert(error.message);
+    document.getElementById('start-page').style.display = 'flex';
+  }
 }
 </script>
 </body>
 </html>"""
 
 
-def _render_html_page():
+LOGIN_PAGE = r"""<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>연구자 로그인 · MAS Ideation</title>
+<style>
+  :root { color-scheme: light; font-family: Arial, "Noto Sans KR", sans-serif; }
+  * { box-sizing: border-box; }
+  body {
+    min-height: 100vh; margin: 0; display: grid; place-items: center;
+    background: #f5f7fb; color: #101828;
+  }
+  main {
+    width: min(440px, calc(100% - 32px)); padding: 42px;
+    background: white; border: 1px solid #e4e7ec; border-radius: 20px;
+    box-shadow: 0 18px 48px rgba(16, 24, 40, .10); text-align: center;
+  }
+  .eyebrow { color: #4f46e5; font-size: 13px; font-weight: 700; }
+  h1 { margin: 12px 0 10px; font-size: 28px; letter-spacing: -.03em; }
+  p { margin: 0 0 28px; color: #667085; line-height: 1.65; font-size: 14px; }
+  form { display: flex; flex-direction: column; gap: 12px; }
+  input[type="password"] {
+    padding: 13px 16px; border: 1px solid #d0d5dd; border-radius: 10px;
+    font-size: 15px;
+  }
+  button {
+    padding: 13px 16px; border: none; border-radius: 10px; background: #4f46e5;
+    color: white; font-size: 15px; font-weight: 600; cursor: pointer;
+  }
+  button:hover { background: #4338ca; }
+  #login-error { min-height: 20px; margin-top: 6px; color: #b42318; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <div class="eyebrow">MAS IDEATION STUDY</div>
+  <h1>연구자 로그인</h1>
+  <p>공용 비밀번호를 입력하면<br>실험 시스템과 설문에 접속할 수 있습니다.</p>
+  <form method="POST" action="/auth/login?next=__NEXT_PATH_ATTR__">
+    <input type="password" name="password" placeholder="비밀번호" autofocus required>
+    <button type="submit">입장</button>
+  </form>
+  <div id="login-error" role="alert"></div>
+</main>
+<script>
+const errorEl = document.getElementById('login-error');
+if (new URLSearchParams(location.search).get('error') === 'wrong_password') {
+  errorEl.textContent = '비밀번호가 올바르지 않습니다.';
+}
+</script>
+</body>
+</html>"""
+
+LOGIN_COMPLETE_PAGE = """<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>로그인 완료 · MAS Ideation</title>
+</head>
+<body>
+<main>
+  <p id="status">로그인 세션을 확인하고 있습니다...</p>
+</main>
+<script>
+const nextPath = __NEXT_PATH_JSON__;
+const fallbackCookie = __FALLBACK_COOKIE_JSON__;
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+async function finishLogin() {
+  let fallbackApplied = false;
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    try {
+      const response = await fetch('/api/auth/me', {
+        credentials: 'same-origin',
+        cache: 'no-store',
+      });
+      if (response.ok) {
+        location.replace(nextPath);
+        return;
+      }
+    } catch (error) {
+      // The next retry handles a transient proxy or revision handoff.
+    }
+    if (!fallbackApplied) {
+      document.cookie = fallbackCookie;
+      fallbackApplied = true;
+    }
+    await delay(150);
+  }
+  document.getElementById('status').textContent =
+    '로그인 세션을 저장하지 못했습니다. 페이지를 새로고침한 뒤 다시 시도해 주세요.';
+}
+finishLogin();
+</script>
+</body>
+</html>"""
+
+
+def _safe_next_path(raw: str | None) -> str:
+    value = urllib.parse.unquote(raw or "/")
+    if not value.startswith("/") or value.startswith("//"):
+        return "/"
+    return value
+
+
+def _render_login_page(next_path: str):
+    safe_path = _safe_next_path(next_path)
+    return LOGIN_PAGE.replace(
+        "__NEXT_PATH_ATTR__",
+        html.escape(urllib.parse.quote(safe_path, safe="/"), quote=True),
+    )
+
+
+def _render_html_page(researcher_email: str = "researcher@example.com"):
     return (HTML_PAGE
             .replace("__FORM_REQUEST_MARKER__", FORM_REQUEST_MARKER)
-            .replace("__TOPIC_MARKER__", TOPIC_MARKER))
+            .replace("__TOPIC_MARKER__", TOPIC_MARKER)
+            .replace("__BRIEFS_JSON__", json.dumps(BRIEFS, ensure_ascii=False))
+            .replace(
+                "__RESEARCHER_EMAIL__",
+                html.escape(researcher_email),
+            ))
 
 
 class FrontendHandler(http.server.SimpleHTTPRequestHandler):
-    def do_GET(self):
+    server_version = "ExperimentServer/1.0"
+
+    def _send_json(self, status, payload, extra_headers=None):
+        body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
         try:
-            self.send_response(200)
-            self.send_header("Content-type", "text/html; charset=utf-8")
+            self.send_response(status)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Content-Length", str(len(body)))
+            self.send_header("Cache-Control", "no-store")
+            self.send_header("X-Content-Type-Options", "nosniff")
+            self.send_header("X-Robots-Tag", "noindex, nofollow")
+            for name, value in (extra_headers or {}).items():
+                self.send_header(name, value)
             self.end_headers()
-            self.wfile.write(_render_html_page().encode("utf-8"))
+            self.wfile.write(body)
         except (ConnectionAbortedError, ConnectionResetError, BrokenPipeError):
             pass
+
+    def _read_json(self):
+        try:
+            length = int(self.headers.get("Content-Length", "0"))
+        except ValueError as error:
+            raise ValueError("잘못된 Content-Length입니다.") from error
+        if length <= 0 or length > 512 * 1024:
+            raise ValueError("요청 본문 크기가 올바르지 않습니다.")
+        try:
+            body = json.loads(self.rfile.read(length).decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError) as error:
+            raise ValueError("올바른 JSON 요청이 아닙니다.") from error
+        if not isinstance(body, dict):
+            raise ValueError("JSON 객체가 필요합니다.")
+        return body
+
+    def _read_form(self):
+        try:
+            length = int(self.headers.get("Content-Length", "0"))
+        except ValueError as error:
+            raise ValueError("잘못된 Content-Length입니다.") from error
+        if length <= 0 or length > 512 * 1024:
+            raise ValueError("요청 본문 크기가 올바르지 않습니다.")
+        try:
+            raw = self.rfile.read(length).decode("utf-8")
+        except UnicodeDecodeError as error:
+            raise ValueError("올바른 폼 요청이 아닙니다.") from error
+        return {
+            key: values[0]
+            for key, values in urllib.parse.parse_qs(raw).items()
+            if values
+        }
+
+    def _redirect(self, location, status=303):
+        self.send_response(status)
+        self.send_header("Location", location)
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+
+    def _send_robots_txt(self):
+        body = b"User-agent: *\nDisallow: /\n"
+        try:
+            self.send_response(200)
+            self.send_header("Content-Type", "text/plain; charset=utf-8")
+            self.send_header("Content-Length", str(len(body)))
+            self.send_header("Cache-Control", "public, max-age=86400")
+            self.end_headers()
+            self.wfile.write(body)
+        except (ConnectionAbortedError, ConnectionResetError, BrokenPipeError):
+            pass
+
+    def _client_ip(self):
+        forwarded = self.headers.get("X-Forwarded-For")
+        if forwarded:
+            return forwarded.split(",")[0].strip()
+        return self.client_address[0]
+
+    def _rate_limited(self):
+        ip = self._client_ip()
+        now = time.time()
+        with _RATE_LIMIT_LOCK:
+            window_start, count = _RATE_LIMIT_BUCKETS.get(ip, (now, 0))
+            if now - window_start >= _RATE_LIMIT_WINDOW_SECONDS:
+                window_start, count = now, 0
+            count += 1
+            _RATE_LIMIT_BUCKETS[ip] = (window_start, count)
+            return count > _RATE_LIMIT_MAX_REQUESTS
+
+    def _current_researcher(self):
+        return RESEARCHER_AUTH.email_from_cookie_header(
+            self.headers.get("Cookie")
+        )
+
+    def _require_researcher(self, *, api):
+        email = self._current_researcher()
+        if email:
+            return email
+        if api:
+            self._send_json(401, {"error": "연구자 로그인이 필요합니다."})
+        else:
+            next_path = urllib.parse.quote(self.path, safe="/?=&")
+            self._redirect(f"/login?next={next_path}")
+        return None
+
+    def _authorized_session(self, session_id, researcher_email):
+        secret = self.headers.get("X-Session-Token", "")
+        session = SESSION_REGISTRY.authorize(session_id, secret)
+        if session is not None and session.researcher_email == researcher_email:
+            return session
+        try:
+            session = STUDY_STORE.authorize_experiment_session(
+                session_id,
+                secret,
+                researcher_email,
+            )
+        except StoreError:
+            self._send_json(
+                503,
+                {"error": "세션 저장소에 연결할 수 없습니다. 잠시 후 다시 시도해 주세요."},
+            )
+            return None
+        if session is None:
+            self._send_json(401, {"error": "세션 인증에 실패했습니다."})
+        return session
+
+    def _serve_survey_asset(self, request_path):
+        if request_path == "/survey":
+            self.send_response(308)
+            self.send_header("Location", "/survey/")
+            self.end_headers()
+            return True
+        if not request_path.startswith("/survey/"):
+            return False
+        relative = urllib.parse.unquote(request_path[len("/survey/"):]) or "index.html"
+        root = os.path.realpath(SURVEY_DIST_DIR)
+        target = os.path.realpath(os.path.join(root, relative))
+        try:
+            inside_root = os.path.commonpath([root, target]) == root
+        except ValueError:
+            inside_root = False
+        if not inside_root or not os.path.isfile(target):
+            self._send_json(404, {"error": "설문 파일을 찾을 수 없습니다."})
+            return True
+        try:
+            with open(target, "rb") as source:
+                body = source.read()
+            content_type = mimetypes.guess_type(target)[0] or "application/octet-stream"
+            self.send_response(200)
+            self.send_header("Content-Type", content_type)
+            self.send_header("Content-Length", str(len(body)))
+            self.send_header(
+                "Cache-Control",
+                "public, max-age=31536000, immutable"
+                if "/assets/" in request_path
+                else "no-store",
+            )
+            self.send_header("X-Content-Type-Options", "nosniff")
+            self.send_header("X-Robots-Tag", "noindex, nofollow")
+            self.end_headers()
+            self.wfile.write(body)
+        except (ConnectionAbortedError, ConnectionResetError, BrokenPipeError):
+            pass
+        return True
+
+    def do_GET(self):
+        parsed = urllib.parse.urlparse(self.path)
+        if parsed.path == "/robots.txt":
+            self._send_robots_txt()
+            return
+        if parsed.path in ("/healthz", "/api/healthz"):
+            self._send_json(200, {"status": "ok"})
+            return
+        if self._rate_limited():
+            self._send_json(429, {"error": "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요."})
+            return
+        if parsed.path == "/login":
+            researcher_email = self._current_researcher()
+            query = urllib.parse.parse_qs(parsed.query)
+            next_path = _safe_next_path(query.get("next", ["/"])[0])
+            if researcher_email:
+                self._redirect(next_path)
+                return
+            if not RESEARCHER_AUTH.configured:
+                self._send_json(
+                    503,
+                    {"error": "연구자 로그인이 아직 설정되지 않았습니다."},
+                )
+                return
+            body = _render_login_page(next_path).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Length", str(len(body)))
+            self.send_header("Cache-Control", "no-store")
+            self.send_header("X-Content-Type-Options", "nosniff")
+            self.send_header("X-Frame-Options", "DENY")
+            self.send_header("Referrer-Policy", "no-referrer")
+            self.send_header("X-Robots-Tag", "noindex, nofollow")
+            self.end_headers()
+            self.wfile.write(body)
+            return
+
+        researcher_email = self._require_researcher(
+            api=parsed.path.startswith("/api/")
+        )
+        if researcher_email is None:
+            return
+        if parsed.path == "/api/auth/me":
+            self._send_json(200, {"email": researcher_email})
+            return
+        if parsed.path == "/api/admin/submissions":
+            self._send_json(
+                200,
+                {"submissions": STUDY_STORE.list_survey_submissions()},
+            )
+            return
+        if parsed.path == "/api/admin/sessions":
+            self._send_json(
+                200,
+                {"sessions": STUDY_STORE.list_session_summaries()},
+            )
+            return
+        parts = [part for part in parsed.path.split("/") if part]
+        if len(parts) == 4 and parts[:2] == ["api", "sessions"] and parts[3] == "events":
+            session = self._authorized_session(parts[2], researcher_email)
+            if session is None:
+                return
+            if isinstance(session, PersistedExperimentSession):
+                self._send_json(
+                    410,
+                    {
+                        "error": (
+                            "서버가 교체되어 진행 중이던 대화는 종료되었습니다. "
+                            "작성 중인 최종 아이디어는 그대로 제출할 수 있습니다."
+                        ),
+                        "recoverable_idea": True,
+                    },
+                )
+                return
+            query = urllib.parse.parse_qs(parsed.query)
+            try:
+                after = max(0, int(query.get("after", ["0"])[0]))
+                wait = max(0, min(25, float(query.get("wait", ["20"])[0])))
+            except ValueError:
+                self._send_json(400, {"error": "이벤트 조회 위치가 올바르지 않습니다."})
+                return
+            events = session.poll(after=after, wait_seconds=wait)
+            self._send_json(200, {
+                "events": events,
+                "status": session.status,
+                "error": session.error,
+            })
+            return
+        if self._serve_survey_asset(parsed.path):
+            return
+        if parsed.path not in ("/", "/index.html"):
+            self._send_json(404, {"error": "찾을 수 없습니다."})
+            return
+        try:
+            body = _render_html_page(researcher_email).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-type", "text/html; charset=utf-8")
+            self.send_header("Content-Length", str(len(body)))
+            self.send_header("Cache-Control", "no-store")
+            self.send_header("X-Content-Type-Options", "nosniff")
+            self.send_header("X-Robots-Tag", "noindex, nofollow")
+            self.end_headers()
+            self.wfile.write(body)
+        except (ConnectionAbortedError, ConnectionResetError, BrokenPipeError):
+            pass
+
+    def do_POST(self):
+        parsed = urllib.parse.urlparse(self.path)
+        parts = [part for part in parsed.path.split("/") if part]
+        if self._rate_limited():
+            self._send_json(429, {"error": "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요."})
+            return
+        try:
+            if parts == ["auth", "login"]:
+                query = urllib.parse.parse_qs(parsed.query)
+                next_path = _safe_next_path(query.get("next", ["/"])[0])
+                form = self._read_form()
+                try:
+                    RESEARCHER_AUTH.verify_password(
+                        str(form.get("password", ""))
+                    )
+                except ResearcherAccessDenied:
+                    self._redirect(
+                        f"/login?next={urllib.parse.quote(next_path, safe='/')}"
+                        "&error=wrong_password"
+                    )
+                    return
+                cookie_header = RESEARCHER_AUTH.session_cookie_header()
+                fallback_cookie = "; ".join(
+                    part
+                    for part in cookie_header.split("; ")
+                    if part != "HttpOnly"
+                )
+                response_body = (
+                    LOGIN_COMPLETE_PAGE
+                    .replace("__NEXT_PATH_JSON__", json.dumps(next_path))
+                    .replace(
+                        "__FALLBACK_COOKIE_JSON__",
+                        json.dumps(fallback_cookie),
+                    )
+                    .encode("utf-8")
+                )
+                self.send_response(200)
+                self.send_header(
+                    "Set-Cookie",
+                    cookie_header,
+                )
+                self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.send_header("Content-Length", str(len(response_body)))
+                self.send_header("Cache-Control", "no-store")
+                self.end_headers()
+                self.wfile.write(response_body)
+                return
+
+            if parts == ["api", "auth", "login"]:
+                body = self._read_json()
+                researcher_email = RESEARCHER_AUTH.verify_password(
+                    str(body.get("password", ""))
+                )
+                self._send_json(
+                    200,
+                    {"email": researcher_email},
+                    {"Set-Cookie": RESEARCHER_AUTH.session_cookie_header()},
+                )
+                return
+
+            if parts == ["api", "auth", "logout"]:
+                self._send_json(
+                    200,
+                    {"logged_out": True},
+                    {"Set-Cookie": RESEARCHER_AUTH.clear_cookie_header()},
+                )
+                return
+
+            researcher_email = self._require_researcher(api=True)
+            if researcher_email is None:
+                return
+            body = self._read_json()
+            if parts == ["api", "sessions"]:
+                participant_id = str(body.get("participant_id", "")).strip()
+                session = start_session(
+                    participant_id,
+                    str(body.get("condition", "")),
+                    str(body.get("task", "")),
+                    researcher_email,
+                )
+                self._send_json(201, {
+                    "session_id": session.id,
+                    "session_token": session.secret,
+                    "participant_id": session.participant_id,
+                })
+                return
+
+            if parts == ["api", "survey"]:
+                participant_id = str(
+                    body.get("participant_id", "")
+                ).strip().upper()
+                if not participant_id or len(participant_id) > 64:
+                    raise ValueError("참가자 번호를 1~64자로 입력해 주세요.")
+                environment = body.get("environment")
+                round_index = body.get("round_index")
+                condition = body.get("condition")
+                responses = body.get("responses")
+                scores = body.get("scores")
+                if environment not in ("web", "vr"):
+                    raise ValueError("올바르지 않은 실험 환경입니다.")
+                if round_index not in (1, 2):
+                    raise ValueError("올바르지 않은 설문 라운드입니다.")
+                if condition not in ("condition_1", "condition_2"):
+                    raise ValueError("올바르지 않은 실험 조건입니다.")
+                if not isinstance(responses, list) or len(responses) > 500:
+                    raise ValueError("설문 응답 형식이 올바르지 않습니다.")
+                if not isinstance(scores, dict) or len(scores) > 100:
+                    raise ValueError("설문 점수 형식이 올바르지 않습니다.")
+                survey_payload = {
+                    "participant_id": participant_id,
+                    "researcher_email": researcher_email,
+                    "environment": environment,
+                    "round_index": round_index,
+                    "condition": condition,
+                    "gender": str(body.get("gender", ""))[:40] or None,
+                    "age": body.get("age") if isinstance(body.get("age"), int) else None,
+                    "design_experience": str(body.get("design_experience", ""))[:80] or None,
+                    "llm_experience": str(body.get("llm_experience", ""))[:80] or None,
+                    "submitted_at": body.get("submitted_at"),
+                    "responses": responses,
+                    "scores": scores,
+                }
+                STUDY_STORE.submit_survey(survey_payload)
+                self._send_json(201, {"saved": True})
+                return
+
+            if len(parts) == 4 and parts[:2] == ["api", "sessions"]:
+                session = self._authorized_session(parts[2], researcher_email)
+                if session is None:
+                    return
+                if parts[3] == "messages":
+                    if isinstance(session, PersistedExperimentSession):
+                        self._send_json(
+                            410,
+                            {
+                                "error": (
+                                    "서버가 교체되어 대화를 계속할 수 없습니다. "
+                                    "현재까지의 기록은 저장되어 있습니다."
+                                )
+                            },
+                        )
+                        return
+                    message = body.get("message")
+                    if not isinstance(message, str) or len(message) > 10_000:
+                        raise ValueError("메시지는 10,000자 이하 문자열이어야 합니다.")
+                    session.submit_message(message)
+                    self._send_json(202, {"accepted": True})
+                    return
+                if parts[3] == "idea":
+                    concept = body.get("concept")
+                    features = body.get("features")
+                    differentiator = body.get("differentiator")
+                    if (
+                        not isinstance(concept, str)
+                        or not isinstance(features, list)
+                        or len(features) != 3
+                        or not all(isinstance(item, str) and item.strip() for item in features)
+                        or not isinstance(differentiator, str)
+                        or not concept.strip()
+                        or not differentiator.strip()
+                    ):
+                        raise ValueError("최종 아이디어의 모든 항목을 채워 주세요.")
+                    if len(json.dumps(body, ensure_ascii=False)) > 20_000:
+                        raise ValueError("최종 아이디어가 너무 깁니다.")
+                    form = {
+                        "concept": concept.strip(),
+                        "features": [item.strip() for item in features],
+                        "differentiator": differentiator.strip(),
+                        "filled_at": datetime.datetime.now(
+                            datetime.timezone.utc
+                        ).isoformat(),
+                    }
+                    if isinstance(session, PersistedExperimentSession):
+                        STUDY_STORE.record_recovered_idea(session, form)
+                    else:
+                        session.submit_form(form)
+                    self._send_json(202, {"accepted": True})
+                    return
+            self._send_json(404, {"error": "찾을 수 없습니다."})
+        except ResearcherAccessDenied as error:
+            self._send_json(403, {"error": str(error)})
+        except AuthConfigurationError as error:
+            self._send_json(503, {"error": str(error)})
+        except SessionCancelled as error:
+            self._send_json(409, {"error": str(error)})
+        except (ValueError, RuntimeError) as error:
+            self._send_json(400, {"error": str(error)})
+        except StoreError:
+            self._send_json(503, {"error": "데이터 저장소에 연결할 수 없습니다."})
+        except Exception:
+            traceback.print_exc()
+            self._send_json(500, {"error": "서버 오류가 발생했습니다."})
+
+    def do_DELETE(self):
+        parsed = urllib.parse.urlparse(self.path)
+        researcher_email = self._require_researcher(api=True)
+        if researcher_email is None:
+            return
+        parts = [part for part in parsed.path.split("/") if part]
+        if len(parts) == 3 and parts[:2] == ["api", "sessions"]:
+            session = self._authorized_session(parts[2], researcher_email)
+            if session is None:
+                return
+            if isinstance(session, PersistedExperimentSession):
+                self._send_json(
+                    410,
+                    {"error": "이미 종료된 서버 세션입니다."},
+                )
+                return
+            try:
+                session.cancel()
+                self._send_json(200, {"cancelled": True})
+            except Exception:
+                self._send_json(500, {"error": "세션을 종료하지 못했습니다."})
+            return
+        self._send_json(404, {"error": "찾을 수 없습니다."})
 
     def log_message(self, format, *args):
         pass
@@ -968,33 +1864,33 @@ if __name__ == "__main__":
     try:
         print("실험 서버 시작 중...")
         print()
-        with IOWebsockets.run_server_in_thread(
-            host="127.0.0.1",
-            port=8765,
-            on_connect=on_connect,
-        ) as ws_uri:
-            print(f"웹소켓: {ws_uri}")
+        runtime_logging.start(logger=ContextRuntimeLogger(STUDY_STORE))
+        port = int(os.getenv("PORT", "8000"))
+        httpd = http.server.ThreadingHTTPServer(("0.0.0.0", port), FrontendHandler)
+        httpd.daemon_threads = True
+        print(f"http://127.0.0.1:{port} 을 열어주세요.")
+        print(f"동시 세션 상한: {SESSION_REGISTRY.max_active_sessions}")
+        print("종료: Ctrl+C")
 
-            httpd = http.server.HTTPServer(("127.0.0.1", 8000), FrontendHandler)
-            print("http://127.0.0.1:8000 을 열어주세요.")
-            print("종료: Ctrl+C")
+        stopping = threading.Event()
 
-            def force_exit(*args):
-                _close_session_files()
-                print("\n종료")
-                os._exit(0)
+        def graceful_stop(*args):
+            if stopping.is_set():
+                return
+            stopping.set()
+            print("\n종료 중...")
+            threading.Thread(target=httpd.shutdown, daemon=True).start()
 
-            signal.signal(signal.SIGINT, force_exit)
-            signal.signal(signal.SIGTERM, force_exit)
+        signal.signal(signal.SIGINT, graceful_stop)
+        signal.signal(signal.SIGTERM, graceful_stop)
 
-            try:
-                httpd.serve_forever()
-            except (KeyboardInterrupt, SystemExit):
-                pass
-            finally:
-                _close_session_files()
-                httpd.shutdown()
-                os._exit(0)
+        try:
+            httpd.serve_forever()
+        finally:
+            SESSION_REGISTRY.close_all()
+            runtime_logging.stop()
+            STUDY_STORE.close()
+            httpd.server_close()
     except Exception as e:
         print(f"\n오류 발생: {e}")
-        input("\nEnter를 누르면 종료됩니다...")
+        raise

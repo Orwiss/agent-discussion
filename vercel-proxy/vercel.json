@@ -1,0 +1,17 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "rewrites": [
+    {
+      "source": "/",
+      "destination": "https://mas-ideation-933812697332.asia-northeast3.run.app/"
+    },
+    {
+      "source": "/survey/",
+      "destination": "https://mas-ideation-933812697332.asia-northeast3.run.app/survey/"
+    },
+    {
+      "source": "/:path*",
+      "destination": "https://mas-ideation-933812697332.asia-northeast3.run.app/:path*"
+    }
+  ]
+}

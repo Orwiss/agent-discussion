@@ -1,10 +1,14 @@
 """Centralized vs Decentralized 실험 — 단일 LLM 통일 (study-design 원칙)
 
 후보 (싼 순):
-  1) Gemini 2.5 Flash — function calling 일관성 부족으로 1차 시도 후 탈락
-  2) GPT-4o-mini — function calling 안정, parallel call 표준 ★ 현재 채택
-  3) Qwen3-235B
-  4) Claude Haiku 4.5
+  1) Gemini 2.5 Flash — function calling 이슈 있었으나 한동안 채택. 실측 A/B 결과
+     지시문 준수(글자수 캡·확신도 명시)와 아이디어 구체성 둘 다 3.1 Flash Lite에 밀려 교체.
+  2) Gemini 3.1 Flash Lite — 현재 채택 ★. 2.5 Flash보다 저렴, GA(비-preview),
+     reasoning 토큰 0(비용 안정), 동일 조건 A/B 테스트에서 길이 캡 준수·아이디어
+     구체성·지시 이행력(확신도 명시 등) 전부 우위 확인.
+  3) GPT-4o-mini — function calling 안정, parallel call 표준 (대안 후보, 미채택)
+  4) Qwen3-235B
+  5) Claude Haiku 4.5
 """
 import os
 import logging
@@ -18,7 +22,7 @@ OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 _TIMEOUT = 120
 
 _BASE_LLM = {
-    "model": "google/gemini-2.5-flash",
+    "model": "google/gemini-3.1-flash-lite",
     "api_key": OPENROUTER_API_KEY,
     "base_url": OPENROUTER_BASE_URL,
 }

@@ -19,7 +19,7 @@ phase별 라운드 4 + user 차례 N번 등간격 (발산·심화 N=2, 수렴 N=
 """
 import asyncio
 import json
-import re
+import traceback
 import autogen
 from autogen.agentchat.chat import a_initiate_chats
 from autogen.io import IOStream
@@ -29,33 +29,62 @@ from meeting.common import inject_phase_prefix, build_opening_message, _log, col
 
 # phase별 라운드 수와 user 차례 횟수
 ROUNDS_PER_PHASE = 4
-USER_TURNS = {"generate": 2, "deepen": 2, "converge": 1}
+USER_TURNS = {"divergence": 2, "elaboration": 2, "convergence": 1}
+
+# PM 라우팅·종합 호출에 넘기는 공식 기록(messages)의 슬라이딩 윈도우 크기.
+# 세션 전체(3phase 연속)가 대략 42개 항목이라 50이면 리셋 없이도 안 잘리고 다 들어간다.
+HISTORY_WINDOW = 50
 
 
-def _push_to_ui(sender: str, content: str, recipient: str = "PM", summary: str = "") -> None:
+def _is_current_session(token) -> bool:
+    """token이 지금 활성 세션 것인지 확인 (web.py 순환 임포트 피하려고 지연 임포트)."""
+    try:
+        from web import is_current_session
+        return is_current_session(token)
+    except Exception:
+        return True
+
+
+def _push_to_ui(sender: str, content: str, recipient: str = "PM", summary: str = "", token=None) -> None:
     """현재 IOStream(웹소켓)에 sender 이름으로 발화 push.
-    summary가 있으면 접힘 미리보기용으로 함께 전송."""
+    summary가 있으면 접힘 미리보기용으로 함께 전송.
+    token이 지금 활성 세션 것과 다르면(이전 세션이 뒤늦게 쓰는 경우) 조용히 버린다."""
     if not content or not content.strip():
         return
     try:
-        iostream = IOStream.get_default()
-        ws = getattr(iostream, "_websocket", None)
-        if ws is None:
+        from web import is_current_session
+        if token is not None and not is_current_session(token):
             return
+        iostream = IOStream.get_default()
         payload = {"sender": sender, "recipient": recipient, "content": content}
         if summary:
             payload["summary"] = summary
+        if hasattr(iostream, "send_text"):
+            iostream.send_text(
+                sender,
+                content,
+                recipient=recipient,
+                summary=summary,
+            )
+            return
+        ws = getattr(iostream, "_websocket", None)
+        if ws is None:
+            _log("push_to_ui_fail", {"sender": sender, "reason": "no_supported_transport"})
+            return
         ws.send(json.dumps({"type": "text", "content": payload}))
-    except Exception:
-        pass
+    except Exception as e:
+        _log("push_to_ui_fail", {"sender": sender, "error": str(e), "type": type(e).__name__})
 
 
-def _log_msg(speaker: str, content: str) -> None:
-    """messages.jsonl + messages.csv 누적 (a_initiate_chat 우회라 hook이 안 잡으니 직접)."""
+def _log_msg(speaker: str, content: str, token=None) -> None:
+    """messages.jsonl + messages.csv 누적 (a_initiate_chat 우회라 hook이 안 잡으니 직접).
+    token이 지금 활성 세션 것과 다르면(이전 세션이 뒤늦게 쓰는 경우) 조용히 버린다."""
     if not content or not content.strip():
         return
     try:
-        from web import log_message, _append_messages_csv
+        from web import log_message, _append_messages_csv, is_current_session
+        if token is not None and not is_current_session(token):
+            return
         log_message(speaker, content)
         _append_messages_csv(speaker, content)
     except Exception:
@@ -70,149 +99,161 @@ def _extract_content(reply) -> str:
     return str(reply).strip()
 
 
-def _looks_truncated(text: str) -> bool:
-    """발화가 잘렸는지 추정. 완결 문장은 종결 부호로 끝남 —
-    중간에 잘리면 부호 없이 단어/조사에서 뚝 끝남. (길이 기준으론 못 잡아서 부호로 판정)"""
-    t = (text or "").strip()
-    if len(t) < 10:
-        return True
-    return not re.search(r"[.!?。…?！？\"')\]]\s*$", t)
-
-
-async def _pm_reply_guarded(pm, msgs, user, tries: int = 3) -> str:
-    """PM 응답 생성. 잘린 응답(종결 부호 없음/너무 짧음)이면 재시도.
-    정상 응답이면 첫 시도에 바로 반환 — 깨졌을 때만 추가 호출."""
-    text = ""
-    for _ in range(tries):
-        ok, msg = await pm.a_generate_oai_reply(messages=msgs, sender=user)
-        text = collapse_blank_lines(_extract_content(msg)) if ok else ""
-        if not _looks_truncated(text):
-            return text
-        _log("pm_reply_retry", {"got": text[:30], "len": len(text)})
-    return text
-
-
-async def _retry_subchat(pm, agent, trigger: str, tries: int = 3) -> str:
-    """단일 D/E sub-chat 실행 + 잘린 응답이면 재시도 (업스트림 truncation 대비).
-    정상이면 첫 시도에 바로 반환."""
-    text = ""
-    for _ in range(tries):
-        res = await a_initiate_chats([{
-            "chat_id": 1, "sender": pm, "recipient": agent,
-            "message": trigger, "max_turns": 1,
-            "summary_method": "last_msg", "clear_history": False, "silent": True,
-        }])
-        text = collapse_blank_lines(getattr(res.get(1), "summary", "") or "")
-        if not _looks_truncated(text):
-            return text
-        _log("subagent_reply_retry", {"agent": getattr(agent, "name", "?"), "len": len(text)})
-    return text
-
-
-_summarizer = None
+async def _pm_reply(pm, msgs, user) -> str:
+    """PM 응답 생성 (단일 패스).
+    truncation 재시도는 제거됨 — 근본원인(추론 토큰이 본문을 잘라먹던 것)이
+    config의 reasoning:{max_tokens:0}으로 이미 차단되어, 재시도는 43세션 중 3회만
+    발동했고 그마저 실제 truncation이 아니라 짧은 서두 조각이었음."""
+    ok, msg = await pm.a_generate_oai_reply(messages=msgs, sender=user)
+    return collapse_blank_lines(_extract_content(msg)) if ok else ""
 
 
 def _get_summarizer(pm):
-    """접힘 미리보기용 경량 요약기 (PM과 같은 모델, 1회 생성 후 재사용)."""
-    global _summarizer
-    if _summarizer is None:
-        _summarizer = autogen.AssistantAgent(
+    """접힘 미리보기용 요약기.
+
+    PM 인스턴스마다 하나씩 둬서 동시에 실행되는 참가자 세션의 대화 기록과
+    토큰 사용량이 섞이지 않게 한다.
+    """
+    summarizer = getattr(pm, "_experiment_summarizer", None)
+    if summarizer is None:
+        summarizer = autogen.AssistantAgent(
             name="Summarizer",
             system_message=(
                 "당신은 한 줄 요약기입니다. 주어진 발언의 핵심 아이디어를 "
-                "명사구 한 줄(20자 이내, 문장부호 없이)로만 출력하세요. 다른 말 금지."
+                "구체적인 내용이 드러나게 한 줄(50자 내외, 문장부호 없이)로 요약하세요. "
+                "너무 압축해서 무슨 내용인지 안 보이게 만들지 마세요. 다만 한 줄을 넘길 정도로 길게는 쓰지 마세요. 다른 말 금지."
             ),
             llm_config=pm.llm_config,
         )
-    return _summarizer
+        # PM 생성 시점에 web.py에서 붙여준 세션 태그를 요약기에도 그대로 물려준다 —
+        # 요약기는 PM보다 늦게(첫 호출 때) 생기므로 web.py의 일괄 태깅을 못 받는다.
+        summarizer.session = getattr(pm, "session", None)
+        pm._experiment_summarizer = summarizer
+    return summarizer
+
+
+def reset_summarizer_usage(pm=None) -> None:
+    """해당 세션 PM에 연결된 요약기의 누적 사용량만 초기화."""
+    summarizer = getattr(pm, "_experiment_summarizer", None) if pm is not None else None
+    if summarizer is not None and getattr(summarizer, "client", None):
+        summarizer.client.clear_usage_summary()
+
+
+def get_extra_usage_agents(pm=None) -> list:
+    """토큰 usage 집계에 pm/designer/engineer 말고 추가로 포함해야 할 에이전트
+    (요약기처럼 세션 agents 리스트엔 없지만 토큰을 쓰는 것들)."""
+    summarizer = getattr(pm, "_experiment_summarizer", None) if pm is not None else None
+    return [summarizer] if summarizer is not None else []
 
 
 async def _summarize(pm, text: str) -> str:
-    """발화를 한 줄 요약 (접힘 미리보기용). 이미 짧으면 그대로 반환."""
+    """발화를 한 줄 요약 (접힘 미리보기용). 이미 짧으면 그대로 반환.
+    응답이 15초 안에 안 오면(hang 대비) 한 번 더 시도하고, 그래도 안 되면 원문 앞부분으로 대체."""
     t = (text or "").strip()
     if len(t) < 30:
         return t
-    try:
-        agent = _get_summarizer(pm)
-        ok, msg = await agent.a_generate_oai_reply(
-            messages=[{"role": "user", "content": t}], sender=pm
-        )
-        s = collapse_blank_lines(_extract_content(msg)) if ok else ""
-        s = s.strip().strip("\"'.").strip()
-        return s or t[:20]
-    except Exception:
-        return t[:20]
+    agent = _get_summarizer(pm)
+    for attempt in range(2):
+        try:
+            ok, msg = await asyncio.wait_for(
+                agent.a_generate_oai_reply(messages=[{"role": "user", "content": t}], sender=pm),
+                timeout=15,
+            )
+            s = collapse_blank_lines(_extract_content(msg)) if ok else ""
+            s = s.strip().strip("\"'.").strip()
+            if s:
+                return s
+        except Exception as e:
+            _log("summarize_retry", {"attempt": attempt, "error": str(e), "type": type(e).__name__})
+    return t[:20]
 
 
 def _make_designer_trigger(question: str) -> str:
     return (
-        f"PM이 이렇게 물었습니다: {question}\n\n"
-        "인사나 공감·동의 추임새 없이, 디자인 관점에서 자기 의견부터 바로 답하세요. "
-        "2~3문장으로 짧게, 핵심 하나만. PM의 안을 그대로 받지 말고 다듬거나 다르게 풀어 답하세요."
+        f"PM이 이렇게 물었습니다: {question}\n"
+        "질문에 '디자이너'라고 불리는 부분이 있으면 그게 당신입니다. "
+        "자기 영역에서 핵심 하나로, 2~3문장으로 답하세요. 확신이 약한 부분은 솔직히 밝히세요."
     )
 
 
 def _make_engineer_trigger(question: str) -> str:
     return (
-        f"PM이 이렇게 물었습니다: {question}\n\n"
-        "인사나 공감·동의 추임새 없이, 엔지니어로서 자기 의견부터 바로 답하세요. "
-        "2~3문장으로 짧게, 핵심 하나만. PM의 안을 그대로 받지 말고 다듬거나 다른 각도로 답하세요."
+        f"PM이 이렇게 물었습니다: {question}\n"
+        "질문에 '엔지니어'라고 불리는 부분이 있으면 그게 당신입니다. "
+        "자기 영역에서 핵심 하나로, 2~3문장으로 답하세요. 확신이 약한 부분은 솔직히 밝히세요."
     )
 
 
-def _make_routing_prompt() -> str:
-    return (
-        "당신은 PM입니다. 받아주는 말 없이, 직전에 나온 핵심 포인트를 이어받아 "
-        "회의를 한 걸음 더 끌고 가세요.\n\n"
-        "지금 다루던 그 포인트를 더 파고들 수 있게, 디자이너와 엔지니어에게 "
-        "자연스럽게 나눠 물으세요. 한 명씩 따로 심문하듯 던지지 말고, "
-        "하나의 흐름 안에서 각자 어디를 봐주면 좋을지 짚어주는 식으로. "
-        "다루는 주제는 같고, 보는 각도만 각자 전문 영역으로 갈립니다 "
-        "(디자이너=화면·경험, 엔지니어=기술·데이터가 여는 가능성).\n\n"
-        "초반엔 넓게, 회의가 진행될수록 더 구체적인 지점을 파고드세요. "
-        "1~2문장으로 짧게, 동료에게 묻듯 자연스럽게.\n\n"
-        "참가자가 의견을 냈으면 그 방향을 직접 반영. 바로 본론으로."
+def _make_routing_prompt(is_first_round: bool, phase: str) -> str:
+    name_call = (
+        "어떻게 구현할지보다 어떤 것이 가능할지 질문하세요. 각자 자기 영역에서 답하는 건 "
+        "디자이너와 엔지니어가 알아서 할 일입니다. 질문할 때는 디자이너와 엔지니어를 각각 이름으로 "
+        "불러 누구에게 무엇을 묻는지 구분되게 하고, 한번에 너무 많은 내용을 질문하지 마세요."
     )
-
-
-def _make_synthesis_prompt(d_reply: str, e_reply: str, is_final: bool = False) -> str:
-    head = f"[디자이너]\n{d_reply}\n\n[엔지니어]\n{e_reply}\n\n"
-    if is_final:
-        # 회의 마지막 발언 — 새 질문 없이 최종 컨셉으로 마무리
+    if is_first_round:
         return (
-            head +
-            "이번이 회의의 마지막 발언입니다. 새 질문이나 다음 단계 제안은 하지 말고, "
-            "지금까지 논의를 모아 최종 컨셉을 분명하게 마무리하세요. "
-            "핵심 기능과 차별점이 무엇인지 짚고, 회의를 닫는 톤으로. 3~4문장으로."
+            "반드시 지금 단계의 목적에 부합하는 업무를 디자이너와 엔지니어에게 질문을 통해 위임하세요. "
+            f"{name_call} "
+            "'디자이너는 ~라고 했다'처럼 상대가 낸 아이디어를 이름 붙여 전달하지 말고, "
+            "지금 논의가 어느 방향으로 가고 있는지 주제만 전하세요."
         )
+    if phase == "divergence":
+        attitude = "두 사람의 답을 나란히 놓고 봤을 때 아직 언급되지 않은 다른 방향이 있는지 살핀 뒤"
+    else:
+        attitude = (
+            "두 사람의 답변을 종합적으로 검토해서 각자의 생각이 혼자서는 어떤 부분이 부족한지, "
+            "두 답이 서로 어디서 충돌하는지 차근차근 따져보세요. 한두 문장으로 부족한 지점과 충돌하는 지점을 충분히 살핀 끝에"
+        )
+    return (
+        f"방금 정리한 내용을 다시 설명하지 말고, {attitude} "
+        f"자연스럽게 다음 질문이 따라 나오게 하세요. 이때 {name_call} "
+        "반드시 지금 단계의 목적에 부합하는 업무를 디자이너와 엔지니어에게 질문을 "
+        "통해 위임하세요. '디자이너는 ~라고 했다'처럼 상대가 낸 아이디어를 이름 붙여 전달하지는 마세요. "
+        "전체 3~4문장, 250자 이내로."
+    )
+
+
+def _make_synthesis_prompt(d_reply: str, e_reply: str, phase: str) -> str:
+    head = f"[디자이너]\n{d_reply}\n\n[엔지니어]\n{e_reply}\n\n"
+    if phase in ("divergence", "elaboration"):
+        reaction = (
+            "두 의견을 하나로 섞지 마세요. 디자이너나 엔지니어의 의견에 반응할 때는, "
+            "부족한 부분이 있다면 이유를 들며 반박하고, 괜찮은 부분에는 당신의 의견을 같이 제시하세요."
+        )
+        if phase == "divergence":
+            reaction += " 완전히 새로운 의견을 제시해도 됩니다."
+        return head + f"반드시 지금 단계의 목적에 맞게 정리하세요. {reaction}"
     return (
         head +
-        "받아주는 말 없이 바로, 두 답을 한 줄로 정리하고 다음에 무엇을 볼지 한 마디로 짚어 넘어가세요. "
-        "두 답을 깎아내리거나 틀렸다고 하지 말고 살려서 엮으세요. "
-        "참가자가 직전에 의견을 냈으면 그 방향을 살리세요. "
-        "본론으로 바로 시작. 길게 늘어놓지 말고 2~3문장으로 짧게."
+        "반드시 지금 단계의 목적에 맞게 정리하세요. 두 사람의 답변을 종합적으로 검토하면서도 각자의 기여가 드러나게 정리하고, "
+        "사용자·가치 관점에서 당신 생각도 한 마디 보태세요."
     )
 
 
-async def _run_one_round(pm, designer, engineer, user, messages, is_final=False):
-    """한 라운드 실행 — PM 라우팅 → D/E 병렬 sub-chat → PM 종합. 종합 발화 반환."""
+async def _run_one_round(pm, designer, engineer, user, messages, phase, is_first_round=False, token=None):
+    """한 라운드 실행 — PM 라우팅 → D/E 병렬 sub-chat → PM 종합.
+
+    messages(세션 전체 공통 공식 기록)에 디자이너·엔지니어 원문 + PM 종합을 그 자리에서
+    이어붙인다 — PM 종합문만 남기면 PM 자신도 다음 라운드부턴 원문을 잃는다. 이 기록은
+    디자이너·엔지니어에게는 절대 안 보내지므로(둘은 각자 트리거만 받음) 격리는 안 깨진다."""
     try:
         # (1) PM 라우팅
-        routing_msgs = list(messages) + [{
-            "role": "user", "name": "system", "content": _make_routing_prompt(),
-        }]
-        routing_text = await _pm_reply_guarded(pm, routing_msgs, user)
-        # 라우팅 발화 화면 노출은 직전 메시지가 user(opening 또는 참가자 발화)일 때만.
-        # 직전이 PM 종합이면 종합 발화가 이미 다음 의제 역할 → 라우팅 중복이라 push X.
+        routing_prompt = _make_routing_prompt(is_first_round, phase)
         last_msg = messages[-1] if messages else {}
-        is_after_user = (
-            last_msg.get("name") == "Participant"
-            or last_msg.get("role") == "user"
-        )
+        if last_msg.get("name") == "Participant":
+            routing_prompt = (
+                f"참가자가 방금 이런 의견을 냈습니다: \"{last_msg.get('content', '')}\"\n"
+                "이 의견부터 짚고 질문하세요.\n"
+            ) + routing_prompt
+        routing_msgs = messages[-HISTORY_WINDOW:] + [{
+            "role": "user", "name": "system", "content": routing_prompt,
+        }]
+        routing_text = await _pm_reply(pm, routing_msgs, user)
+        # 이후 라운드는 라우팅 프롬프트 자체가 직전 D/E 답을 곱씹는 내용을 포함하므로,
+        # 화면에서 숨기면 종합→다음 D/E 답 사이가 근거 없이 점프해 보임 — 항상 노출.
         if routing_text:
-            if is_after_user:
-                _push_to_ui("PM", routing_text, recipient="Participant")
-            _log_msg("PM_routing", routing_text)
+            _push_to_ui("PM", routing_text, recipient="Participant", token=token)
+            _log_msg("PM_routing", routing_text, token=token)
 
         # (2) D, E 병렬 sub-chat
         sub_queue = [
@@ -247,97 +288,92 @@ async def _run_one_round(pm, designer, engineer, user, messages, is_final=False)
             elif cid == 2:
                 e_reply = collapse_blank_lines(summary)
 
-        # 잘린 응답(종결 부호 없음/너무 짧음)이면 해당 에이전트만 재시도
-        if _looks_truncated(d_reply):
-            d_reply = await _retry_subchat(pm, designer, _make_designer_trigger(routing_text))
-        if _looks_truncated(e_reply):
-            e_reply = await _retry_subchat(pm, engineer, _make_engineer_trigger(routing_text))
-
         # 접힘 미리보기용 한 줄 요약 (D·E 병렬 생성 → 지연 최소화)
         d_sum, e_sum = await asyncio.gather(_summarize(pm, d_reply), _summarize(pm, e_reply))
 
         if d_reply:
-            _push_to_ui("Designer", d_reply, recipient="PM", summary=d_sum)
-            _log_msg("Designer", d_reply)
+            _push_to_ui("Designer", d_reply, recipient="PM", summary=d_sum, token=token)
+            _log_msg("Designer", d_reply, token=token)
+            messages.append({"role": "user", "content": d_reply, "name": "Designer"})
         if e_reply:
-            _push_to_ui("Engineer", e_reply, recipient="PM", summary=e_sum)
-            _log_msg("Engineer", e_reply)
+            _push_to_ui("Engineer", e_reply, recipient="PM", summary=e_sum, token=token)
+            _log_msg("Engineer", e_reply, token=token)
+            messages.append({"role": "user", "content": e_reply, "name": "Engineer"})
 
         # (3) PM 종합
-        synth_msgs = list(messages) + [{
+        synth_msgs = messages[-HISTORY_WINDOW:] + [{
             "role": "user", "name": "system",
-            "content": _make_synthesis_prompt(d_reply, e_reply, is_final=is_final),
+            "content": _make_synthesis_prompt(d_reply, e_reply, phase),
         }]
-        synth_text = await _pm_reply_guarded(pm, synth_msgs, user)
+        synth_text = await _pm_reply(pm, synth_msgs, user)
         if synth_text:
-            _push_to_ui("PM", synth_text, recipient="Participant")
-            _log_msg("PM", synth_text)
+            _push_to_ui("PM", synth_text, recipient="Participant", token=token)
+            _log_msg("PM", synth_text, token=token)
+            messages.append({"role": "assistant", "content": synth_text, "name": "PM"})
 
         return synth_text
     except Exception as e:
-        _log("centralized_error", {"error": str(e), "type": type(e).__name__})
+        _log("centralized_error", {
+            "error": str(e), "type": type(e).__name__, "traceback": traceback.format_exc(),
+        })
         return ""
 
 
-async def run_centralized_discussion(pm, designer, engineer, user, brief):
-    """Centralized 토론 — phase별 직접 흐름 제어.
+async def run_centralized_discussion(pm, designer, engineer, user, brief, token=None):
+    """Centralized 토론 — 세션 전체를 하나의 대화로 이어가며 phase만 전환.
 
     각 phase: 라운드 4 + user 차례 (등간격, 라운드 2 끝·4 끝)
     - 발산·심화: user 2번
     - 수렴: user 1번 (라운드 4 끝은 양식 자동 전환이라 skip)
 
+    phase 리셋 없음 — messages는 세션 시작부터 끝까지 하나로 이어지고(HISTORY_WINDOW로만
+    자름), phase 전환은 발산 시작 때 딱 한 번 오프닝을 띄운 뒤로는 시스템 메시지
+    (inject_phase_prefix) 갱신만으로 처리한다 — 화면에 새 메시지가 안 뜬다.
+
     web.py는 async loop에서 이 함수를 await.
     """
-    phases = ["generate", "deepen", "converge"]
-    all_results = []
+    reset_summarizer_usage(pm)
+    phases = ["divergence", "elaboration", "convergence"]
+    messages = []
 
     for i, phase in enumerate(phases):
-        carryover = ""
-        if all_results:
-            prev = all_results[-1]
-            prev_summary = getattr(prev, "summary", "") or ""
-            prev_user = getattr(prev, "trailing_user", "") or ""
-            carryover = (
-                f"\n\n=== 이전 페이즈 요약 ===\n{prev_summary}\n==================\n"
-            )
-            if prev_user:
-                carryover += (
-                    f"\n참가자가 직전에 이런 의견을 냈습니다: \"{prev_user}\"\n"
-                    "이 의견부터 짚고 이번 페이즈를 시작하세요.\n"
-                )
-
-        opening_msg = build_opening_message(brief, phase, carryover)
+        if token is not None and not _is_current_session(token):
+            _log("centralized_stale_session_stop", {"token": token, "at": "phase_start"})
+            return None
 
         for agent in (pm, designer, engineer):
-            inject_phase_prefix(agent, phase)
+            inject_phase_prefix(agent, phase, brief)
 
         _log("phase_start", {"phase": phase, "condition": "centralized"})
 
-        # opening — outer messages 시작 + 화면·로그
-        messages = [{
-            "role": "user", "content": opening_msg, "name": "Participant",
-        }]
-        _push_to_ui("Participant", opening_msg, recipient="PM")
-        _log_msg("Participant", opening_msg)
+        if phase == "divergence":
+            # 세션 전체에서 대화를 여는 유일한 지점 — 이후 phase 전환은 시스템
+            # 메시지 갱신만으로 처리하고 새 오프닝은 안 띄운다.
+            opening_msg = build_opening_message(brief, phase)
+            messages.append({
+                "role": "user", "content": opening_msg, "name": "Participant",
+            })
+            _push_to_ui("Participant", opening_msg, recipient="PM", token=token)
+            _log_msg("Participant", opening_msg, token=token)
 
-        is_converge = (phase == "converge")
+        is_convergence = (phase == "convergence")
         n_rounds = ROUNDS_PER_PHASE
 
         for round_idx in range(n_rounds):
-            is_final_round = is_converge and (round_idx + 1 == n_rounds)
-            synth_text = await _run_one_round(
-                pm, designer, engineer, user, messages, is_final=is_final_round
+            if token is not None and not _is_current_session(token):
+                _log("centralized_stale_session_stop", {"token": token, "at": "round_start"})
+                return None
+
+            await _run_one_round(
+                pm, designer, engineer, user, messages, phase,
+                is_first_round=(i == 0 and round_idx == 0), token=token,
             )
-            if synth_text:
-                messages.append({
-                    "role": "assistant", "content": synth_text, "name": "PM",
-                })
 
             # 라운드 2의 배수 끝마다 user 차례. 수렴 phase의 라운드 4 끝은 skip.
             current_round = round_idx + 1
             is_user_turn = (current_round % 2 == 0)
             is_last_round = (current_round == n_rounds)
-            if is_user_turn and not (is_last_round and is_converge):
+            if is_user_turn and not (is_last_round and is_convergence):
                 user_input = await user.a_get_human_input(
                     "Replying as Participant. Provide feedback to PM. "
                     "Press enter to skip and use auto-reply, or type 'exit' to end the conversation: "
@@ -349,22 +385,21 @@ async def run_centralized_discussion(pm, designer, engineer, user, brief):
                     messages.append({
                         "role": "user", "content": user_input, "name": "Participant",
                     })
-                    _push_to_ui("Participant", user_input, recipient="PM")
-                    _log_msg("Participant", user_input)
+                    _push_to_ui("Participant", user_input, recipient="PM", token=token)
+                    _log_msg("Participant", user_input, token=token)
 
-        # phase 결과 — 마지막 PM 종합 + 그 뒤에 나온 참가자 발언(있으면 다음 페이즈로 넘김)
-        last_synth = ""
-        trailing_user = ""
-        for m in reversed(messages):
-            name = m.get("name")
-            if name == "PM":
-                last_synth = m.get("content", "")
-                break
-            if name == "Participant" and not trailing_user:
-                trailing_user = m.get("content", "")
-        all_results.append(type("Result", (), {
-            "summary": last_synth,
-            "trailing_user": trailing_user,
-        })())
-
-    return all_results[-1]
+    # 세션 결과 — 마지막 PM 종합 + 그 뒤에 나온 참가자 발언
+    last_synth = ""
+    trailing_user = ""
+    for m in reversed(messages):
+        name = m.get("name")
+        if name == "PM" and not last_synth:
+            last_synth = m.get("content", "")
+        if name == "Participant" and not trailing_user:
+            trailing_user = m.get("content", "")
+        if last_synth and trailing_user:
+            break
+    return type("Result", (), {
+        "summary": last_synth,
+        "trailing_user": trailing_user,
+    })()

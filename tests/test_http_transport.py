@@ -15,7 +15,6 @@ from experiment_runtime import (
     SessionIOStream,
     session_scope,
 )
-from researcher_auth import COOKIE_NAME, ResearcherAuth
 from study_store import PersistedExperimentSession
 
 
@@ -25,16 +24,6 @@ class TestHTTPTransport(unittest.TestCase):
         self.registry = ExperimentSessionRegistry(self.temp_dir.name, max_active_sessions=3)
         self.store = MagicMock()
         self.store.authorize_experiment_session.return_value = None
-        self.auth = ResearcherAuth(
-            shared_password="s3cr3t-phrase",
-            session_label="researcher@example.com",
-            cookie_secret="x" * 32,
-            clock=lambda: 1_000,
-        )
-        self.auth_cookie = (
-            f"{COOKIE_NAME}=" + self.auth.create_session_value()
-        )
-
         def fake_worker(session):
             stream = SessionIOStream(session)
             with session_scope(session), IOStream.set_default(stream):
@@ -51,7 +40,6 @@ class TestHTTPTransport(unittest.TestCase):
             patch.object(web, "SESSION_REGISTRY", self.registry),
             patch.object(web, "_session_worker", fake_worker),
             patch.object(web, "STUDY_STORE", self.store),
-            patch.object(web, "RESEARCHER_AUTH", self.auth),
         ]
         for item in self.patches:
             item.start()
@@ -74,13 +62,11 @@ class TestHTTPTransport(unittest.TestCase):
             item.stop()
         self.temp_dir.cleanup()
 
-    def request(self, method, path, body=None, token=None, authenticated=True):
+    def request(self, method, path, body=None, token=None):
         payload = None if body is None else json.dumps(body).encode("utf-8")
         headers = {"Content-Type": "application/json"}
         if token:
             headers["X-Session-Token"] = token
-        if authenticated:
-            headers["Cookie"] = self.auth_cookie
         request = urllib.request.Request(
             self.base_url + path,
             data=payload,
@@ -103,61 +89,9 @@ class TestHTTPTransport(unittest.TestCase):
         return result
 
     def test_api_health_check(self):
-        status, result = self.request(
-            "GET",
-            "/api/healthz",
-            authenticated=False,
-        )
+        status, result = self.request("GET", "/api/healthz")
         self.assertEqual(status, 200)
         self.assertEqual(result, {"status": "ok"})
-
-    def test_anonymous_api_is_rejected(self):
-        with self.assertRaises(urllib.error.HTTPError) as raised:
-            self.request(
-                "POST",
-                "/api/sessions",
-                {
-                    "participant_id": "P01",
-                    "condition": "centralized",
-                    "task": "A",
-                },
-                authenticated=False,
-            )
-        self.assertEqual(raised.exception.code, 401)
-
-    def test_password_login_cookie_authenticates_next_request(self):
-        payload = urllib.parse.urlencode(
-            {"password": "s3cr3t-phrase"}
-        ).encode("utf-8")
-        login_request = urllib.request.Request(
-            self.base_url + "/auth/login?next=/",
-            data=payload,
-            headers={"Content-Type": "application/x-www-form-urlencoded"},
-            method="POST",
-        )
-        with urllib.request.urlopen(login_request, timeout=3) as response:
-            self.assertEqual(response.status, 200)
-            set_cookie = response.headers["Set-Cookie"]
-            login_page = response.read().decode("utf-8")
-
-        issued_cookie = set_cookie.split(";", 1)[0]
-        self.assertTrue(issued_cookie.startswith(f"{COOKIE_NAME}="))
-        self.assertIn("HttpOnly", set_cookie)
-        self.assertIn("Secure", set_cookie)
-        self.assertIn("fetch('/api/auth/me'", login_page)
-        self.assertIn("document.cookie = fallbackCookie", login_page)
-        self.assertNotIn("__FALLBACK_COOKIE_JSON__", login_page)
-
-        me_request = urllib.request.Request(
-            self.base_url + "/api/auth/me",
-            headers={"Cookie": issued_cookie},
-        )
-        with urllib.request.urlopen(me_request, timeout=3) as response:
-            self.assertEqual(response.status, 200)
-            self.assertEqual(
-                json.loads(response.read()),
-                {"email": "researcher@example.com"},
-            )
 
     def test_two_http_sessions_receive_only_their_own_events(self):
         first = self.create_session("P01")
@@ -266,7 +200,7 @@ class TestHTTPTransport(unittest.TestCase):
         stored = self.store.submit_survey.call_args.args[0]
         self.assertNotIn("access_code", stored)
         self.assertEqual(stored["participant_id"], "P01")
-        self.assertEqual(stored["researcher_email"], "researcher@example.com")
+        self.assertEqual(stored["researcher_email"], web.LOCAL_RESEARCHER)
 
 
 if __name__ == "__main__":

@@ -17,7 +17,6 @@
 """
 import asyncio
 import csv
-import html
 import json
 import os
 import sys
@@ -42,11 +41,6 @@ from experiment_runtime import (
 )
 from study_store import PersistedExperimentSession, StoreError, StudyStore
 from runtime_llm_logger import ContextRuntimeLogger
-from researcher_auth import (
-    AuthConfigurationError,
-    ResearcherAccessDenied,
-    ResearcherAuth,
-)
 
 from config_uniform import (
     llm_config_pm, llm_config_designer, llm_config_engineer,
@@ -89,7 +83,11 @@ SESSION_REGISTRY = ExperimentSessionRegistry(
     max_active_sessions=int(os.getenv("MAX_ACTIVE_SESSIONS", "3")),
 )
 STUDY_STORE = StudyStore()
-RESEARCHER_AUTH = ResearcherAuth()
+
+# 이 브랜치는 VR 장비가 붙은 로컬 머신에서만 돌아간다. 공개 배포용 연구자 로그인은
+# 걷어냈고, 세션 기록에 들어가던 식별자 자리는 이 고정값으로 채운다 — 이 칸은
+# Supabase 행과 세션 인가 조회에 그대로 쓰이므로 없애면 데이터 모양이 바뀐다.
+LOCAL_RESEARCHER = "local"
 
 # === 간단한 IP당 레이트리밋 (봇/스크립트 방어용) ===
 _RATE_LIMIT_WINDOW_SECONDS = float(os.getenv("RATE_LIMIT_WINDOW_SECONDS", "60"))
@@ -508,17 +506,6 @@ HTML_PAGE = r"""<!DOCTYPE html>
   }
   #start-page .secondary-link-button:hover { background: rgba(79,70,229,0.08); }
   #start-page .secondary-link-button:active { transform: translateY(1px); }
-  #researcher-bar {
-    position: fixed; top: 16px; right: 20px; z-index: 20;
-    display: flex; align-items: center; gap: 10px;
-    padding: 8px 12px; border: 1px solid var(--border);
-    border-radius: 999px; background: rgba(255,255,255,.94);
-    box-shadow: var(--shadow); color: var(--muted); font-size: 12px;
-  }
-  #researcher-bar button {
-    border: 0; background: transparent; color: var(--accent);
-    font: inherit; font-weight: 700; cursor: pointer; padding: 0; margin: 0;
-  }
 
   /* ===== 안내 모달 ===== */
   .modal-overlay {
@@ -739,10 +726,6 @@ HTML_PAGE = r"""<!DOCTYPE html>
 <body>
 
 <div id="start-page">
-  <div id="researcher-bar">
-    <span>__RESEARCHER_EMAIL__</span>
-    <button type="button" onclick="logoutResearcher()">로그아웃</button>
-  </div>
   <h1>디자인 아이디에이션 실험</h1>
   <p>PM · UX/UI Designer · SW Engineer와 함께 모바일 앱 아이디어를 발전시킵니다.</p>
   <div class="form-group">
@@ -1184,15 +1167,6 @@ async function resetToStart() {
   location.reload();
 }
 
-async function logoutResearcher() {
-  pollActive = false;
-  try {
-    await fetch('/api/auth/logout', {method: 'POST'});
-  } finally {
-    location.replace('/login');
-  }
-}
-
 function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -1266,129 +1240,11 @@ async function confirmStart() {
 </html>"""
 
 
-LOGIN_PAGE = r"""<!DOCTYPE html>
-<html lang="ko">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>연구자 로그인 · MAS Ideation</title>
-<style>
-  :root { color-scheme: light; font-family: Arial, "Noto Sans KR", sans-serif; }
-  * { box-sizing: border-box; }
-  body {
-    min-height: 100vh; margin: 0; display: grid; place-items: center;
-    background: #f5f7fb; color: #101828;
-  }
-  main {
-    width: min(440px, calc(100% - 32px)); padding: 42px;
-    background: white; border: 1px solid #e4e7ec; border-radius: 20px;
-    box-shadow: 0 18px 48px rgba(16, 24, 40, .10); text-align: center;
-  }
-  .eyebrow { color: #4f46e5; font-size: 13px; font-weight: 700; }
-  h1 { margin: 12px 0 10px; font-size: 28px; letter-spacing: -.03em; }
-  p { margin: 0 0 28px; color: #667085; line-height: 1.65; font-size: 14px; }
-  form { display: flex; flex-direction: column; gap: 12px; }
-  input[type="password"] {
-    padding: 13px 16px; border: 1px solid #d0d5dd; border-radius: 10px;
-    font-size: 15px;
-  }
-  button {
-    padding: 13px 16px; border: none; border-radius: 10px; background: #4f46e5;
-    color: white; font-size: 15px; font-weight: 600; cursor: pointer;
-  }
-  button:hover { background: #4338ca; }
-  #login-error { min-height: 20px; margin-top: 6px; color: #b42318; font-size: 13px; }
-</style>
-</head>
-<body>
-<main>
-  <div class="eyebrow">MAS IDEATION STUDY</div>
-  <h1>연구자 로그인</h1>
-  <p>공용 비밀번호를 입력하면<br>실험 시스템과 설문에 접속할 수 있습니다.</p>
-  <form method="POST" action="/auth/login?next=__NEXT_PATH_ATTR__">
-    <input type="password" name="password" placeholder="비밀번호" autofocus required>
-    <button type="submit">입장</button>
-  </form>
-  <div id="login-error" role="alert"></div>
-</main>
-<script>
-const errorEl = document.getElementById('login-error');
-if (new URLSearchParams(location.search).get('error') === 'wrong_password') {
-  errorEl.textContent = '비밀번호가 올바르지 않습니다.';
-}
-</script>
-</body>
-</html>"""
-
-LOGIN_COMPLETE_PAGE = """<!doctype html>
-<html lang="ko">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>로그인 완료 · MAS Ideation</title>
-</head>
-<body>
-<main>
-  <p id="status">로그인 세션을 확인하고 있습니다...</p>
-</main>
-<script>
-const nextPath = __NEXT_PATH_JSON__;
-const fallbackCookie = __FALLBACK_COOKIE_JSON__;
-const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-async function finishLogin() {
-  let fallbackApplied = false;
-  for (let attempt = 0; attempt < 20; attempt += 1) {
-    try {
-      const response = await fetch('/api/auth/me', {
-        credentials: 'same-origin',
-        cache: 'no-store',
-      });
-      if (response.ok) {
-        location.replace(nextPath);
-        return;
-      }
-    } catch (error) {
-      // The next retry handles a transient proxy or revision handoff.
-    }
-    if (!fallbackApplied) {
-      document.cookie = fallbackCookie;
-      fallbackApplied = true;
-    }
-    await delay(150);
-  }
-  document.getElementById('status').textContent =
-    '로그인 세션을 저장하지 못했습니다. 페이지를 새로고침한 뒤 다시 시도해 주세요.';
-}
-finishLogin();
-</script>
-</body>
-</html>"""
-
-
-def _safe_next_path(raw: str | None) -> str:
-    value = urllib.parse.unquote(raw or "/")
-    if not value.startswith("/") or value.startswith("//"):
-        return "/"
-    return value
-
-
-def _render_login_page(next_path: str):
-    safe_path = _safe_next_path(next_path)
-    return LOGIN_PAGE.replace(
-        "__NEXT_PATH_ATTR__",
-        html.escape(urllib.parse.quote(safe_path, safe="/"), quote=True),
-    )
-
-
-def _render_html_page(researcher_email: str = "researcher@example.com"):
+def _render_html_page():
     return (HTML_PAGE
             .replace("__FORM_REQUEST_MARKER__", FORM_REQUEST_MARKER)
             .replace("__TOPIC_MARKER__", TOPIC_MARKER)
-            .replace("__BRIEFS_JSON__", json.dumps(BRIEFS, ensure_ascii=False))
-            .replace(
-                "__RESEARCHER_EMAIL__",
-                html.escape(researcher_email),
-            ))
+            .replace("__BRIEFS_JSON__", json.dumps(BRIEFS, ensure_ascii=False)))
 
 
 class FrontendHandler(http.server.SimpleHTTPRequestHandler):
@@ -1477,21 +1333,11 @@ class FrontendHandler(http.server.SimpleHTTPRequestHandler):
             _RATE_LIMIT_BUCKETS[ip] = (window_start, count)
             return count > _RATE_LIMIT_MAX_REQUESTS
 
-    def _current_researcher(self):
-        return RESEARCHER_AUTH.email_from_cookie_header(
-            self.headers.get("Cookie")
-        )
-
     def _require_researcher(self, *, api):
-        email = self._current_researcher()
-        if email:
-            return email
-        if api:
-            self._send_json(401, {"error": "연구자 로그인이 필요합니다."})
-        else:
-            next_path = urllib.parse.quote(self.path, safe="/?=&")
-            self._redirect(f"/login?next={next_path}")
-        return None
+        """로컬 전용 브랜치라 로그인 관문이 없다. 호출부를 그대로 두려고
+        함수는 남기고 항상 같은 식별자를 돌려준다."""
+        del api
+        return LOCAL_RESEARCHER
 
     def _authorized_session(self, session_id, researcher_email):
         secret = self.headers.get("X-Session-Token", "")
@@ -1564,40 +1410,9 @@ class FrontendHandler(http.server.SimpleHTTPRequestHandler):
         if self._rate_limited():
             self._send_json(429, {"error": "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요."})
             return
-        if parsed.path == "/login":
-            researcher_email = self._current_researcher()
-            query = urllib.parse.parse_qs(parsed.query)
-            next_path = _safe_next_path(query.get("next", ["/"])[0])
-            if researcher_email:
-                self._redirect(next_path)
-                return
-            if not RESEARCHER_AUTH.configured:
-                self._send_json(
-                    503,
-                    {"error": "연구자 로그인이 아직 설정되지 않았습니다."},
-                )
-                return
-            body = _render_login_page(next_path).encode("utf-8")
-            self.send_response(200)
-            self.send_header("Content-Type", "text/html; charset=utf-8")
-            self.send_header("Content-Length", str(len(body)))
-            self.send_header("Cache-Control", "no-store")
-            self.send_header("X-Content-Type-Options", "nosniff")
-            self.send_header("X-Frame-Options", "DENY")
-            self.send_header("Referrer-Policy", "no-referrer")
-            self.send_header("X-Robots-Tag", "noindex, nofollow")
-            self.end_headers()
-            self.wfile.write(body)
-            return
-
         researcher_email = self._require_researcher(
             api=parsed.path.startswith("/api/")
         )
-        if researcher_email is None:
-            return
-        if parsed.path == "/api/auth/me":
-            self._send_json(200, {"email": researcher_email})
-            return
         if parsed.path == "/api/admin/submissions":
             self._send_json(
                 200,
@@ -1647,7 +1462,7 @@ class FrontendHandler(http.server.SimpleHTTPRequestHandler):
             self._send_json(404, {"error": "찾을 수 없습니다."})
             return
         try:
-            body = _render_html_page(researcher_email).encode("utf-8")
+            body = _render_html_page().encode("utf-8")
             self.send_response(200)
             self.send_header("Content-type", "text/html; charset=utf-8")
             self.send_header("Content-Length", str(len(body)))
@@ -1666,70 +1481,7 @@ class FrontendHandler(http.server.SimpleHTTPRequestHandler):
             self._send_json(429, {"error": "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요."})
             return
         try:
-            if parts == ["auth", "login"]:
-                query = urllib.parse.parse_qs(parsed.query)
-                next_path = _safe_next_path(query.get("next", ["/"])[0])
-                form = self._read_form()
-                try:
-                    RESEARCHER_AUTH.verify_password(
-                        str(form.get("password", ""))
-                    )
-                except ResearcherAccessDenied:
-                    self._redirect(
-                        f"/login?next={urllib.parse.quote(next_path, safe='/')}"
-                        "&error=wrong_password"
-                    )
-                    return
-                cookie_header = RESEARCHER_AUTH.session_cookie_header()
-                fallback_cookie = "; ".join(
-                    part
-                    for part in cookie_header.split("; ")
-                    if part != "HttpOnly"
-                )
-                response_body = (
-                    LOGIN_COMPLETE_PAGE
-                    .replace("__NEXT_PATH_JSON__", json.dumps(next_path))
-                    .replace(
-                        "__FALLBACK_COOKIE_JSON__",
-                        json.dumps(fallback_cookie),
-                    )
-                    .encode("utf-8")
-                )
-                self.send_response(200)
-                self.send_header(
-                    "Set-Cookie",
-                    cookie_header,
-                )
-                self.send_header("Content-Type", "text/html; charset=utf-8")
-                self.send_header("Content-Length", str(len(response_body)))
-                self.send_header("Cache-Control", "no-store")
-                self.end_headers()
-                self.wfile.write(response_body)
-                return
-
-            if parts == ["api", "auth", "login"]:
-                body = self._read_json()
-                researcher_email = RESEARCHER_AUTH.verify_password(
-                    str(body.get("password", ""))
-                )
-                self._send_json(
-                    200,
-                    {"email": researcher_email},
-                    {"Set-Cookie": RESEARCHER_AUTH.session_cookie_header()},
-                )
-                return
-
-            if parts == ["api", "auth", "logout"]:
-                self._send_json(
-                    200,
-                    {"logged_out": True},
-                    {"Set-Cookie": RESEARCHER_AUTH.clear_cookie_header()},
-                )
-                return
-
             researcher_email = self._require_researcher(api=True)
-            if researcher_email is None:
-                return
             body = self._read_json()
             if parts == ["api", "sessions"]:
                 participant_id = str(body.get("participant_id", "")).strip()
@@ -1843,10 +1595,6 @@ class FrontendHandler(http.server.SimpleHTTPRequestHandler):
                     self._send_json(202, {"accepted": True})
                     return
             self._send_json(404, {"error": "찾을 수 없습니다."})
-        except ResearcherAccessDenied as error:
-            self._send_json(403, {"error": str(error)})
-        except AuthConfigurationError as error:
-            self._send_json(503, {"error": str(error)})
         except SessionCancelled as error:
             self._send_json(409, {"error": str(error)})
         except (ValueError, RuntimeError) as error:
@@ -1860,8 +1608,6 @@ class FrontendHandler(http.server.SimpleHTTPRequestHandler):
     def do_DELETE(self):
         parsed = urllib.parse.urlparse(self.path)
         researcher_email = self._require_researcher(api=True)
-        if researcher_email is None:
-            return
         parts = [part for part in parsed.path.split("/") if part]
         if len(parts) == 3 and parts[:2] == ["api", "sessions"]:
             session = self._authorized_session(parts[2], researcher_email)

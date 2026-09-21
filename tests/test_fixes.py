@@ -66,7 +66,6 @@ class TestFormMarker(unittest.TestCase):
         self.assertIn("max-width: 50%; overflow: hidden", html)
         self.assertIn("padding: 12px 16px;", html)
         self.assertIn(".sub-gist { font-size: 16px", html)
-        self.assertIn("cursor: pointer; padding: 0; margin: 0;", html)
 
     def test_blank_participant_id_falls_back_to_p99(self):
         from unittest.mock import patch

@@ -28,10 +28,12 @@ class OSCListener:
         # socketserver 기본값은 한 번에 8192바이트만 읽는다. 오디오 청크는 40KB라
         # 그대로 두면 잘려서 파싱에 실패하고 조용히 사라진다.
         self.server.max_packet_size = 65535
-        # 수신 버퍼도 키운다. 기본 64KB로 두면 40KB 청크를 연달아 쏠 때 넘쳐서
-        # 뒷부분이 버려진다(실측: 4청크 중 2개 + audio_end 유실). 이 테스트는
-        # '패킷을 제대로 만드는가'를 보는 것이라 유실 변수를 빼고 본다 —
-        # 버스트 유실 자체는 UE5 수신 설정과 함께 따로 다뤄야 할 문제다.
+        # 수신 버퍼도 키운다. 기본 64KB로 두면 청크를 연달아 쏠 때 넘쳐서 뒷부분이
+        # 버려진다 — 실측으로 40KB 청크는 4개 중 2개만 도착했고, 청크를 8KB로 줄여도
+        # 13개 중 12개만 도착했다. 두 경우 모두 audio_end까지 사라졌다. 청크를 줄여도
+        # 마찬가지라는 건 원인이 크기가 아니라 '쉬지 않고 연달아 보내는 것'이라는 뜻이고,
+        # 그건 _send_audio_via_osc 쪽 문제다(받는 쪽 설정 문제가 아니다).
+        # 이 테스트는 패킷을 제대로 만드는지만 보려는 것이라 그 변수를 빼고 본다.
         self.server.socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 1 << 20)
         self.port = self.server.server_address[1]
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)

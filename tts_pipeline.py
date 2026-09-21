@@ -29,10 +29,13 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 # -- Voice mapping --
+# 에이전트 이름이 centralized/decentralized 구조로 바뀌면서 PM·Designer·Engineer가
+# 됐다. VOICE_PM 같은 새 변수를 먼저 보고, 없으면 예전 변수를 그대로 읽는다.
+# PM에는 예전 UX 리서처 목소리가 기본으로 붙는다 — 바꾸려면 VOICE_PM을 지정한다.
 AGENT_VOICE_MAP: dict[str, str] = {
-    "UXResearcher":     os.getenv("VOICE_UX_RESEARCHER", ""),
-    "VisualDesigner":   os.getenv("VOICE_VISUAL_DESIGNER", ""),
-    "SoftwareEngineer": os.getenv("VOICE_SOFTWARE_ENGINEER", ""),
+    "PM":       os.getenv("VOICE_PM") or os.getenv("VOICE_UX_RESEARCHER", ""),
+    "Designer": os.getenv("VOICE_DESIGNER") or os.getenv("VOICE_VISUAL_DESIGNER", ""),
+    "Engineer": os.getenv("VOICE_ENGINEER") or os.getenv("VOICE_SOFTWARE_ENGINEER", ""),
 }
 
 # -- Audio2Face gRPC --
@@ -511,8 +514,15 @@ threading.Thread(target=_playback_worker, daemon=True, name="playback-worker").s
 
 
 # -- Entry point --
+def wait_until_idle(timeout: float | None = None) -> bool:
+    """마지막으로 넘긴 발화의 재생이 끝날 때까지 기다린다.
+    trigger()가 시작할 때 _prev_done을 내려놓고 _run이 끝날 때 다시 올리므로,
+    이 함수가 돌아오면 큐에 들어간 발화가 전부 재생된 상태다."""
+    return _prev_done.wait(timeout)
+
+
 def trigger(agent_name: str, text: str) -> None:
-    """guardrails.py에서 호출. 이전 발화 재생이 끝날 때까지 대기 후,
+    """vr_output의 워커 스레드에서 호출. 이전 발화 재생이 끝날 때까지 대기 후,
     현재 발화의 TTS/재생을 백그라운드로 시작하고 즉시 리턴.
     → AutoGen은 항상 한 발화만 미리 생성 가능 (텍스트 선행, 오디오는 순차)."""
     _prev_done.wait()

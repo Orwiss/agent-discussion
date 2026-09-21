@@ -2,10 +2,15 @@
 from dataclasses import dataclass, field
 from typing import List
 
+import os
+
+# 에이전트 이름은 PM·Designer·Engineer로 바뀌었지만, 캐릭터 ID는 UE5 쪽에 이미
+# 박혀 있는 이름을 그대로 둔다 — 언리얼 블루프린트를 안 고쳐도 되게 하려는 것이다.
+# UE5에서 캐릭터 이름을 새로 지으면 CHARACTER_PM 같은 변수로 덮어쓰면 된다.
 AGENT_CHARACTER_MAP: dict[str, str] = {
-    "UXResearcher":     "MH_UXResearcher",
-    "VisualDesigner":   "MH_VisualDesigner",
-    "SoftwareEngineer": "MH_SoftwareEngineer",
+    "PM":       os.getenv("CHARACTER_PM", "MH_UXResearcher"),
+    "Designer": os.getenv("CHARACTER_DESIGNER", "MH_VisualDesigner"),
+    "Engineer": os.getenv("CHARACTER_ENGINEER", "MH_SoftwareEngineer"),
 }
 
 

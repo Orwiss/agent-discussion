@@ -1,0 +1,10 @@
+# VR 출력 레이어 전용 의존성 (TTS → Audio2Face → OSC).
+# Cloud Run 이미지에는 안 들어간다 — requirements.txt와 따로 두는 이유다.
+# 로컬 VR 실행 머신에서만: pip install -r requirements.txt -r requirements-vr.txt
+#
+# 버전은 이 파이프라인이 실제로 돌아간 개발 머신에 설치돼 있는 것을 그대로 적었다.
+python-osc==1.9.3
+elevenlabs==2.41.0
+numpy==1.26.4
+grpcio==1.72.0rc1
+protobuf==4.25.8

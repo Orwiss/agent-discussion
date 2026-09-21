@@ -22,6 +22,8 @@ from typing import Any, Iterator
 
 from autogen.io import IOStream
 
+import vr_output
+
 
 ACTIVE_STATUSES = {"created", "running", "waiting_input", "awaiting_form"}
 TERMINAL_STATUSES = {"completed", "cancelled", "error"}
@@ -151,7 +153,9 @@ class ExperimentSession:
                 }
             )
             self._event_condition.notify_all()
-            return sequence
+        # 메타휴먼에게 넘기는 건 락을 놓은 다음에 — 여기서 막히면 poll()까지 같이 멈춘다.
+        vr_output.dispatch(payload)
+        return sequence
 
     def poll(self, after: int, wait_seconds: float = 20) -> list[dict[str, Any]]:
         deadline = time.monotonic() + max(0, min(wait_seconds, 25))
@@ -391,6 +395,9 @@ class SessionIOStream(IOStream):
 
     def input(self, prompt: str = "", *, password: bool = False) -> str:
         del password
+        # 메타휴먼이 아직 말하는 중이면 참가자 차례를 열지 않는다 — 웹에서 렌더 큐가
+        # 밀린 발화를 다 타이핑한 뒤에야 입력창이 열리는 것과 같은 규칙이다.
+        vr_output.wait_until_idle()
         # 대기 시작 시각은 여기서 안 재고 프론트의 input-ready 신호(POST
         # /api/sessions/{id}/input-ready)로 기록한다 — 렌더 큐가 밀린 발화를
         # 다 타이핑하기 전까지는 입력창이 실제로 안 열리므로, 여기서 재면

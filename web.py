@@ -578,10 +578,20 @@ HTML_PAGE = r"""<!DOCTYPE html>
   #reset-btn:hover { background: var(--bg-2); color: var(--text); }
 
   #discussion-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  #chat-wrap { flex: 1; min-height: 0; position: relative; }
   #chat {
-    flex: 1; overflow-y: auto; padding: 28px;
+    position: absolute; inset: 0; overflow-y: auto; padding: 28px;
     display: flex; flex-direction: column; gap: 14px;
   }
+  #scroll-down-btn {
+    display: none; position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%);
+    z-index: 5; align-items: center; gap: 6px; padding: 9px 16px; border-radius: 999px;
+    border: 1px solid var(--border); background: var(--accent); color: #fff;
+    font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: var(--shadow-bar);
+    transition: background .15s;
+  }
+  #scroll-down-btn:hover { background: var(--accent-hover); }
+  #scroll-down-btn.visible { display: flex; }
   @keyframes msgIn { from { opacity: 0; } to { opacity: 1; } }
   .msg {
     max-width: min(78%, 960px); padding: 16px 20px; border-radius: var(--radius);
@@ -788,7 +798,10 @@ HTML_PAGE = r"""<!DOCTYPE html>
   </header>
 
   <div id="discussion-area">
-    <div id="chat"></div>
+    <div id="chat-wrap">
+      <div id="chat"></div>
+      <button id="scroll-down-btn" onclick="scrollChatToBottom()">↓ 새 메시지</button>
+    </div>
     <div id="status">대기 중...</div>
     <div id="input-area">
       <textarea id="msg" rows="1" placeholder="의견을 입력하세요 (Enter 전송, Shift+Enter 줄바꿈, 빈칸 = 넘기기)" disabled></textarea>
@@ -862,16 +875,30 @@ function processQueue() {
   }
 }
 function enqueue(fn, sender) { renderQueue.push({ fn, sender: sender || null }); processQueue(); }
+
+// 채팅이 바닥 근처에 있을 때만 새 발화를 따라 스크롤한다. 사용자가 위로 스크롤해서
+// 이전 내용을 보고 있으면 강제로 내리지 않고 "새 메시지" 버튼만 띄운다.
+const scrollDownBtn = document.getElementById('scroll-down-btn');
+function isChatNearBottom(threshold) {
+  threshold = threshold || 80;
+  return chat.scrollHeight - chat.scrollTop - chat.clientHeight <= threshold;
+}
+function showScrollDownBtn() { scrollDownBtn.classList.add('visible'); }
+function hideScrollDownBtn() { scrollDownBtn.classList.remove('visible'); }
+function scrollChatToBottom() { chat.scrollTop = chat.scrollHeight; hideScrollDownBtn(); }
+function stickOrIndicate(stick) { if (stick) { chat.scrollTop = chat.scrollHeight; } else { showScrollDownBtn(); } }
+chat.addEventListener('scroll', () => { if (isChatNearBottom()) hideScrollDownBtn(); });
+
 // 전체 텍스트로 말풍선 높이를 미리 잡아두고, 안 보이는 부분만 투명 처리해서
 // 한 글자씩 드러냄 → 타이핑 중 영역이 커지거나 스크롤이 튀지 않음.
-function typeText(node, text, done) {
+function typeText(node, text, done, stick) {
   const shown = document.createElement('span');
   const rest = document.createElement('span');
   rest.style.visibility = 'hidden';
   rest.textContent = text;
   node.appendChild(shown);
   node.appendChild(rest);
-  chat.scrollTop = chat.scrollHeight;  // 말풍선 등장 시 1회만 스크롤
+  stickOrIndicate(stick);  // 말풍선 등장 시 1회만, 바닥 근처일 때만 스크롤
   let i = 0;
   const step = () => {
     if (i >= text.length) {
@@ -930,6 +957,7 @@ function addMsg(type, content, sender, summary) {
     (sender === 'Designer' || sender === 'Engineer')
   );
   enqueue((done) => {
+    const stick = isChatNearBottom();  // 새 발화 추가 전, 바닥 근처였는지 한 번만 판단
     if (isSummaryOnly) {
       // PM 아래 — 작은 아바타+이름은 박스 밖, 박스 안엔 PM 질문 인용 + 요약
       const row = document.createElement('div');
@@ -966,7 +994,7 @@ function addMsg(type, content, sender, summary) {
       row.appendChild(avatar);
       row.appendChild(col);
       chat.appendChild(row);
-      chat.scrollTop = chat.scrollHeight;
+      stickOrIndicate(stick);
       done();
     } else if (type === 'agent' && sender) {
       if (sender === 'PM') lastPmText = content;
@@ -987,14 +1015,14 @@ function addMsg(type, content, sender, summary) {
       row.appendChild(avatar);
       row.appendChild(col);
       chat.appendChild(row);
-      chat.scrollTop = chat.scrollHeight;
-      typeText(bubble, content, done);  // 에이전트 발화는 한 글자씩
+      stickOrIndicate(stick);
+      typeText(bubble, content, done, stick);  // 에이전트 발화는 한 글자씩
     } else {
       const div = document.createElement('div');
       div.className = 'msg ' + type;
       div.textContent = content;          // 시스템·사용자 발화는 즉시
       chat.appendChild(div);
-      chat.scrollTop = chat.scrollHeight;
+      stickOrIndicate(stick);
       done();
     }
   }, sender);

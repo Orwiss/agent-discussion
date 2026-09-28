@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "jobs": [
+    {
+      "id": "pm",
+      "prompt": "A clean flat-design character illustration of a Product Manager for an academic research paper figure. Upper body portrait, facing slightly left. A professional but approachable person wearing a smart-casual blazer over a simple top. They hold a small clipboard or tablet. Expression is thoughtful and evaluative, one eyebrow slightly raised as if weighing options. Soft indigo/purple color accent on their clothing. White background, minimal clean lines, no outlines, soft shadows, modern vector illustration style similar to Notion or Slack avatars. No text.",
+      "out": "generated-images/agent-pm.png",
+      "quality": "high"
+    },
+    {
+      "id": "designer",
+      "prompt": "A clean flat-design character illustration of a UX/UI Designer for an academic research paper figure. Upper body portrait, facing slightly right. A creative-looking person wearing a casual turtleneck or crew-neck sweater. They hold a stylus or pencil, gesturing as if sketching in the air. Expression is warm and observant, eyes focused as if studying a user interface. Soft green/teal color accent on their clothing. White background, minimal clean lines, no outlines, soft shadows, modern vector illustration style similar to Notion or Slack avatars. No text.",
+      "out": "generated-images/agent-designer.png",
+      "quality": "high"
+    },
+    {
+      "id": "engineer",
+      "prompt": "A clean flat-design character illustration of a Software Engineer for an academic research paper figure. Upper body portrait, facing forward. A curious-looking person wearing a casual hoodie or simple tech-style top. They rest one hand on chin in a thinking pose. Expression is exploratory and analytical, eyes bright with curiosity. Soft blue color accent on their clothing. White background, minimal clean lines, no outlines, soft shadows, modern vector illustration style similar to Notion or Slack avatars. No text.",
+      "out": "generated-images/agent-engineer.png",
+      "quality": "high"
+    }
+  ]
+}

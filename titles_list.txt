@@ -1,0 +1,30 @@
+value
+MAxPrototyper: A Multi-Agent Generation System for Interactive User Interface Prototyping
+Conversation Progress Guide : UI System for Enhancing Self-Efficacy in Conversational AI
+AIdeation: Designing a Human-AI Collaborative Ideation System for Concept Designers
+Towards AI as Colleagues: Multi-Agent System Improves Structured Professional Ideation
+Collaborative Ideation Partner: Design Ideation in Human-AI Co-creativity:
+A Novel Idea Generation Tool using a Structured Conversational AI (CAI) System
+PersonaFlow: Designing LLM-Simulated Expert Perspectives for Enhanced Research Ideation
+CritiqueCrew: Orchestrating Multi-Perspective Conversational Design Critique
+YES AND: A Generative AI Multi-Agent Framework for Enhancing Diversity of Thought in Individual Ideation for Problem-Solving Through Confidence-Based Agent Turn-Taking
+Exploring the Design of Multi-Agent LLM Dialogues for Research Ideation
+Towards AI as Colleagues: Multi-Agent System Improves Structured Ideation Processes
+Perspectra: Choosing Your Experts Enhances Critical Thinking in Multi-Agent Research Ideation
+Designing Creative AI Partners with COFI: A Framework for Modeling Interaction in Human-AI Co-Creative Systems
+Creative Sketching Partner: An Analysis of Human-AI Co-Creativity
+Luminate: Structured Generation and Exploration of Design Space with Large Language Models for Human-AI Co-Creation
+Rapid AIdeation: Generating Ideas With the Self and in Collaboration With Large Language Models
+AI-Augmented Brainwriting: Investigating the Use of LLMs in Group Ideation
+Modes for Creative Human-Computer Collaboration: Alternating and Task-Divided Co-Creativity
+An Ontology of Co-Creative AI Systems
+Exploring Design of Multi-Agent LLM Dialogues for Research Ideation
+IdeationWeb: Tracking the Evolution of Design Ideas in Human-AI Co-Creation
+Intent Tagging: Exploring Micro-Prompting Interactions for Supporting Granular Human-GenAI Co-Creation Workflows
+Agentic Workflows for Conversational Human-AI Interaction Design
+From Conversation to Orchestration: HCI Challenges and Opportunities in Interactive Multi-Agentic Systems
+YES AND: An AI-Powered Problem-Solving Framework for Diversity of Thought
+AI-Augmented Brainwriting: Investigating the Use of Generative AI in the Creative Pre-Production Stages
+Exploring Creativity in Human-AI Co-Creation: A Comparative Study across Design Experience
+Feed-O-Meter: Fostering Design Novices' Creativity through an LLM-Driven Environment Simulating Feedback Conversations with a Virtual Design Mentee
+Deep Ideation: Designing LLM Agents to Generate Novel Research Ideas on Scientific Concept Network

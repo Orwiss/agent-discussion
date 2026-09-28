@@ -3,6 +3,7 @@
 import os
 import asyncio
 import base64
+import json
 import re
 import subprocess
 import time
@@ -45,6 +46,9 @@ NGC_API_KEY = os.getenv("NGC_API_KEY", "")
 A2F_CONTAINER_NAME = "audio2face-3d"
 A2F_DOCKER_IMAGE = "nvcr.io/nim/nvidia/audio2face-3d:2.0"
 A2F_CACHE_DIR = os.path.expanduser("~/.cache/audio2face-3d")
+# A2F가 미리 잡아두는 동시 스트림 수. 기본 10이면 8GB 노트북 GPU에서 UE와 같이 돌 때
+# VRAM이 넘쳐 추론이 초당 1~2프레임까지 떨어진다. 발화는 한 번에 한 문장씩만 보낸다.
+A2F_MAX_STREAM = os.getenv("A2F_MAX_STREAM", "2")
 
 _a2f_ready = False
 _a2f_ready_lock = threading.Lock()
@@ -103,6 +107,7 @@ def _ensure_a2f_running() -> None:
             "-p", f"{A2F_GRPC_PORT}:52000",
             "-p", "8000:8000",
             "-e", f"NGC_API_KEY={NGC_API_KEY}",
+            "-e", f"PERF_MAX_STREAM={A2F_MAX_STREAM}",
             "-v", f"{cache_dir}:/tmp/a2x",
             A2F_DOCKER_IMAGE,
         ]
@@ -132,7 +137,7 @@ def _ensure_a2f_running() -> None:
 
 # -- Singletons --
 _eleven_client: ElevenLabs | None = None
-_osc_client: udp_client.SimpleUDPClient | None = None
+_osc_client: "_OscFanout | None" = None
 _osc_lock = threading.Lock()
 _speech_queue = queue.Queue(maxsize=2)
 _trigger_lock = threading.Lock()
@@ -168,13 +173,29 @@ def _eleven() -> ElevenLabs:
     return _eleven_client
 
 
-def _osc() -> udp_client.SimpleUDPClient:
+class _OscFanout:
+    """UE5_OSC_HOST에 적힌 모든 주소로 같은 메시지를 보낸다.
+    노트북 PIE와 ZeroTier 너머 PC 언리얼에 동시에 보낼 때 쓴다 (쉼표로 구분)."""
+
+    def __init__(self, hosts: list[str], port: int) -> None:
+        self.clients = [udp_client.SimpleUDPClient(h, port) for h in hosts]
+
+    def send_message(self, address: str, value) -> None:
+        for c in self.clients:
+            c.send_message(address, value)
+
+
+_osc_init_lock = threading.Lock()
+
+
+def _osc() -> _OscFanout:
     global _osc_client
-    if _osc_client is None:
-        host = os.getenv("UE5_OSC_HOST", "127.0.0.1")
-        port = int(os.getenv("UE5_OSC_PORT", "7400"))
-        _osc_client = udp_client.SimpleUDPClient(host, port)
-        logger.info(f"OSC 클라이언트 초기화: {host}:{port}")
+    with _osc_init_lock:
+        if _osc_client is None:
+            hosts = [h.strip() for h in os.getenv("UE5_OSC_HOST", "127.0.0.1").split(",") if h.strip()]
+            port = int(os.getenv("UE5_OSC_PORT", "7400"))
+            _osc_client = _OscFanout(hosts, port)
+            logger.info(f"OSC 클라이언트 초기화: {', '.join(hosts)} :{port}")
     return _osc_client
 
 
@@ -409,6 +430,12 @@ def _play_audio_local(pcm_bytes: bytes, sample_rate: int = 16000) -> None:
 
 
 # -- Step 4: OSC 전송 - 블렌드셰이프 --
+# UDP는 흐름 제어가 없어서 쉬지 않고 쏘면 받는 쪽 소켓 버퍼가 넘치고 뒷부분이 조용히 버려진다.
+# 실측(루프백, 기본 수신 버퍼 65,536B): 52 weights 기준 600프레임(20초)을 페이싱 없이 보내면
+# 439/600만 도착했다. 프레임 사이에 1ms만 주면 600/600 도착한다. 150·300프레임은 페이싱
+# 없이도 통과하므로, 짧은 발화만 테스트하면 이 문제가 안 보인다.
+_BS_PACE_SEC = 0.001
+
 def _send_blendshapes_via_osc(packet: PerformancePacket) -> None:
     """블렌드셰이프 프레임을 OSC로 UE5에 전송."""
     if not packet.blendshape_frames:
@@ -425,6 +452,7 @@ def _send_blendshapes_via_osc(packet: PerformancePacket) -> None:
 
         for i, frame in enumerate(packet.blendshape_frames):
             osc.send_message("/mh/bs", [char_id, i] + [float(w) for w in frame])
+            time.sleep(_BS_PACE_SEC)
 
         osc.send_message("/mh/bs_end", [char_id])
 
@@ -434,7 +462,18 @@ def _send_blendshapes_via_osc(packet: PerformancePacket) -> None:
 
 
 # -- Step 5: OSC 전송 - 오디오 (Base64 청크) --
-_CHUNK_B64_SIZE = 40000  # ZeroTier UDP 안전 마진 (60KB → 40KB)
+# 크기: ZeroTier 어댑터 MTU가 2,800B다. 40,000B 청크는 실제 경로에서 IP 단편 15개로 쪼개지고
+# 그중 하나만 잃어도 datagram 전체가 버려진다. 2,048B면 OSC 오버헤드를 얹어도 단일 패킷에 들어간다.
+# base64 '문자열'을 자르는 구조이므로 이 값은 반드시 4의 배수여야 한다(아니면 조각이 유효한
+# base64가 아니게 되어 수신측 FBase64::Decode가 실패한다).
+_CHUNK_B64_SIZE = 2048
+
+# 페이싱: 크기를 줄이는 것만으로는 안 고쳐진다. 실측(루프백, 기본 수신 버퍼 65,536B)에서
+# 40,000B는 2/4, 2,600B는 41/53, 1,024B는 109/134만 도착했다. 청크 사이에 2ms를 주면
+# 네 크기 모두 전량 도착한다. 원인은 크기가 아니라 흐름 제어 없이 연달아 보내는 것이다.
+# 특히 audio_end가 잘 유실되는데, 수신측 MHAudioPlayerComponent는 AudioEnd()에서만
+# 디코딩·재생 준비를 하므로 이것 하나를 잃으면 소리가 아예 안 난다.
+_AUDIO_PACE_SEC = 0.002
 
 def _send_audio_via_osc(packet: PerformancePacket) -> None:
     """오디오를 Base64 청크로 OSC 전송."""
@@ -447,6 +486,7 @@ def _send_audio_via_osc(packet: PerformancePacket) -> None:
         osc.send_message("/mh/audio_start", [packet.character_id, len(chunks)])
         for idx, chunk in enumerate(chunks):
             osc.send_message("/mh/audio_chunk", [packet.character_id, idx, chunk])
+            time.sleep(_AUDIO_PACE_SEC)
         osc.send_message("/mh/audio_end", [packet.character_id])
 
     logger.info(
@@ -463,6 +503,45 @@ def _split_sentences(text: str) -> list[str]:
     return [s.strip() for s in parts if s.strip()]
 
 
+# -- 녹화: 실제 A2F 결과를 파일로 남겨 나중에 UE로 다시 보낸다 (vr_replay.py) --
+# 노트북 한 대에서는 UE PIE와 A2F가 VRAM을 같이 못 쓴다. 그래서 UE를 끄고 A2F만 켠 채
+# 세션을 돌려 녹화하고, 반대로 A2F를 끄고 UE PIE를 켠 채 재생한다.
+# VR_RECORD_DIR이 비어 있으면 아무것도 안 한다.
+_record_dir: str | None = None
+_record_seq = 0
+_record_lock = threading.Lock()
+
+
+def _record_packet(packet: PerformancePacket) -> None:
+    global _record_dir, _record_seq
+    root = os.getenv("VR_RECORD_DIR", "").strip()
+    if not root or not packet.audio_bytes:
+        return
+    try:
+        with _record_lock:
+            if _record_dir is None:
+                _record_dir = os.path.join(root, time.strftime("%Y%m%d_%H%M%S"))
+                os.makedirs(_record_dir, exist_ok=True)
+                logger.info(f"[Record] 녹화 폴더: {_record_dir}")
+            _record_seq += 1
+            path = os.path.join(_record_dir, f"{_record_seq:04d}_{packet.agent_name}.json")
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump({
+                "time": time.time(),
+                "agent_name": packet.agent_name,
+                "character_id": packet.character_id,
+                "text": packet.text,
+                "blendshape_fps": packet.blendshape_fps,
+                "weight_count": packet.weight_count,
+                "blendshape_frames": packet.blendshape_frames,
+                "audio_b64": base64.b64encode(packet.audio_bytes).decode("ascii"),
+            }, f, ensure_ascii=False)
+        if not packet.blendshape_frames:
+            logger.warning(f"[Record] {path}: 블렌드셰이프 없이 녹화됨 (A2F 실패)")
+    except Exception:
+        logger.exception("[Record] 녹화 실패")
+
+
 # -- 발화 처리 워커 --
 def _process_one(agent_name: str, sentence: str, idx: int, total: int) -> PerformancePacket | None:
     """TTS + A2F gRPC 처리."""
@@ -476,6 +555,7 @@ def _process_one(agent_name: str, sentence: str, idx: int, total: int) -> Perfor
             packet.blendshape_fps = bs_data["fps"]
             packet.weight_count = bs_data["weight_count"]
             packet.blendshape_frames = bs_data["frames"]
+        _record_packet(packet)
         logger.info(f"[Process] {agent_name} 문장 {idx+1}/{total} 준비 완료")
         return packet
     except Exception as e:

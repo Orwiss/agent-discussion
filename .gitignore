@@ -129,6 +129,7 @@ celerybeat.pid
 
 # Environments
 .env
+.env.*
 .venv
 env/
 venv/
@@ -196,3 +197,17 @@ _scratch/
 
 # proposal 문서 스냅샷 (파생물, 백업 제외)
 outputs/_*.png
+/.playwright-cli
+/generated-images
+/outputs
+/tmp
+/RESEARCH
+/scripts
+/.idea
+/outputs
+/survey-dist
+/outputs
+/outputs
+recordings/
+/autogen_logs
+/.codex-tmp

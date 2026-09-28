@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "jobs": [
+    {
+      "id": "pm-ai-v2",
+      "prompt": "A simple flat 2D kawaii-style robot character icon for a chat app avatar. Tiny friendly robot with a round head, simple dot eyes and a small smile on a dark screen face. The robot has a small antenna on top. It holds a tiny clipboard. Body color is soft purple/indigo. Very minimal detail, thick simple shapes, no shading, no gradients, no 3D effects. Solid white background. Consistent geometric style like a mascot emoji. Upper body only.",
+      "out": "generated-images/agent-pm-ai-v2.png",
+      "quality": "high"
+    },
+    {
+      "id": "designer-ai-v2",
+      "prompt": "A simple flat 2D kawaii-style robot character icon for a chat app avatar. Tiny friendly robot with a round head, simple dot eyes and a small smile on a dark screen face. The robot has small round ear sensors on the sides. It holds a tiny pencil or stylus. Body color is soft coral/orange. Very minimal detail, thick simple shapes, no shading, no gradients, no 3D effects. Solid white background. Consistent geometric style like a mascot emoji. Upper body only.",
+      "out": "generated-images/agent-designer-ai-v2.png",
+      "quality": "high"
+    },
+    {
+      "id": "engineer-ai-v2",
+      "prompt": "A simple flat 2D kawaii-style robot character icon for a chat app avatar. Tiny friendly robot with a round head, simple dot eyes and a small smile on a dark screen face. The robot wears small goggles pushed up on its forehead. It holds a tiny wrench or gear. Body color is soft green. Very minimal detail, thick simple shapes, no shading, no gradients, no 3D effects. Solid white background. Consistent geometric style like a mascot emoji. Upper body only.",
+      "out": "generated-images/agent-engineer-ai-v2.png",
+      "quality": "high"
+    }
+  ]
+}

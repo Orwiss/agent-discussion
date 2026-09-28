@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "jobs": [
+    {
+      "id": "pm-ai",
+      "prompt": "A clean flat-design AI robot character illustration for an academic research paper figure. Upper body portrait of a friendly humanoid robot representing a Product Manager role. The robot has a smooth rounded head with a simple digital face display showing a thoughtful evaluating expression, one LED eyebrow slightly raised. It holds a small holographic tablet or clipboard. The robot's body shell has a soft indigo/purple color accent. White background, minimal clean lines, no outlines, soft shadows, modern vector illustration style. Cute but professional, not cartoonish. No text.",
+      "out": "generated-images/agent-pm-ai.png",
+      "quality": "high"
+    },
+    {
+      "id": "designer-ai",
+      "prompt": "A clean flat-design AI robot character illustration for an academic research paper figure. Upper body portrait of a friendly humanoid robot representing a UX/UI Designer role. The robot has a smooth rounded head with a simple digital face display showing a warm observant expression with curious eyes. It holds a stylus or digital pen, gesturing as if sketching. The robot's body shell has a soft green/teal color accent. White background, minimal clean lines, no outlines, soft shadows, modern vector illustration style. Cute but professional, not cartoonish. No text.",
+      "out": "generated-images/agent-designer-ai.png",
+      "quality": "high"
+    },
+    {
+      "id": "engineer-ai",
+      "prompt": "A clean flat-design AI robot character illustration for an academic research paper figure. Upper body portrait of a friendly humanoid robot representing a Software Engineer role. The robot has a smooth rounded head with a simple digital face display showing an exploratory curious expression with bright LED eyes. One hand rests on its chin in a thinking pose. The robot's body shell has a soft blue color accent. White background, minimal clean lines, no outlines, soft shadows, modern vector illustration style. Cute but professional, not cartoonish. No text.",
+      "out": "generated-images/agent-engineer-ai.png",
+      "quality": "high"
+    }
+  ]
+}

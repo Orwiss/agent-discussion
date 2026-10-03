@@ -8,3 +8,6 @@ elevenlabs==2.41.0
 numpy==1.26.4
 grpcio==1.72.0rc1
 protobuf==4.25.8
+# STT (stt_client.py — VR 헤드셋이 연결된 PC에서 참가자 음성 받아 적기)
+sounddevice==0.5.1
+websockets>=13  # elevenlabs 실시간 STT가 websockets.asyncio를 쓴다

@@ -23,6 +23,8 @@ class PerformancePacket:
     blendshape_fps:  int = 60
     weight_count:    int = 0
     blendshape_frames: List[List[float]] = field(default_factory=list)
+    recipient:       str = ""      # 받는 사람 에이전트 이름 (없으면 참가자)
+    is_last:         bool = True    # 이 발화의 마지막 문장인지 (시선: 끝에서 받는 사람을 봄)
 
 
 def build_packet(agent_name: str, text: str) -> PerformancePacket | None:

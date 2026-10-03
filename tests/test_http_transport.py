@@ -37,6 +37,9 @@ class TestHTTPTransport(unittest.TestCase):
                     pass
 
         self.patches = [
+            # .env의 VR_OUTPUT=1이 새어 들어오면 실제 TTS를 부르고 세션끼리 발화 대기로 얽힌다.
+            # 이 테스트는 HTTP 전송만 본다 — VR 출력은 test_vr_output.py가 따로 본다.
+            patch.object(web.vr_output, "_enabled_cache", False),
             patch.object(web, "SESSION_REGISTRY", self.registry),
             patch.object(web, "_session_worker", fake_worker),
             patch.object(web, "STUDY_STORE", self.store),

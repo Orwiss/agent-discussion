@@ -14,7 +14,7 @@ from dotenv import load_dotenv
 from pythonosc import udp_client
 from elevenlabs.client import ElevenLabs
 from elevenlabs import VoiceSettings
-from performance_packet import PerformancePacket, build_packet
+from performance_packet import AGENT_CHARACTER_MAP, PerformancePacket, build_packet
 
 import grpc
 import numpy as np
@@ -139,10 +139,20 @@ def _ensure_a2f_running() -> None:
 _eleven_client: ElevenLabs | None = None
 _osc_client: "_OscFanout | None" = None
 _osc_lock = threading.Lock()
-_speech_queue = queue.Queue(maxsize=2)
-_trigger_lock = threading.Lock()
-_prev_done = threading.Event()
-_prev_done.set()  # 처음엔 idle
+# 재생 대기열. trigger()가 앞서 만들어 둘 수 있는 문장 수 = maxsize (+ 재생 워커가 들고 있는 1개)
+_speech_queue: "queue.Queue[tuple[int, PerformancePacket]]" = queue.Queue(maxsize=int(os.getenv("VR_PREFETCH", "3")))
+# 대기열에 넣었지만 UE에서 재생이 아직 안 끝난 문장 수. 0이면 idle.
+_unplayed = 0
+_idle_cv = threading.Condition()
+# reset() 때마다 1씩 오른다. 대기열의 문장은 넣을 때의 값을 달고 있고, 다르면 버린다.
+_epoch = 0
+
+# 재생 타이밍 (초). 같은 사람이 문장을 이어 말할 때 / 말하는 사람이 바뀔 때의 공백.
+SENTENCE_GAP = float(os.getenv("VR_SENTENCE_GAP", "0.3"))
+SPEAKER_GAP = float(os.getenv("VR_SPEAKER_GAP", "0.5"))
+# 1이면 앞 문장 재생 중에 다음 문장 데이터를 미리 보낸다. UE의 BP_AgentBlendshapes가
+# bs_end를 보관만 하는 버전(bLegacyBSStart=false)이어야 한다 — 옛 버전이면 0으로 둔다.
+PRESEND = os.getenv("VR_PRESEND", "1").strip().lower() in {"1", "true", "yes", "on"}
 
 # gRPC async event loop (dedicated thread)
 _grpc_loop: asyncio.AbstractEventLoop | None = None
@@ -461,6 +471,24 @@ def _send_blendshapes_via_osc(packet: PerformancePacket) -> None:
     )
 
 
+# -- 시선용 OSC: 누가 누구에게 말하는지, 참가자 차례인지 --
+def _send_speaker_via_osc(packet: PerformancePacket) -> None:
+    """/mh/speaker [말하는 캐릭터, 받는 캐릭터 또는 "Participant", 마지막 문장 1/0].
+    UE의 BP_AgentGaze가 이걸 보고 말하는 사람은 끝에서 받는 사람을, 나머지는 말하는 사람을 본다."""
+    recipient = AGENT_CHARACTER_MAP.get(packet.recipient, "Participant")
+    if recipient == packet.character_id:
+        recipient = "Participant"
+    with _osc_lock:
+        _osc().send_message("/mh/speaker", [packet.character_id, recipient, 1 if packet.is_last else 0])
+
+
+def send_turn(state: str) -> None:
+    """/mh/turn ["participant" | "agents"]"""
+    with _osc_lock:
+        _osc().send_message("/mh/turn", [state])
+    logger.info(f"[OSC/Turn] {state}")
+
+
 # -- Step 5: OSC 전송 - 오디오 (Base64 청크) --
 # 크기: ZeroTier 어댑터 MTU가 2,800B다. 40,000B 청크는 실제 경로에서 IP 단편 15개로 쪼개지고
 # 그중 하나만 잃어도 datagram 전체가 버려진다. 2,048B면 OSC 오버헤드를 얹어도 단일 패킷에 들어간다.
@@ -475,8 +503,9 @@ _CHUNK_B64_SIZE = 2048
 # 디코딩·재생 준비를 하므로 이것 하나를 잃으면 소리가 아예 안 난다.
 _AUDIO_PACE_SEC = 0.002
 
-def _send_audio_via_osc(packet: PerformancePacket) -> None:
-    """오디오를 Base64 청크로 OSC 전송."""
+def _send_audio_body(packet: PerformancePacket) -> None:
+    """audio_start + 청크까지만 보낸다. UE는 audio_end를 받아야 디코딩·재생하므로
+    앞 문장이 재생되는 동안 미리 보내 둘 수 있다 (재생 중인 소리는 SoundWave에 복사돼 있어 안 끊긴다)."""
     osc = _osc()
     audio = packet.audio_bytes
     b64 = base64.b64encode(audio).decode("ascii")
@@ -487,11 +516,22 @@ def _send_audio_via_osc(packet: PerformancePacket) -> None:
         for idx, chunk in enumerate(chunks):
             osc.send_message("/mh/audio_chunk", [packet.character_id, idx, chunk])
             time.sleep(_AUDIO_PACE_SEC)
-        osc.send_message("/mh/audio_end", [packet.character_id])
 
     logger.info(
         f"[OSC/Audio] {packet.agent_name} | {len(audio)}bytes -> {len(chunks)}chunks"
     )
+
+
+def _send_audio_end(packet: PerformancePacket) -> None:
+    """UE가 이걸 받는 순간 소리와 입 모양을 같이 재생한다 (BP_AgentBlendshapes.StartBlendshapes)."""
+    with _osc_lock:
+        _osc().send_message("/mh/audio_end", [packet.character_id])
+
+
+def _send_audio_via_osc(packet: PerformancePacket) -> None:
+    """오디오를 Base64 청크로 OSC 전송 (바로 재생). vr_replay·테스트용."""
+    _send_audio_body(packet)
+    _send_audio_end(packet)
 
 
 # -- 문장 분리 --
@@ -563,31 +603,80 @@ def _process_one(agent_name: str, sentence: str, idx: int, total: int) -> Perfor
         return None
 
 
+def _packet_seconds(packet: PerformancePacket) -> float:
+    return len(packet.audio_bytes) / (SAMPLE_RATE * 2)
+
+
+def _preload(packet: PerformancePacket) -> None:
+    """표정 + 소리 데이터를 UE에 미리 보낸다. 재생은 _start_playback()의 audio_end에서 시작된다.
+    UE는 bs_end를 받으면 보관 칸(Pending)에 넣기만 하므로 앞 문장 재생을 건드리지 않는다."""
+    _send_blendshapes_via_osc(packet)
+    _send_audio_body(packet)
+
+
+def _start_playback(packet: PerformancePacket, send_speaker: bool = True) -> float:
+    """(시선용 /mh/speaker 다음) audio_end를 보내 재생을 시작하고, 재생이 끝날 시각을 돌려준다."""
+    if send_speaker:
+        _send_speaker_via_osc(packet)
+    _send_audio_end(packet)
+    return time.monotonic() + _packet_seconds(packet)
+
+
+def _finish(packet: PerformancePacket | None) -> None:
+    global _unplayed
+    with _idle_cv:
+        _unplayed -= 1
+        _idle_cv.notify_all()
+
+
 def _playback_worker():
-    """큐에서 준비된 패킷을 꺼내 순서대로 재생. 항상 1개 스레드만 실행."""
+    """큐에서 준비된 패킷을 꺼내 순서대로 재생. 항상 1개 스레드만 실행.
+    앞 문장이 재생되는 동안 다음 문장을 미리 보내 두고(_preload), 앞 문장이 끝나면
+    VR_SENTENCE_GAP(같은 사람) / VR_SPEAKER_GAP(사람이 바뀜)만큼 쉰 뒤 audio_end만 보낸다.
+    전에는 앞 문장이 끝난 뒤에 전송을 시작해서 전송 시간(0.8~2초)이 그대로 공백이 됐다."""
+    current: PerformancePacket | None = None
+    current_end = 0.0
     while True:
-        packet = _speech_queue.get()
-        if packet is None:
-            _speech_queue.task_done()
+        try:
+            wait = None if current is None else max(0.0, current_end - time.monotonic())
+            epoch, packet = _speech_queue.get(timeout=wait)
+        except queue.Empty:
+            # 다음 문장 없이 앞 문장이 끝났다 → 재생 완료로 표시 (wait_until_idle이 풀린다)
+            _finish(current)
+            current = None
+            continue
+        if epoch != _epoch:  # reset() 전에 들어온 문장 — 재생하지 않는다
+            _finish(packet)
             continue
         try:
-            # 블렌드셰이프 + 오디오를 병렬로 OSC 전송
-            # UE5의 TryStartPlayback에서 둘 다 도착하면 동시 재생
-            bs_thread = threading.Thread(
-                target=_send_blendshapes_via_osc, args=(packet,), daemon=True)
-            audio_thread = threading.Thread(
-                target=_send_audio_via_osc, args=(packet,), daemon=True)
-            bs_thread.start()
-            audio_thread.start()
-            bs_thread.join()
-            audio_thread.join()
-            # 다음 발화와 겹치지 않게 오디오 길이만큼 대기
-            audio_duration = len(packet.audio_bytes) / (SAMPLE_RATE * 2)
-            time.sleep(audio_duration)
+            if PRESEND:
+                _preload(packet)
+            speaker_sent = False
+            if current is not None:
+                gap = SENTENCE_GAP if current.character_id == packet.character_id else SPEAKER_GAP
+                delay = current_end - time.monotonic()
+                if delay > 0:
+                    time.sleep(delay)
+                if epoch != _epoch:  # 기다리는 동안 취소됐다 — 미리 보낸 데이터는 다음 문장이 덮어쓴다
+                    _finish(current)
+                    current = None
+                    _finish(packet)
+                    continue
+                # /mh/speaker는 앞 문장이 끝나는 순간 보낸다 — 공백 동안 UE의 SpeakerPending이
+                # 시선을 붙잡아 둬서, 사람이 바뀔 때 0.5초짜리 "아무도 안 말함"(state 4)이 끼지 않는다.
+                _send_speaker_via_osc(packet)
+                speaker_sent = True
+                time.sleep(gap)
+                _finish(current)
+                current = None
+            if not PRESEND:
+                _preload(packet)
+            current_end = _start_playback(packet, send_speaker=not speaker_sent)
+            current = packet
         except Exception as e:
             logger.error(f"[Playback] 재생 실패: {e}", exc_info=True)
-        finally:
-            _speech_queue.task_done()
+            # 이 문장은 재생 못 한 채로 끝낸다. 아직 재생 중인 앞 문장은 위의 timeout에서 끝난다.
+            _finish(packet)
 
 # 재생 워커 시작 (1개)
 threading.Thread(target=_playback_worker, daemon=True, name="playback-worker").start()
@@ -595,33 +684,48 @@ threading.Thread(target=_playback_worker, daemon=True, name="playback-worker").s
 
 # -- Entry point --
 def wait_until_idle(timeout: float | None = None) -> bool:
-    """마지막으로 넘긴 발화의 재생이 끝날 때까지 기다린다.
-    trigger()가 시작할 때 _prev_done을 내려놓고 _run이 끝날 때 다시 올리므로,
-    이 함수가 돌아오면 큐에 들어간 발화가 전부 재생된 상태다."""
-    return _prev_done.wait(timeout)
+    """대기열에 넣은 문장이 전부 재생될 때까지 기다린다 (UE 재생 시간 기준).
+    vr_output.wait_until_idle()이 trigger() 호출이 다 끝난 뒤에 부르므로,
+    돌아오면 넘긴 발화가 전부 재생된 상태다."""
+    with _idle_cv:
+        return _idle_cv.wait_for(lambda: _unplayed == 0, timeout)
 
 
-def trigger(agent_name: str, text: str) -> None:
-    """vr_output의 워커 스레드에서 호출. 이전 발화 재생이 끝날 때까지 대기 후,
-    현재 발화의 TTS/재생을 백그라운드로 시작하고 즉시 리턴.
-    → AutoGen은 항상 한 발화만 미리 생성 가능 (텍스트 선행, 오디오는 순차)."""
-    _prev_done.wait()
-    _prev_done.clear()
+def trigger(agent_name: str, text: str, recipient: str = "") -> None:
+    """vr_output의 워커 스레드에서 발화 순서대로 호출된다. 문장마다 TTS + A2F를 만들어
+    재생 대기열에 넣고, 다 넣으면 돌아온다. 앞 발화가 재생되는 동안 다음 발화를 미리 만들어서
+    에이전트가 바뀔 때 생기던 공백(5.6~9.8초 실측)을 없앤다.
+    대기열(VR_PREFETCH 문장)이 차면 put()에서 기다리므로 너무 멀리 앞서 만들지 않는다."""
+    global _unplayed
+    epoch = _epoch
+    sentences = _split_sentences(text)
+    for i, sentence in enumerate(sentences):
+        if epoch != _epoch:  # 만드는 도중 세션이 취소됐다
+            return
+        packet = _process_one(agent_name, sentence, i, len(sentences))
+        if packet is None:
+            # 한 번 더 시도한다 — 그래도 실패하면 이 문장은 화면에만 남고 VR에서는 건너뛴다
+            logger.warning(f"[TTS] {agent_name} 문장 {i+1} 재시도")
+            packet = _process_one(agent_name, sentence, i, len(sentences))
+        if packet is None:
+            logger.error(f"[TTS] {agent_name} 문장 {i+1} 건너뜀 (VR에서 안 들림): {sentence[:40]}")
+            continue
+        packet.recipient = recipient
+        packet.is_last = (i == len(sentences) - 1)
+        with _idle_cv:
+            _unplayed += 1
+        _speech_queue.put((epoch, packet))
 
-    def _run():
+
+def reset() -> None:
+    """세션 취소 시 vr_output.reset()이 부른다. 아직 재생 안 한 문장을 전부 버린다.
+    지금 재생 중인 문장은 끝까지 간다 (UE에 멈춤 신호가 없다)."""
+    global _epoch
+    with _idle_cv:
+        _epoch += 1
+    while True:
         try:
-            with _trigger_lock:
-                sentences = _split_sentences(text)
-                if not sentences:
-                    return
-                for i, sentence in enumerate(sentences):
-                    packet = _process_one(agent_name, sentence, i, len(sentences))
-                    if packet:
-                        _speech_queue.put(packet)
-                _speech_queue.join()
-        except Exception as e:
-            logger.error(f"[TTS] {agent_name} 실패: {e}", exc_info=True)
-        finally:
-            _prev_done.set()
-
-    threading.Thread(target=_run, daemon=True, name=f"tts-{agent_name}").start()
+            _speech_queue.get_nowait()
+        except queue.Empty:
+            break
+        _finish(None)

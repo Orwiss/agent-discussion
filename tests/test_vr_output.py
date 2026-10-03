@@ -31,11 +31,13 @@ class FakeTTS:
         self.spoken: list[tuple[str, str]] = []
         self.finished_at: list[float] = []
         self.speak_seconds = speak_seconds
+        self.turns: list[str] = []
+        self.resets: list[float] = []
         self._idle = threading.Event()
         self._idle.set()
         self._lock = threading.Lock()
 
-    def trigger(self, agent_name: str, text: str) -> None:
+    def trigger(self, agent_name: str, text: str, recipient: str = "") -> None:
         # 진짜 trigger()와 같은 규칙: 직전 발화가 끝날 때까지 기다렸다가,
         # 이번 발화는 백그라운드로 돌리고 바로 리턴한다.
         self._idle.wait()
@@ -60,6 +62,8 @@ class FakeTTS:
         module = types.ModuleType("tts_pipeline")
         module.trigger = self.trigger
         module.wait_until_idle = self.wait_until_idle
+        module.send_turn = lambda state: self.turns.append(state)
+        module.reset = lambda: self.resets.append(time.perf_counter())
         return module
 
 
@@ -95,7 +99,7 @@ class TestExtract(VROutputTestCase):
     def test_agent_utterance_passes(self):
         self.assertEqual(
             self.vr.extract(text_event("Designer", "사용자가 먼저 고르게 하죠.")),
-            ("Designer", "사용자가 먼저 고르게 하죠."),
+            ("Designer", "사용자가 먼저 고르게 하죠.", "PM"),
         )
 
     def test_chat_manager_and_participant_are_skipped(self):
@@ -109,7 +113,7 @@ class TestExtract(VROutputTestCase):
         self.assertIsNone(self.vr.extract({"type": "input_request", "content": {"prompt": ""}}))
 
     def test_terminate_and_think_are_stripped(self):
-        sender, text = self.vr.extract(
+        sender, text, _ = self.vr.extract(
             text_event("PM", "<think>고민 중</think>정리하면 이렇습니다. TERMINATE")
         )
         self.assertEqual(sender, "PM")
@@ -121,7 +125,7 @@ class TestExtract(VROutputTestCase):
 
     def test_summary_is_ignored_full_text_is_spoken(self):
         # 화면에서는 접힘 미리보기가 보이지만, 말하는 건 전문이다.
-        _, text = self.vr.extract(
+        _, text, _ = self.vr.extract(
             text_event("Engineer", "기술적으로는 가능합니다.", summary="가능함")
         )
         self.assertEqual(text, "기술적으로는 가능합니다.")
@@ -254,6 +258,67 @@ class TestParticipantTurnWaitsForSpeech(VROutputTestCase):
         started = time.perf_counter()
         self.assertFalse(self.vr.wait_until_idle(timeout=0.3))
         self.assertLess(time.perf_counter() - started, 3.0)
+
+
+class TestBackpressureAndCancel(VROutputTestCase):
+    """대화 생성이 음성보다 너무 앞서가지 않고, 세션을 취소하면 남은 대사가 버려진다."""
+
+    def setUp(self):
+        self.fake = FakeTTS(speak_seconds=1.0)
+        self.vr = self.reload_vr(enabled=True, fake=self.fake)
+        self.vr.MAX_AHEAD = 1
+        self.temp_dir = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp_dir.cleanup)
+        registry = ExperimentSessionRegistry(self.temp_dir.name, max_active_sessions=3)
+        self.session = registry.create(
+            participant_id="P03", condition="centralized", task="A", brief="테스트 과제"
+        )
+
+    def test_generation_waits_when_far_ahead_and_cancel_releases_it(self):
+        done = threading.Event()
+
+        def generate():
+            for i in range(4):
+                self.session.emit(text_event("PM", f"{i}번째 발언입니다."))
+            done.set()
+
+        threading.Thread(target=generate, daemon=True).start()
+        # 0번은 말하는 중, 1번은 TTS가 붙잡고 있고, 2번이 대기열에 있으니 3번은 기다려야 한다
+        self.assertFalse(done.wait(0.4), "대화 생성이 음성보다 한없이 앞서갔다")
+        # 기다리는 중에도 브라우저에는 이미 만든 발화가 다 보인다
+        texts = [e["payload"]["content"]["content"] for e in self.session.poll(after=0, wait_seconds=0)]
+        self.assertEqual(len(texts), 4)
+
+        self.session.cancel()
+        self.assertTrue(done.wait(1.0), "취소했는데 대화 생성이 계속 붙잡혀 있다")
+        self.assertTrue(self.vr.wait_until_idle(5))
+        self.session.emit(text_event("PM", "취소 뒤 발언입니다."))  # 취소된 세션 — 받으면 안 된다
+        time.sleep(0.3)
+        self.assertTrue(self.vr.wait_until_idle(5))
+        spoken = [text for _, text in self.fake.spoken]
+        self.assertEqual(spoken, ["0번째 발언입니다.", "1번째 발언입니다."],
+                         "취소 전에 이미 만들던 것까지만 말하고 나머지는 버려야 한다")
+        self.assertEqual(len(self.fake.resets), 1)
+        self.assertEqual(self.fake.turns[-1], "agents", "취소하면 참가자 차례를 닫아야 한다")
+
+
+class TestResponseTimingInVR(VROutputTestCase):
+    """VR에서는 참가자 응답 시간을 메타휴먼 말이 끝나고 차례가 열린 순간부터 잰다."""
+
+    def test_wait_is_measured_from_turn_open(self):
+        fake = FakeTTS()
+        self.reload_vr(enabled=True, fake=fake)
+        temp_dir = tempfile.TemporaryDirectory()
+        self.addCleanup(temp_dir.cleanup)
+        session = ExperimentSessionRegistry(temp_dir.name).create(
+            participant_id="P04", condition="centralized", task="A", brief="테스트 과제"
+        )
+        self.addCleanup(session.cancel)
+        threading.Timer(0.3, session.submit_message, args=("좋아요",)).start()
+        SessionIOStream(session).input("당신의 차례입니다.")
+        wait_s = session.intervention_timings[0]["wait_s"]
+        self.assertAlmostEqual(wait_s, 0.3, delta=0.15)
+        self.assertEqual(fake.turns, ["participant", "agents"])
 
 
 if __name__ == "__main__":

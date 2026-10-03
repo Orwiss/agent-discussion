@@ -154,7 +154,7 @@ class ExperimentSession:
             )
             self._event_condition.notify_all()
         # 메타휴먼에게 넘기는 건 락을 놓은 다음에 — 여기서 막히면 poll()까지 같이 멈춘다.
-        vr_output.dispatch(payload)
+        vr_output.dispatch(payload, owner=self.id)
         return sequence
 
     def poll(self, after: int, wait_seconds: float = 20) -> list[dict[str, Any]]:
@@ -343,6 +343,8 @@ class ExperimentSession:
 
     def cancel(self) -> None:
         self._cancelled.set()
+        # 아직 말 안 한 대사가 다음 세션에 섞이지 않게 버리고, 참가자 차례를 닫는다
+        vr_output.reset(owner=self.id)
         self.finish("cancelled", idea=self.idea, token_usage=self.token_usage)
 
 
@@ -398,7 +400,12 @@ class SessionIOStream(IOStream):
         # 메타휴먼이 아직 말하는 중이면 참가자 차례를 열지 않는다 — 웹에서 렌더 큐가
         # 밀린 발화를 다 타이핑한 뒤에야 입력창이 열리는 것과 같은 규칙이다.
         vr_output.wait_until_idle()
-        # 대기 시작 시각은 여기서 안 재고 프론트의 input-ready 신호(POST
+        vr_output.set_turn("participant", owner=self.session.id)
+        if vr_output.enabled():
+            # VR에서는 참가자가 웹 화면을 안 본다 — 메타휴먼 말이 끝나고 차례가 열린
+            # 지금부터 잰다. 뒤늦게 오는 프론트의 input-ready 신호는 이미 대기 중이라 무시된다.
+            self.session.record_intervention_wait_start()
+        # VR이 꺼져 있으면 대기 시작 시각은 여기서 안 재고 프론트의 input-ready 신호(POST
         # /api/sessions/{id}/input-ready)로 기록한다 — 렌더 큐가 밀린 발화를
         # 다 타이핑하기 전까지는 입력창이 실제로 안 열리므로, 여기서 재면
         # "화면에 다 뜨길 기다린 시간"까지 참가자 응답 시간에 섞여 들어간다.
@@ -409,7 +416,11 @@ class SessionIOStream(IOStream):
                 "content": {"prompt": prompt},
             }
         )
-        message = self.session.next_message()
+        try:
+            message = self.session.next_message()
+        finally:
+            # 취소돼서 예외로 빠져나가도 UE가 "참가자 차례"에 머물지 않게 한다
+            vr_output.set_turn("agents")
         self.session.record_intervention_response(message)
         self.session.set_status("running")
         return message

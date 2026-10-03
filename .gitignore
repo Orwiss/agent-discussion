@@ -211,3 +211,8 @@ outputs/_*.png
 recordings/
 /autogen_logs
 /.codex-tmp
+
+# 내 PC 전용 원격 실행 스크립트 (PC 계정·IP 포함)
+pc_ssh_toggle.bat
+run_pc_web.bat
+stop_pc_web.bat

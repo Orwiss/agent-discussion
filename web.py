@@ -20,6 +20,7 @@ import csv
 import json
 import os
 import sys
+import hmac
 import http.server
 import datetime
 import threading
@@ -40,6 +41,7 @@ from experiment_runtime import (
     session_scope,
 )
 from study_store import PersistedExperimentSession, StoreError, StudyStore
+import vr_output
 from runtime_llm_logger import ContextRuntimeLogger
 
 from config_uniform import (
@@ -284,6 +286,9 @@ def _session_worker(session: ExperimentSession) -> None:
                 session.brief,
                 session.id,
             )
+            # VR에서는 대화 생성이 음성보다 앞서 끝난다. 메타휴먼이 마지막 말까지 마친 뒤를
+            # 토론 종료로 기록하고 양식을 띄운다 (VR이 꺼져 있으면 바로 돌아온다).
+            vr_output.wait_until_idle()
             session.record_discussion_end()
             form_data = _collect_form(iostream)
         except SessionCancelled:
@@ -828,6 +833,7 @@ const TOPIC_MARKER = '__TOPIC_MARKER__';
 const BRIEF_TEXT = __BRIEFS_JSON__;
 const chat = document.getElementById('chat');
 const msgInput = document.getElementById('msg');
+const STT_IDLE_PLACEHOLDER = msgInput.placeholder;
 const sendBtn = document.getElementById('send');
 const statusEl = document.getElementById('status');
 let sessionId = null;
@@ -1141,6 +1147,16 @@ function handleServerMessage(data) {
   } else if (t === 'tool_response') {
     // tool 결과는 화면에 안 표시 (D/E 답은 별도 메커니즘으로 흘러야 함)
     return;
+  } else if (t === 'stt_partial') {
+    // VR 참가자가 말하는 중 — 받아 적은 글자를 실험자에게 실시간으로 보여준다 (전송은 아직 안 됨)
+    statusEl.textContent = '음성 인식 중: ' + (c.text || '');
+    if (!msgInput.value) msgInput.placeholder = c.text || STT_IDLE_PLACEHOLDER;
+  } else if (t === 'stt_final') {
+    // 참가자가 트리거를 눌러 음성 답이 서버로 들어갔다 — 직접 친 답과 같은 모양으로 보여준다
+    msgInput.placeholder = STT_IDLE_PLACEHOLDER;
+    addMsg('user', c.text ? c.text : '(넘기기)', 'Participant');
+    // input_request의 enableInput도 렌더 큐에 있으므로 같은 큐 뒤에 넣어야 다시 안 열린다
+    enqueue((done) => { disableInput(); done(); });
   }
 }
 
@@ -1399,6 +1415,75 @@ class FrontendHandler(http.server.SimpleHTTPRequestHandler):
             pass
         return True
 
+    # -- STT (PC의 stt_client.py 전용). STT_SECRET이 비어 있으면 꺼져 있다. --
+    def _stt_authorized(self):
+        secret = os.getenv("STT_SECRET", "")
+        given = self.headers.get("X-STT-Secret", "")
+        if not secret or not hmac.compare_digest(secret, given):
+            self._send_json(404, {"error": "찾을 수 없습니다."})
+            return False
+        return True
+
+    def _handle_stt_get(self, parsed):
+        """GET /api/stt/turn?turn_id=N&open=0|1&wait=S — 참가자 차례 상태가 바뀔 때까지 기다렸다 돌려준다."""
+        if not self._stt_authorized():
+            return
+        if parsed.path != "/api/stt/turn":
+            self._send_json(404, {"error": "찾을 수 없습니다."})
+            return
+        query = urllib.parse.parse_qs(parsed.query)
+        try:
+            turn_id = int(query.get("turn_id", ["-1"])[0])
+            is_open = query.get("open", ["0"])[0] == "1"
+            wait = max(0.0, min(25.0, float(query.get("wait", ["20"])[0])))
+        except ValueError:
+            self._send_json(400, {"error": "잘못된 요청입니다."})
+            return
+        state = vr_output.wait_turn_change(turn_id, is_open, wait)
+        self._send_json(200, {"turn_id": state["turn_id"], "open": state["open"]})
+
+    def _handle_stt_post(self, parts):
+        """POST /api/stt/partial {turn_id, text} — 받아 적는 중인 글자를 실험자 화면에 보여준다.
+        POST /api/stt/submit {turn_id, text} — 참가자가 트리거를 눌렀다. 그 차례가 아직 열려 있으면
+        웹에서 친 답과 똑같이 넘긴다 (빈 문자열 = 넘기기)."""
+        if not self._stt_authorized():
+            return
+        try:
+            body = self._read_json()
+            turn_id = body.get("turn_id")
+            text = body.get("text", "")
+            if not isinstance(turn_id, int) or not isinstance(text, str) or len(text) > 10_000:
+                raise ValueError("turn_id(정수)와 text(10,000자 이하)가 필요합니다.")
+            text = text.strip()
+            if parts == ["api", "stt", "partial"]:
+                state = vr_output.turn_state()
+                session = SESSION_REGISTRY.get(state["owner"] or "")
+                if state["open"] and state["turn_id"] == turn_id and session is not None and session.is_current:
+                    session.emit({"type": "stt_partial", "content": {"turn_id": turn_id, "text": text}})
+                    self._send_json(202, {"accepted": True})
+                else:
+                    self._send_json(409, {"error": "열린 참가자 차례가 아닙니다."})
+                return
+            if parts == ["api", "stt", "submit"]:
+                owner = vr_output.claim_turn(turn_id=turn_id)
+                session = SESSION_REGISTRY.get(owner or "")
+                if owner is None or session is None or not session.is_current:
+                    self._send_json(409, {"error": "이미 닫힌 차례입니다."})
+                    return
+                session.record_event("stt_input", {"turn_id": turn_id, "chars": len(text)})
+                session.emit({"type": "stt_final", "content": {"turn_id": turn_id, "text": text}})
+                session.submit_message(text)
+                self._send_json(202, {"accepted": True})
+                return
+            self._send_json(404, {"error": "찾을 수 없습니다."})
+        except SessionCancelled as error:
+            self._send_json(409, {"error": str(error)})
+        except ValueError as error:
+            self._send_json(400, {"error": str(error)})
+        except Exception:
+            traceback.print_exc()
+            self._send_json(500, {"error": "서버 오류가 발생했습니다."})
+
     def do_GET(self):
         parsed = urllib.parse.urlparse(self.path)
         if parsed.path == "/robots.txt":
@@ -1406,6 +1491,9 @@ class FrontendHandler(http.server.SimpleHTTPRequestHandler):
             return
         if parsed.path in ("/healthz", "/api/healthz"):
             self._send_json(200, {"status": "ok"})
+            return
+        if parsed.path.startswith("/api/stt/"):
+            self._handle_stt_get(parsed)
             return
         if self._rate_limited():
             self._send_json(429, {"error": "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요."})
@@ -1477,6 +1565,9 @@ class FrontendHandler(http.server.SimpleHTTPRequestHandler):
     def do_POST(self):
         parsed = urllib.parse.urlparse(self.path)
         parts = [part for part in parsed.path.split("/") if part]
+        if parsed.path.startswith("/api/stt/"):
+            self._handle_stt_post(parts)
+            return
         if self._rate_limited():
             self._send_json(429, {"error": "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요."})
             return
@@ -1556,6 +1647,8 @@ class FrontendHandler(http.server.SimpleHTTPRequestHandler):
                     message = body.get("message")
                     if not isinstance(message, str) or len(message) > 10_000:
                         raise ValueError("메시지는 10,000자 이하 문자열이어야 합니다.")
+                    # 실험자가 직접 친 답이 이 차례를 차지한다 — 뒤늦게 오는 STT 문장은 거절된다
+                    vr_output.claim_turn(owner=session.id)
                     session.submit_message(message)
                     self._send_json(202, {"accepted": True})
                     return

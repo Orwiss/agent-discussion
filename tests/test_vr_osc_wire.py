@@ -20,6 +20,7 @@ class OSCListener:
 
     def __init__(self) -> None:
         self.received: list[tuple[str, tuple]] = []
+        self.stamps: list[tuple[str, tuple, float]] = []
         self._lock = threading.Lock()
         disp = osc_dispatcher.Dispatcher()
         disp.set_default_handler(self._record)
@@ -42,6 +43,7 @@ class OSCListener:
     def _record(self, address, *args):
         with self._lock:
             self.received.append((address, args))
+            self.stamps.append((address, args, time.perf_counter()))
 
     def wait_for(self, address: str, timeout: float = 5.0) -> bool:
         deadline = time.perf_counter() + timeout
@@ -51,6 +53,11 @@ class OSCListener:
                     return True
             time.sleep(0.01)
         return False
+
+    def times(self, address: str, character: str) -> list[float]:
+        """그 캐릭터의 메시지가 도착한 시각들 (perf_counter)."""
+        with self._lock:
+            return [t for addr, args, t in self.stamps if addr == address and args and args[0] == character]
 
     def by_address(self, address: str) -> list[tuple]:
         with self._lock:
@@ -77,7 +84,8 @@ class TestOSCWire(unittest.TestCase):
         def drop_client():
             client = getattr(tts_pipeline, "_osc_client", None)
             if client is not None:
-                client._sock.close()
+                for c in client.clients:
+                    c._sock.close()
             tts_pipeline._osc_client = None
 
         self.addCleanup(drop_client)
@@ -129,6 +137,73 @@ class TestOSCWire(unittest.TestCase):
             base64.b64decode(rejoined), self.packet.audio_bytes,
             "UE5가 이어붙이면 원본 오디오가 나와야 한다",
         )
+
+    def test_playback_presends_next_sentence_and_starts_it_after_the_gap(self):
+        """앞 문장이 재생되는 동안 다음 문장 데이터가 미리 가고, audio_end(=UE 재생 시작)는
+        앞 문장 길이 + 공백 뒤에 간다. 다 끝나야 wait_until_idle이 풀린다."""
+        from performance_packet import PerformancePacket
+
+        def packet(char, seconds):
+            return PerformancePacket(
+                agent_name=char, character_id=char, text="문장.",
+                audio_bytes=b"\x00\x01" * int(16000 * seconds),
+                blendshape_fps=30, weight_count=3,
+                blendshape_frames=[[0.1, 0.2, 0.3]] * 3,
+            )
+
+        made = iter([packet("MH_PM", 0.6), packet("MH_PM", 0.4), packet("MH_Designer", 0.4)])
+        original = self.tts._process_one
+        self.tts._process_one = lambda *a: next(made)
+        self.addCleanup(setattr, self.tts, "_process_one", original)
+
+        self.tts.trigger("PM", "첫 문장. 둘째 문장.", "Designer")
+        self.tts.trigger("Designer", "셋째 문장.", "PM")
+        self.assertFalse(self.tts.wait_until_idle(0.3), "재생 중인데 idle이라고 했다")
+        self.assertTrue(self.tts.wait_until_idle(10), "재생이 시간 안에 안 끝났다")
+        idle_at = time.perf_counter()
+
+        L = self.listener
+        self.assertEqual([a[0] for a in L.by_address("/mh/audio_end")], ["MH_PM", "MH_PM", "MH_Designer"])
+        self.assertEqual([a[0] for a in L.by_address("/mh/speaker")], ["MH_PM", "MH_PM", "MH_Designer"])
+        pm_end1, pm_end2 = L.times("/mh/audio_end", "MH_PM")
+        des_end = L.times("/mh/audio_end", "MH_Designer")[0]
+        # PM 둘째 문장 데이터는 첫 문장이 재생되는 동안(첫 audio_end 뒤, 둘째 audio_end 전) 이미 갔다
+        pm_start2 = L.times("/mh/audio_start", "MH_PM")[1]
+        self.assertLess(pm_start2, pm_end1 + 0.6, "다음 문장을 앞 문장 재생 중에 미리 보내야 한다")
+        # 재생 시작 간격 = 앞 문장 길이 + 공백 (같은 사람 SENTENCE_GAP / 바뀌면 SPEAKER_GAP)
+        self.assertAlmostEqual(pm_end2 - pm_end1, 0.6 + self.tts.SENTENCE_GAP, delta=0.15)
+        self.assertAlmostEqual(des_end - pm_end2, 0.4 + self.tts.SPEAKER_GAP, delta=0.15)
+        # /mh/speaker는 앞 문장이 끝나는 순간(= audio_end보다 공백만큼 먼저) 간다
+        pm_spk2 = L.times("/mh/speaker", "MH_PM")[1]
+        des_spk = L.times("/mh/speaker", "MH_Designer")[0]
+        self.assertAlmostEqual(pm_end2 - pm_spk2, self.tts.SENTENCE_GAP, delta=0.1)
+        self.assertAlmostEqual(des_end - des_spk, self.tts.SPEAKER_GAP, delta=0.1)
+        # 마지막 문장이 끝나는 시점에 idle
+        self.assertAlmostEqual(idle_at - des_end, 0.4, delta=0.15)
+
+    def test_reset_drops_sentences_that_have_not_started(self):
+        """세션 취소: 재생 중인 문장은 끝까지, 아직 시작 안 한 문장은 재생하지 않는다."""
+        from performance_packet import PerformancePacket
+
+        def packet(seconds):
+            return PerformancePacket(
+                agent_name="PM", character_id="MH_PM", text="문장.",
+                audio_bytes=bytes(2) * int(16000 * seconds),
+                blendshape_fps=30, weight_count=3, blendshape_frames=[[0.1, 0.2, 0.3]],
+            )
+
+        made = iter([packet(0.5), packet(0.5), packet(0.5)])
+        original = self.tts._process_one
+        self.tts._process_one = lambda *a: next(made)
+        self.addCleanup(setattr, self.tts, "_process_one", original)
+
+        self.tts.trigger("PM", "하나. 둘. 셋.", "")
+        self.assertTrue(self.listener.wait_for("/mh/audio_end"), "첫 문장이 시작 안 됐다")
+        self.tts.reset()
+        self.assertTrue(self.tts.wait_until_idle(5), "취소 뒤에도 idle이 안 됐다")
+        time.sleep(0.5)
+        self.assertEqual(len(self.listener.by_address("/mh/audio_end")), 1,
+                         "취소 뒤에 남은 문장이 재생됐다")
 
     def test_no_blendshapes_sends_nothing(self):
         self.packet.blendshape_frames = []

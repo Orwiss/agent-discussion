@@ -6,7 +6,9 @@ import tempfile
 import threading
 import time
 import unittest
+from unittest.mock import patch
 
+import vr_output
 from experiment_runtime import (
     ExperimentSessionRegistry,
     SessionCancelled,
@@ -18,6 +20,10 @@ from experiment_runtime import (
 
 class TestMultiSessionIsolation(unittest.TestCase):
     def setUp(self):
+        # .env의 VR_OUTPUT=1이 새어 들어와 실제 UE로 신호를 보내지 않게 한다
+        vr_off = patch.object(vr_output, "_enabled_cache", False)
+        vr_off.start()
+        self.addCleanup(vr_off.stop)
         self.temp_dir = tempfile.TemporaryDirectory()
         self.registry = ExperimentSessionRegistry(
             log_dir=self.temp_dir.name,

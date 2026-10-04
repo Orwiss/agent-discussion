@@ -161,6 +161,7 @@ def reset(owner: str | None = None) -> None:
     except Exception:
         logger.exception("[VR] 취소 정리 실패")
     set_turn("agents")
+    show_hud("")
 
 
 def wait_until_idle(timeout: float | None = None) -> bool:
@@ -191,6 +192,34 @@ def wait_until_idle(timeout: float | None = None) -> bool:
         logger.warning("[VR] 마지막 발화 재생이 %.1f초 안에 안 끝나 그냥 진행", limit)
         return False
     return True
+
+
+# 회의가 끝나면 VR 참가자 눈앞에 띄우는 안내의 신호. 문구 자체("회의가 종료되었습니다. VR 기기를 벗고,
+# 최종 아이디어를 작성해주세요.")는 UE의 WBP_HUDMessage에 들어 있다 — UE OSC가 문자열을 바이트 단위로
+# 읽어서 한글을 보내면 깨지므로 영문 신호만 보낸다 (빈 문자열 = 숨김).
+END_MESSAGE = "end"
+
+
+def participant_speaking() -> None:
+    """참가자가 말하는 중이라고 UE에 알린다 (STT 글자가 늘어날 때마다). 절대 예외를 올리지 않는다."""
+    if not enabled():
+        return
+    try:
+        from tts_pipeline import send_pt_speaking
+        send_pt_speaking()
+    except Exception:
+        logger.exception("[VR] 말하는 중 신호 전달 실패")
+
+
+def show_hud(text: str) -> None:
+    """VR 참가자 눈앞에 안내를 띄운다 (text는 영문 신호, 빈 문자열이면 숨긴다). 절대 예외를 올리지 않는다."""
+    if not enabled():
+        return
+    try:
+        from tts_pipeline import send_hud
+        send_hud(text)
+    except Exception:
+        logger.exception("[VR] 안내 문구 전달 실패")
 
 
 def set_turn(state: str, owner: str | None = None) -> None:

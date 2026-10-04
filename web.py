@@ -94,6 +94,8 @@ LOCAL_RESEARCHER = "local"
 # === 간단한 IP당 레이트리밋 (봇/스크립트 방어용) ===
 _RATE_LIMIT_WINDOW_SECONDS = float(os.getenv("RATE_LIMIT_WINDOW_SECONDS", "60"))
 _RATE_LIMIT_MAX_REQUESTS = int(os.getenv("RATE_LIMIT_MAX_REQUESTS", "120"))
+# STT 차례별로 마지막에 받은 글자 수 — 늘어날 때만 "말하는 중" 신호를 보낸다
+_STT_LAST_LEN: dict[int, int] = {}
 _RATE_LIMIT_LOCK = threading.Lock()
 _RATE_LIMIT_BUCKETS: dict[str, tuple[float, int]] = {}
 
@@ -279,6 +281,7 @@ def _session_worker(session: ExperimentSession) -> None:
             "base": session.base,
         })
         iostream.print(f"{TOPIC_MARKER}{session.brief}")
+        vr_output.show_hud("")  # 지난 세션의 종료 안내가 떠 있으면 지운다
         try:
             _run_session(
                 iostream,
@@ -290,6 +293,7 @@ def _session_worker(session: ExperimentSession) -> None:
             # 토론 종료로 기록하고 양식을 띄운다 (VR이 꺼져 있으면 바로 돌아온다).
             vr_output.wait_until_idle()
             session.record_discussion_end()
+            vr_output.show_hud(vr_output.END_MESSAGE)
             form_data = _collect_form(iostream)
         except SessionCancelled:
             final_status = "cancelled"
@@ -1460,6 +1464,10 @@ class FrontendHandler(http.server.SimpleHTTPRequestHandler):
                 session = SESSION_REGISTRY.get(state["owner"] or "")
                 if state["open"] and state["turn_id"] == turn_id and session is not None and session.is_current:
                     session.emit({"type": "stt_partial", "content": {"turn_id": turn_id, "text": text}})
+                    # 받아 적은 글자가 늘었다 = 참가자가 지금 말하고 있다 → 메타휴먼 맞장구 끄덕임 허용
+                    if len(text) > _STT_LAST_LEN.get(turn_id, 0):
+                        vr_output.participant_speaking()
+                    _STT_LAST_LEN[turn_id] = len(text)
                     self._send_json(202, {"accepted": True})
                 else:
                     self._send_json(409, {"error": "열린 참가자 차례가 아닙니다."})

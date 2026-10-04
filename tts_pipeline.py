@@ -226,7 +226,36 @@ def _synthesize(packet: PerformancePacket) -> bytes:
         ),
         output_format="pcm_16000",
     )
-    return b"".join(gen)
+    return _apply_voice_gain(packet.agent_name, b"".join(gen))
+
+
+# 목소리마다 음량이 달라서 맞춘다 (dB). 2026-10-04 같은 문장 3개로 잰 말소리 평균:
+# PM -21.8 / Designer -15.3 / Engineer -15.4 dBFS. PM은 Engineer에 맞추고,
+# Designer는 높은 목소리라 같은 음량이어도 크게 들려서 조금 내린다. VOICE_GAIN_PM 등으로 덮어쓴다.
+_VOICE_GAIN_DB = {"PM": 5.9, "Designer": -1.5, "Engineer": 0.0}
+
+
+def _voice_gain_db(agent_name: str) -> float:
+    env = os.getenv(f"VOICE_GAIN_{agent_name.upper()}")
+    if env:
+        try:
+            return float(env)
+        except ValueError:
+            logger.warning(f"VOICE_GAIN_{agent_name.upper()} 값이 숫자가 아님: {env}")
+    return _VOICE_GAIN_DB.get(agent_name, 0.0)
+
+
+def _apply_voice_gain(agent_name: str, pcm: bytes) -> bytes:
+    """A2F에 넣기 전에 음량을 맞춘다. 키운 뒤 최대치가 넘치면 깨지지 않게 전체를 줄인다."""
+    db = _voice_gain_db(agent_name)
+    if not db or not pcm:
+        return pcm
+    x = np.frombuffer(pcm, dtype=np.int16).astype(np.float32) * (10 ** (db / 20))
+    peak = float(np.abs(x).max())
+    limit = 0.98 * 32767
+    if peak > limit:
+        x *= limit / peak
+    return x.astype(np.int16).tobytes()
 
 
 # -- Step 2: Audio2Face gRPC -> blendshape weights --
@@ -487,6 +516,24 @@ def send_turn(state: str) -> None:
     with _osc_lock:
         _osc().send_message("/mh/turn", [state])
     logger.info(f"[OSC/Turn] {state}")
+
+
+# -- 참가자가 지금 말하고 있다 (STT가 받아 적는 글자가 늘어날 때). 메타휴먼이 이때만 맞장구로 끄덕인다 --
+def send_pt_speaking() -> None:
+    """/mh/pt_speaking [1] — UE의 BP_OSCManager가 받은 시각을 PTSpeakAt에 적는다."""
+    with _osc_lock:
+        _osc().send_message("/mh/pt_speaking", [1])
+
+
+# -- 참가자 눈앞 안내 문구 (BP_OSCManager가 HUDText에 담고 BP_HUDMessage가 띄운다) --
+def send_hud(text: str) -> None:
+    """/mh/hud [영문 신호] — 빈 문자열이면 숨긴다. 한글은 UE OSC에서 깨지므로 문구는 UE 위젯에 둔다.
+    UDP라 한 번 잃어도 되게 세 번 보낸다 (같은 신호라 중복은 무해)."""
+    with _osc_lock:
+        for _ in range(3):
+            _osc().send_message("/mh/hud", [text])
+            time.sleep(0.05)
+    logger.info(f"[OSC/HUD] {text!r}")
 
 
 # -- Step 5: OSC 전송 - 오디오 (Base64 청크) --

@@ -210,7 +210,7 @@ def _osc() -> _OscFanout:
 
 
 # 말하기 속도 (ElevenLabs speed, 0.7~1.2, 기본 1.0). PM이 너무 느려서 올림 (2026-10-10).
-AGENT_SPEED = {"PM": 1.1}
+AGENT_SPEED = {"PM": 1.1, "Designer": 1.1}
 
 
 # -- Step 1: ElevenLabs TTS -> PCM bytes --

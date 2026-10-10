@@ -209,6 +209,10 @@ def _osc() -> _OscFanout:
     return _osc_client
 
 
+# 말하기 속도 (ElevenLabs speed, 0.7~1.2, 기본 1.0). PM이 너무 느려서 올림 (2026-10-10).
+AGENT_SPEED = {"PM": 1.1}
+
+
 # -- Step 1: ElevenLabs TTS -> PCM bytes --
 def _synthesize(packet: PerformancePacket) -> bytes:
     voice_id = AGENT_VOICE_MAP.get(packet.agent_name, "")
@@ -223,6 +227,7 @@ def _synthesize(packet: PerformancePacket) -> bytes:
             similarity_boost=0.75,
             style=0.0,
             use_speaker_boost=True,
+            speed=AGENT_SPEED.get(packet.agent_name, 1.0),
         ),
         output_format="pcm_16000",
     )

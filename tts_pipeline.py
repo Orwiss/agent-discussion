@@ -536,6 +536,107 @@ def send_hud(text: str) -> None:
     logger.info(f"[OSC/HUD] {text!r}")
 
 
+# -- 참가자 노트북 화면: 실험 조건 / 타이핑 / 자막 --
+def _send_repeated(address: str, args: list) -> None:
+    """상태 신호는 UDP라 한 번 잃어도 되게 세 번 보낸다 (send_hud와 같은 이유, 같은 값이라 중복은 무해)."""
+    with _osc_lock:
+        for _ in range(3):
+            _osc().send_message(address, args)
+            time.sleep(0.05)
+
+
+# 마지막으로 보낸 조건. UE가 세션 도중에 다시 켜져도 몇 초 안에 알도록 resend_condition()이
+# 타이핑 시작·발화 첫 자막 직전과 vr_output의 주기 신호 때 이 값을 한 번씩 다시 보낸다.
+_condition: str | None = None
+
+
+def send_condition(condition: str) -> None:
+    """/mh/condition ["centralized" | "decentralized"] — UE는 이걸 못 받으면 decentralized로 동작한다."""
+    global _condition
+    _condition = condition
+    _send_repeated("/mh/condition", [condition])
+    logger.info(f"[OSC/Condition] {condition}")
+
+
+def resend_condition(condition: str | None = None) -> None:
+    """조건을 한 번 다시 보낸다 — 안 주면 마지막으로 보낸 조건 (아직 없으면 아무것도 안 한다)."""
+    condition = condition or _condition
+    if condition is None:
+        return
+    with _osc_lock:
+        _osc().send_message("/mh/condition", [condition])
+
+
+def resend_typing(agent_name: str) -> None:
+    """주기 신호용 — 타이핑 중인 사람의 /mh/typing [캐릭터, 1]을 한 번 다시 보낸다 (UE가 도중에 다시 켜졌을 때)."""
+    character_id = AGENT_CHARACTER_MAP.get(agent_name)
+    if not character_id:
+        return
+    with _osc_lock:
+        _osc().send_message("/mh/typing", [character_id, 1])
+
+
+def send_typing(agent_name: str, typing: bool) -> None:
+    """/mh/typing [캐릭터, 1=타이핑 시작 / 0=끝]. centralized에서 디자이너·엔지니어가 PM에게 답을
+    말하는 대신 노트북으로 치는 동안. 시작 직전에 조건을 한 번 다시 보낸다."""
+    character_id = AGENT_CHARACTER_MAP.get(agent_name)
+    if not character_id:
+        return
+    if typing:
+        resend_condition()
+    _send_repeated("/mh/typing", [character_id, 1 if typing else 0])
+    logger.info(f"[OSC/Typing] {agent_name} {'start' if typing else 'end'}")
+
+
+_utterance_seq = 0
+_utterance_lock = threading.Lock()
+
+
+def _next_utterance_id() -> int:
+    global _utterance_seq
+    with _utterance_lock:
+        _utterance_seq += 1
+        return _utterance_seq
+
+
+def _send_subtitle(character_id: str, utterance_id: int, index: int, is_last: bool, kind: str, text: str,
+                   full_text: str) -> None:
+    """/mh/subtitle [캐릭터, 발화 번호, 문장 번호, 마지막 문장 1/0, "speech" | "summary", 이 문장(blob),
+    발화 전문(blob)]. 전문은 웹 말풍선과 같은 텍스트라 노트북 채팅창이 발화 시작 때 한 번에 띄울 수 있다.
+    텍스트는 UTF-8 바이트를 blob으로 보낸다 — UE OSC는 문자열을 바이트 단위(ANSI)로 읽어서 한글이 깨진다."""
+    with _osc_lock:
+        _osc().send_message("/mh/subtitle", [
+            character_id, utterance_id, index, 1 if is_last else 0, kind,
+            text.encode("utf-8"), full_text.encode("utf-8"),
+        ])
+
+
+def send_summary_subtitle(agent_name: str, text: str) -> None:
+    """타이핑이 끝난 디자이너·엔지니어의 답 요약을 자막으로 띄운다 (한 줄짜리 발화 하나로 보낸다)."""
+    character_id = AGENT_CHARACTER_MAP.get(agent_name)
+    if not character_id or not text:
+        return
+    resend_condition()  # 발화(요약) 첫 자막 직전
+    _send_subtitle(character_id, _next_utterance_id(), 0, True, "summary", text, text)
+    logger.info(f"[OSC/Subtitle] {agent_name} 요약 {len(text)}자")
+
+
+# -- 재생 멈춤: centralized에서 디자이너·엔지니어가 타이핑하는 동안 PM 종합 발화를 붙잡아 둔다 --
+# TTS·A2F는 그동안 미리 만들어 두고, 재생(audio_end)만 막는다 — 생성까지 막으면 타이핑이 끝난 뒤
+# 몇 초씩 공백이 생긴다. vr_output이 PM 라우팅 발화가 다 끝난 뒤(= 재생 중인 문장이 없을 때)에만 건다.
+_play_gate = threading.Event()
+_play_gate.set()
+PLAY_HOLD_TIMEOUT = float(os.getenv("VR_DRAIN_TIMEOUT", "180"))
+
+
+def hold_playback() -> None:
+    _play_gate.clear()
+
+
+def release_playback() -> None:
+    _play_gate.set()
+
+
 # -- Step 5: OSC 전송 - 오디오 (Base64 청크) --
 # 크기: ZeroTier 어댑터 MTU가 2,800B다. 40,000B 청크는 실제 경로에서 IP 단편 15개로 쪼개지고
 # 그중 하나만 잃어도 datagram 전체가 버려진다. 2,048B면 OSC 오버헤드를 얹어도 단일 패킷에 들어간다.
@@ -666,6 +767,10 @@ def _start_playback(packet: PerformancePacket, send_speaker: bool = True) -> flo
     if send_speaker:
         _send_speaker_via_osc(packet)
     _send_audio_end(packet)
+    if packet.sentence_index == 0:  # 발화 첫 자막 직전에 조건을 한 번 다시 보낸다
+        resend_condition()
+    _send_subtitle(packet.character_id, packet.utterance_id, packet.sentence_index,
+                   packet.is_last, "speech", packet.text, packet.full_text or packet.text)
     return time.monotonic() + _packet_seconds(packet)
 
 
@@ -711,11 +816,19 @@ def _playback_worker():
                     continue
                 # /mh/speaker는 앞 문장이 끝나는 순간 보낸다 — 공백 동안 UE의 SpeakerPending이
                 # 시선을 붙잡아 둬서, 사람이 바뀔 때 0.5초짜리 "아무도 안 말함"(state 4)이 끼지 않는다.
-                _send_speaker_via_osc(packet)
-                speaker_sent = True
-                time.sleep(gap)
+                # 재생이 막혀 있으면(타이핑 중) 시선 신호는 막힘이 풀린 뒤 _start_playback이 보낸다.
+                if _play_gate.is_set():
+                    _send_speaker_via_osc(packet)
+                    speaker_sent = True
+                    time.sleep(gap)
                 _finish(current)
                 current = None
+            if not _play_gate.is_set():
+                if not _play_gate.wait(PLAY_HOLD_TIMEOUT):
+                    logger.warning(f"[Playback] 재생 멈춤이 {PLAY_HOLD_TIMEOUT:.0f}초 동안 안 풀려서 그냥 재생")
+            if epoch != _epoch:  # 미리 보내거나 재생 멈춤을 기다리는 동안 취소됐다
+                _finish(packet)
+                continue
             if not PRESEND:
                 _preload(packet)
             current_end = _start_playback(packet, send_speaker=not speaker_sent)
@@ -738,14 +851,33 @@ def wait_until_idle(timeout: float | None = None) -> bool:
         return _idle_cv.wait_for(lambda: _unplayed == 0, timeout)
 
 
-def trigger(agent_name: str, text: str, recipient: str = "") -> None:
+_ENGINEER_RE = re.compile(r"엔지니어|engineer", re.IGNORECASE)
+_DESIGNER_RE = re.compile(r"디자이너|designer", re.IGNORECASE)
+
+
+def _routing_recipients(sentences: list[str]) -> list[str]:
+    """centralized PM 라우팅 발화의 문장별 받는 사람 — PM이 디자이너, 엔지니어 순으로 보며 묻게 한다.
+    엔지니어를 부르는 첫 문장 앞까지는 Designer, 그 문장부터는 Engineer. 디자이너도 같이 부르는 문장
+    ("디자이너와 엔지니어 두 분께")은 갈림점으로 안 친다. 그런 문장이 없으면 문장 수 절반에서 나눈다."""
+    n = len(sentences)
+    split = next(
+        (i for i, s in enumerate(sentences) if _ENGINEER_RE.search(s) and not _DESIGNER_RE.search(s)),
+        (n + 1) // 2,
+    )
+    return ["Designer" if i < split else "Engineer" for i in range(n)]
+
+
+def trigger(agent_name: str, text: str, recipient: str = "", routing: bool = False) -> None:
     """vr_output의 워커 스레드에서 발화 순서대로 호출된다. 문장마다 TTS + A2F를 만들어
     재생 대기열에 넣고, 다 넣으면 돌아온다. 앞 발화가 재생되는 동안 다음 발화를 미리 만들어서
     에이전트가 바뀔 때 생기던 공백(5.6~9.8초 실측)을 없앤다.
-    대기열(VR_PREFETCH 문장)이 차면 put()에서 기다리므로 너무 멀리 앞서 만들지 않는다."""
+    대기열(VR_PREFETCH 문장)이 차면 put()에서 기다리므로 너무 멀리 앞서 만들지 않는다.
+    routing=True(centralized PM 라우팅)면 /mh/speaker의 받는 사람을 문장마다 디자이너→엔지니어로 둔다."""
     global _unplayed
     epoch = _epoch
+    utterance_id = _next_utterance_id()
     sentences = _split_sentences(text)
+    recipients = _routing_recipients(sentences) if routing else [recipient] * len(sentences)
     for i, sentence in enumerate(sentences):
         if epoch != _epoch:  # 만드는 도중 세션이 취소됐다
             return
@@ -757,8 +889,11 @@ def trigger(agent_name: str, text: str, recipient: str = "") -> None:
         if packet is None:
             logger.error(f"[TTS] {agent_name} 문장 {i+1} 건너뜀 (VR에서 안 들림): {sentence[:40]}")
             continue
-        packet.recipient = recipient
+        packet.recipient = recipients[i]
         packet.is_last = (i == len(sentences) - 1)
+        packet.utterance_id = utterance_id
+        packet.sentence_index = i
+        packet.full_text = text
         with _idle_cv:
             _unplayed += 1
         _speech_queue.put((epoch, packet))
@@ -770,6 +905,7 @@ def reset() -> None:
     global _epoch
     with _idle_cv:
         _epoch += 1
+    _play_gate.set()  # 타이핑 때문에 막아 둔 재생을 풀어 줘야 붙잡혀 있던 문장이 버려진다
     while True:
         try:
             _speech_queue.get_nowait()

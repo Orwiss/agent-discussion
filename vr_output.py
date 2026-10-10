@@ -11,6 +11,11 @@ tts_pipeline.trigger()는 문장마다 TTS+A2F를 만드느라 몇 초씩 걸리
 차면 자리가 날 때까지 호출한 쪽을 붙잡는다. 그래서 emit()은 큐에 넣기만 하고,
 전용 워커 스레드가 꺼내서 trigger()를 호출한다. emit()이 기다리는 건 대화 생성이
 VR_MAX_AHEAD개 넘게 앞서갈 때뿐이고, 이벤트 큐 락을 놓은 뒤라 브라우저 폴링은 안 막힌다.
+
+centralized 조건만 예외가 하나 있다. 디자이너·엔지니어가 PM에게만 하는 답(sub-chat, 웹에서는
+접힌 말풍선)은 말하지 않고 노트북으로 친다. PM 라우팅 발화가 끝나면 둘이 같이 타이핑을 시작하고,
+각자 그 답을 말했다면 걸렸을 시간만큼 친 뒤 끝내면서 답 요약을 자막으로 띄운다. PM 종합 발화는
+둘 다 끝난 뒤에 재생된다. centralized.py가 이벤트에 붙이는 step("routing"/"subchat")으로 알아본다.
 """
 from __future__ import annotations
 
@@ -19,6 +24,7 @@ import os
 import queue
 import re
 import threading
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -35,8 +41,23 @@ DRAIN_TIMEOUT = float(os.getenv("VR_DRAIN_TIMEOUT", "180"))
 # 대화 생성이 앞서갈 수 있는 발화 수 (TTS를 아직 시작 못 한 것 기준). 0이면 제한 없음.
 MAX_AHEAD = int(os.getenv("VR_MAX_AHEAD", "1"))
 
-# (epoch, 발신자, 텍스트, 받는 사람). epoch이 지금과 다르면 reset() 전에 들어온 것이라 버린다.
-_queue: "queue.Queue[tuple[int, str, str, str]]" = queue.Queue()
+# centralized에서 PM 라우팅 뒤에 타이핑하는 사람 (PM이 sub-chat으로 부르는 두 사람)
+SUBCHAT_AGENTS = ("Designer", "Engineer")
+
+# 타이핑 시간 = 답 글자 수(공백 포함) ÷ 초당 글자 수 — 그 답을 decentralized처럼 말했다면 걸렸을 시간.
+# recordings/20261001_155948 녹화(문장 19개 = 사람별 발화 2개씩)에서 쟀다: 같은 사람이 이어 말한
+# 문장을 한 발화로 묶고, 발화마다 글자 수 ÷ (오디오 길이 합 + 문장 사이 공백 0.3초 × (문장 수 - 1)).
+# 디자이너 목소리가 확연히 느려서 사람별로 둔다. 목록에 없는 이름은 셋을 합친 값("*")을 쓴다.
+TTS_CHARS_PER_SEC = {"PM": 7.60, "Designer": 6.29, "Engineer": 8.36, "*": 7.39}
+
+
+def speaking_seconds(agent: str, text: str) -> float:
+    rate = TTS_CHARS_PER_SEC.get(agent) or TTS_CHARS_PER_SEC["*"]
+    return len(text) / rate
+
+
+# (epoch, 발신자, 텍스트, 받는 사람, step, 요약, 들어온 시각). epoch이 지금과 다르면 reset() 전에 들어온 것이라 버린다.
+_queue: "queue.Queue[tuple[int, str, str, str, str, str, float]]" = queue.Queue()
 _room = threading.Condition()
 _epoch = 0
 _owner: str | None = None          # 지금 VR로 말하고 있는 세션 id
@@ -73,20 +94,119 @@ def extract(payload: dict) -> tuple[str, str, str] | None:
 
 
 def _run_worker() -> None:
-    from tts_pipeline import trigger  # 플래그가 켜진 뒤에만 import
+    import tts_pipeline as tts  # 플래그가 켜진 뒤에만 import
 
     q = _queue  # get과 task_done이 같은 큐를 보게 붙잡아 둔다 (테스트가 모듈을 다시 불러와도)
     while True:
-        epoch, sender, text, recipient = q.get()
+        epoch, sender, text, recipient, step, summary, arrived = q.get()
         with _room:
             _room.notify_all()  # 자리가 났다 — dispatch()에서 기다리던 대화 생성이 이어간다
         try:
-            if epoch == _epoch:  # reset() 전에 들어온 발화는 버린다
-                trigger(sender, text, recipient)
+            if epoch != _epoch:  # reset() 전에 들어온 발화는 버린다
+                continue
+            if step == "subchat":
+                _type_instead_of_speaking(tts, epoch, sender, text, summary, arrived)
+                continue
+            _end_orphan_typing(tts)
+            if step == "routing":  # PM이 문장마다 디자이너→엔지니어를 보며 묻는다 (/mh/speaker 받는 사람)
+                tts.trigger(sender, text, recipient, routing=True)
+            else:
+                tts.trigger(sender, text, recipient)
+            if step == "routing":
+                # 라우팅 발화가 VR에서 다 끝난 뒤에 타이핑을 시작한다. 여기서 워커가 멈춰도 그 뒤에 올
+                # sub-chat 답과 PM 종합은 어차피 이 발화 뒤에 나온다.
+                tts.wait_until_idle(DRAIN_TIMEOUT)
+                _start_typing(tts, epoch)
         except Exception:
             logger.exception("[VR] %s 발화 전달 실패", sender)
         finally:
             q.task_done()
+
+
+# -- centralized: 디자이너·엔지니어 타이핑 --
+# 타이핑 중인 사람 → {"since": 시작 시각, "timer": 끝낼 타이머 (답이 아직 안 왔으면 None)}
+_typing: dict[str, dict] = {}
+_typing_cv = threading.Condition()
+
+
+def _start_typing(tts, epoch: int) -> None:
+    """디자이너·엔지니어 타이핑을 같이 시작하고, 끝날 때까지 PM 종합 발화 재생을 막아 둔다."""
+    with _typing_cv:
+        if epoch != _epoch:
+            return
+        tts.hold_playback()
+        now = time.monotonic()
+        started = [agent for agent in SUBCHAT_AGENTS if agent not in _typing]
+        for agent in started:
+            _typing[agent] = {"since": now, "timer": None}
+        for agent in started:  # 보내다 실패해도 위의 기록은 이미 끝나 있다 — 끝내기는 그대로 돈다
+            try:
+                tts.send_typing(agent, True)
+            except Exception:
+                logger.exception("[VR] %s 타이핑 시작 전달 실패", agent)
+
+
+def _type_instead_of_speaking(tts, epoch: int, agent: str, text: str, summary: str, arrived: float) -> None:
+    """sub-chat 답을 말하지 않고, 그 답을 말했다면 걸렸을 시간만큼 타이핑한 뒤 요약을 자막으로 띄운다.
+    답이 그 시간이 지나서야 왔으면 온 순간에 끝낸다. 다른 사람과 상관없이 자기 시간에 끝난다."""
+    with _typing_cv:
+        typing = agent in _typing
+    if not typing:
+        # 라우팅 발화가 비어서 타이핑이 아직 안 시작됐다 — 하던 말이 끝나면 지금부터 시작한다
+        tts.wait_until_idle(DRAIN_TIMEOUT)
+        _start_typing(tts, epoch)
+    with _typing_cv:
+        state = _typing.get(agent)
+        if state is None or epoch != _epoch or state["timer"] is not None:
+            return
+        end_at = max(state["since"] + speaking_seconds(agent, text), arrived)
+        timer = threading.Timer(
+            max(0.0, end_at - time.monotonic()), _end_typing, args=(tts, epoch, agent, summary or text)
+        )
+        timer.daemon = True
+        state["timer"] = timer
+        timer.start()
+
+
+def _end_typing(tts, epoch: int, agent: str, subtitle: str) -> None:
+    """타이핑을 끝내고 (subtitle이 있으면) 바로 요약 자막을 띄운다. 마지막 사람이면 PM 재생을 풀어 준다."""
+    with _typing_cv:
+        if epoch != _epoch or agent not in _typing:
+            return
+        del _typing[agent]
+        try:
+            tts.send_typing(agent, False)
+            if subtitle:
+                tts.send_summary_subtitle(agent, subtitle)
+        except Exception:
+            logger.exception("[VR] %s 타이핑 끝내기 전달 실패", agent)
+        finally:
+            # 보내다 실패해도 PM 재생과 참가자 차례는 풀어 준다 — 안 그러면 180초씩 멈춘다
+            if not _typing:
+                tts.release_playback()
+            _typing_cv.notify_all()
+
+
+def _end_orphan_typing(tts) -> None:
+    """답이 비어서 sub-chat 이벤트가 안 온 사람의 타이핑을 끝낸다 (자막 없이).
+    그 라운드의 sub-chat 이벤트는 다음 발화보다 먼저 오므로, 다음 발화 때 타이머가 없으면 영영 안 끝난다."""
+    with _typing_cv:
+        orphans = [agent for agent, state in _typing.items() if state["timer"] is None]
+        epoch = _epoch
+    for agent in orphans:
+        _end_typing(tts, epoch, agent, "")
+
+
+def _clear_typing() -> list[str]:
+    """reset()용 — 타이머를 멈추고 타이핑 상태를 비운다. 타이핑하던 사람을 돌려준다."""
+    with _typing_cv:
+        agents = list(_typing)
+        for state in _typing.values():
+            if state["timer"] is not None:
+                state["timer"].cancel()
+        _typing.clear()
+        _typing_cv.notify_all()
+    return agents
 
 
 def _ensure_worker() -> None:
@@ -110,9 +230,12 @@ def dispatch(payload: dict, owner: str | None = None) -> None:
     if not enabled():
         return
     try:
+        arrived = time.monotonic()  # sub-chat 답이 준비된 시각 — 아래에서 기다리는 시간은 빼고 잰다
         item = extract(payload)
         if item is None:
             return
+        content = payload["content"]
+        item = item + (str(content.get("step") or ""), str(content.get("summary") or ""), arrived)
         _ensure_worker()
         global _owner
         with _room:
@@ -155,6 +278,7 @@ def reset(owner: str | None = None) -> None:
                     break
                 _queue.task_done()
             _room.notify_all()
+        _clear_typing()
         if _worker is not None:
             from tts_pipeline import reset as _tts_reset
             _tts_reset()
@@ -162,6 +286,18 @@ def reset(owner: str | None = None) -> None:
         logger.exception("[VR] 취소 정리 실패")
     set_turn("agents")
     show_hud("")
+    _send_typing_off()
+    _stop_heartbeat(owner)
+    set_condition("decentralized")  # 세션이 없을 때는 UE 기본값(= 조건 신호를 못 받았을 때)으로 돌려 둔다
+
+
+def _send_typing_off() -> None:
+    try:
+        from tts_pipeline import send_typing
+        for agent in SUBCHAT_AGENTS:
+            send_typing(agent, False)
+    except Exception:
+        logger.exception("[VR] 타이핑 끄기 실패")
 
 
 def wait_until_idle(timeout: float | None = None) -> bool:
@@ -184,10 +320,20 @@ def wait_until_idle(timeout: float | None = None) -> bool:
         return False
 
     try:
-        from tts_pipeline import wait_until_idle as _tts_idle
+        import tts_pipeline as tts
+        _tts_idle = tts.wait_until_idle
     except Exception:
         logger.exception("[VR] tts_pipeline 상태 확인 실패")
         return False
+    # centralized: 디자이너·엔지니어가 아직 타이핑 중이면 그것도 끝나야 참가자 차례다
+    with _typing_cv:
+        typing = bool(_typing)
+    if typing:
+        _end_orphan_typing(tts)
+        with _typing_cv:
+            if not _typing_cv.wait_for(lambda: not _typing, limit):
+                logger.warning("[VR] 타이핑이 %.1f초 안에 안 끝나 그냥 진행", limit)
+                return False
     if not _tts_idle(limit):
         logger.warning("[VR] 마지막 발화 재생이 %.1f초 안에 안 끝나 그냥 진행", limit)
         return False
@@ -220,6 +366,67 @@ def show_hud(text: str) -> None:
         send_hud(text)
     except Exception:
         logger.exception("[VR] 안내 문구 전달 실패")
+
+
+# 세션 중 조건을 다시 보내는 주기(초). UE가 도중에 다시 켜지거나 죽었다 살아나도 이 안에 조건을 안다.
+# (타이핑 시작·발화 첫 자막 직전에도 tts_pipeline이 한 번씩 다시 보낸다.)
+CONDITION_INTERVAL = float(os.getenv("VR_CONDITION_INTERVAL", "5"))
+_heartbeat_lock = threading.Lock()
+_heartbeat_stop: threading.Event | None = None
+_heartbeat_owner: str | None = None
+
+
+def set_condition(condition: str, owner: str | None = None) -> None:
+    """실험 조건을 UE에 알린다 ("centralized" / "decentralized"). 세션이 시작될 때와 취소될 때 보낸다.
+    owner(세션 id)를 주면 그 세션이 끝날 때까지(end_condition / reset) CONDITION_INTERVAL마다 다시 보낸다.
+    UE는 이걸 못 받으면 decentralized(지금 동작)로 둔다. 절대 예외를 올리지 않는다."""
+    if not enabled():
+        return
+    try:
+        from tts_pipeline import send_condition
+        send_condition(condition)
+    except Exception:
+        logger.exception("[VR] 조건 전달 실패")
+    if owner is not None:
+        _start_heartbeat(owner, condition)
+
+
+def end_condition(owner: str) -> None:
+    """세션이 끝났다 — 그 세션이 걸어 둔 조건 주기 신호를 멈춘다 (다른 세션 것이면 그대로 둔다)."""
+    _stop_heartbeat(owner)
+
+
+def _start_heartbeat(owner: str, condition: str) -> None:
+    global _heartbeat_stop, _heartbeat_owner
+    stop = threading.Event()
+    with _heartbeat_lock:
+        if _heartbeat_stop is not None:
+            _heartbeat_stop.set()  # 새 세션이 시작됐다 — 앞 세션의 주기 신호는 멈춘다
+        _heartbeat_stop, _heartbeat_owner = stop, owner
+    threading.Thread(target=_heartbeat, args=(stop, condition), daemon=True, name="vr-condition").start()
+
+
+def _stop_heartbeat(owner: str | None = None) -> None:
+    global _heartbeat_stop, _heartbeat_owner
+    with _heartbeat_lock:
+        if _heartbeat_stop is None or owner not in (None, _heartbeat_owner):
+            return
+        _heartbeat_stop.set()
+        _heartbeat_stop, _heartbeat_owner = None, None
+
+
+def _heartbeat(stop: threading.Event, condition: str) -> None:
+    """조건과, 지금 타이핑 중인 사람의 /mh/typing 1을 주기적으로 다시 보낸다."""
+    while not stop.wait(CONDITION_INTERVAL):
+        try:
+            import tts_pipeline as tts
+            tts.resend_condition(condition)
+            # 락을 쥔 채 보낸다 — 타이핑 끝(0)을 보낸 뒤에 1이 늦게 가서 다시 켜지는 일이 없게
+            with _typing_cv:
+                for agent in _typing:
+                    tts.resend_typing(agent)
+        except Exception:
+            logger.exception("[VR] 조건 주기 신호 실패")
 
 
 def set_turn(state: str, owner: str | None = None) -> None:

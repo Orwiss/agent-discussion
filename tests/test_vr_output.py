@@ -16,11 +16,13 @@ import vr_output
 from experiment_runtime import ExperimentSessionRegistry, SessionIOStream
 
 
-def text_event(sender: str, content: str, summary: str = "") -> dict:
+def text_event(sender: str, content: str, summary: str = "", step: str = "") -> dict:
     """centralized의 _push_to_ui / decentralized의 AG2 메시지가 만드는 것과 같은 모양."""
     body = {"sender": sender, "recipient": "PM", "content": content}
     if summary:
         body["summary"] = summary
+    if step:
+        body["step"] = step
     return {"type": "text", "content": body}
 
 
@@ -30,21 +32,37 @@ class FakeTTS:
     def __init__(self, speak_seconds: float = 0.0) -> None:
         self.spoken: list[tuple[str, str]] = []
         self.finished_at: list[float] = []
+        self.started_at: list[float] = []
         self.speak_seconds = speak_seconds
         self.turns: list[str] = []
         self.resets: list[float] = []
+        # centralized 타이핑 신호: (시각, 사람, True=시작/False=끝), 요약 자막: (시각, 사람, 텍스트)
+        self.typing: list[tuple[float, str, bool]] = []
+        self.summaries: list[tuple[float, str, str]] = []
+        self.conditions: list[str] = []
+        self.resent: list[str | None] = []
+        self.resent_typing: list[str] = []
+        self.routing_flags: list[bool] = []
+        self.gate = threading.Event()  # 진짜 hold_playback()처럼 재생만 막는다
+        self.gate.set()
         self._idle = threading.Event()
         self._idle.set()
         self._lock = threading.Lock()
 
-    def trigger(self, agent_name: str, text: str, recipient: str = "") -> None:
+    def trigger(self, agent_name: str, text: str, recipient: str = "", routing: bool = False) -> None:
         # 진짜 trigger()와 같은 규칙: 직전 발화가 끝날 때까지 기다렸다가,
         # 이번 발화는 백그라운드로 돌리고 바로 리턴한다.
+        self.routing_flags.append(routing)
         self._idle.wait()
         self._idle.clear()
+        resets = len(self.resets)
 
         def _run():
             try:
+                self.gate.wait()
+                if len(self.resets) != resets:  # 재생을 기다리는 동안 취소됐다 — 진짜처럼 버린다
+                    return
+                self.started_at.append(time.perf_counter())
                 time.sleep(self.speak_seconds)
                 with self._lock:
                     self.spoken.append((agent_name, text))
@@ -63,8 +81,22 @@ class FakeTTS:
         module.trigger = self.trigger
         module.wait_until_idle = self.wait_until_idle
         module.send_turn = lambda state: self.turns.append(state)
-        module.reset = lambda: self.resets.append(time.perf_counter())
+        module.reset = self._reset
+        module.send_typing = lambda agent, on: self.typing.append((time.perf_counter(), agent, on))
+        module.send_summary_subtitle = lambda agent, text: self.summaries.append((time.perf_counter(), agent, text))
+        module.send_condition = self.conditions.append
+        module.resend_condition = lambda condition=None: self.resent.append(condition)
+        module.resend_typing = self.resent_typing.append
+        module.hold_playback = self.gate.clear
+        module.release_playback = self.gate.set
         return module
+
+    def _reset(self) -> None:
+        self.resets.append(time.perf_counter())
+        self.gate.set()
+
+    def typing_times(self, agent: str, on: bool) -> list[float]:
+        return [t for t, a, o in self.typing if a == agent and o == on]
 
 
 class VROutputTestCase(unittest.TestCase):
@@ -319,6 +351,200 @@ class TestResponseTimingInVR(VROutputTestCase):
         wait_s = session.intervention_timings[0]["wait_s"]
         self.assertAlmostEqual(wait_s, 0.3, delta=0.15)
         self.assertEqual(fake.turns, ["participant", "agents"])
+
+
+class TestCentralizedTyping(VROutputTestCase):
+    """centralized: 디자이너·엔지니어의 sub-chat 답은 말하지 않고 타이핑한다.
+    라우팅이 끝나면 둘이 같이 시작 → 각자 말했을 시간만큼 → 끝나면서 요약 자막 → 둘 다 끝나야 PM 종합."""
+
+    ROUTING = "디자이너와 엔지니어, 각각 어떻게 보세요?"
+    D_TEXT = "가" * 40   # 0.4초 (아래에서 초당 100자로 둔다)
+    E_TEXT = "나" * 40   # 0.8초 (초당 50자)
+
+    def setUp(self):
+        self.fake = FakeTTS(speak_seconds=0.3)
+        self.vr = self.reload_vr(enabled=True, fake=self.fake)
+        self.vr.TTS_CHARS_PER_SEC = {"Designer": 100.0, "Engineer": 50.0}
+        self.temp_dir = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp_dir.cleanup)
+        registry = ExperimentSessionRegistry(self.temp_dir.name, max_active_sessions=3)
+        self.session = registry.create(
+            participant_id="P05", condition="centralized", task="A", brief="테스트 과제"
+        )
+        self.addCleanup(self.session.cancel)
+
+    def emit_subchats(self, d_text=None, e_text=None):
+        if d_text is not False:
+            self.session.emit(text_event("Designer", d_text or self.D_TEXT, summary="디자인 요약", step="subchat"))
+        if e_text is not False:
+            self.session.emit(text_event("Engineer", e_text or self.E_TEXT, summary="기술 요약", step="subchat"))
+
+    def test_one_round(self):
+        generation = threading.Thread(target=lambda: (
+            self.session.emit(text_event("PM", self.ROUTING, step="routing")),
+            self.emit_subchats(),
+            self.session.emit(text_event("PM", "정리하면 이렇습니다.")),
+        ), daemon=True)
+        generation.start()
+        generation.join(10)
+        self.assertTrue(self.vr.wait_until_idle(10))
+        f = self.fake
+
+        # sub-chat 답은 말하지 않는다
+        self.assertEqual(f.spoken, [("PM", self.ROUTING), ("PM", "정리하면 이렇습니다.")])
+
+        # 라우팅 발화가 끝난 뒤에 둘이 같이 시작
+        d_on, e_on = f.typing_times("Designer", True)[0], f.typing_times("Engineer", True)[0]
+        self.assertGreaterEqual(d_on, f.finished_at[0])
+        self.assertAlmostEqual(d_on, e_on, delta=0.3)
+
+        # 각자 말했을 시간만큼 (서로 상관없이)
+        d_off, e_off = f.typing_times("Designer", False)[0], f.typing_times("Engineer", False)[0]
+        self.assertAlmostEqual(d_off - d_on, 0.4, delta=0.15)
+        self.assertAlmostEqual(e_off - e_on, 0.8, delta=0.15)
+
+        # 끝나자마자 그 사람의 요약(전문이 아니라)이 자막으로
+        self.assertEqual([(a, t) for _, a, t in f.summaries], [("Designer", "디자인 요약"), ("Engineer", "기술 요약")])
+        self.assertAlmostEqual(f.summaries[0][0], d_off, delta=0.05)
+        self.assertAlmostEqual(f.summaries[1][0], e_off, delta=0.05)
+
+        # PM 종합은 둘 다 끝난 뒤에야 재생
+        self.assertGreaterEqual(f.started_at[1], e_off)
+
+    def test_keeps_typing_until_the_reply_exists(self):
+        self.session.emit(text_event("PM", self.ROUTING, step="routing"))
+        time.sleep(1.2)  # 답 생성이 늦다 — 말했을 시간(0.4/0.8초)은 이미 지났다
+        ready = time.perf_counter()
+        self.emit_subchats()
+        self.assertTrue(self.vr.wait_until_idle(10))
+        d_off = self.fake.typing_times("Designer", False)[0]
+        e_off = self.fake.typing_times("Engineer", False)[0]
+        self.assertGreaterEqual(d_off, ready - 0.05)
+        self.assertGreaterEqual(e_off, ready - 0.05)
+        self.assertLess(e_off - ready, 0.3, "답이 오면 바로 끝내야 한다")
+
+    def test_participant_turn_waits_for_typing(self):
+        self.session.emit(text_event("PM", self.ROUTING, step="routing"))
+        self.emit_subchats()
+        self.assertTrue(self.vr.wait_until_idle(10))
+        self.assertEqual(len(self.fake.typing_times("Engineer", False)), 1,
+                         "타이핑이 끝나기 전에 참가자 차례가 열린다")
+
+    def test_empty_reply_does_not_hang(self):
+        # 엔지니어 답이 비면 centralized는 그 이벤트를 안 보낸다 — 엔지니어 타이핑도 끝나야 한다
+        self.session.emit(text_event("PM", self.ROUTING, step="routing"))
+        self.emit_subchats(e_text=False)
+        self.session.emit(text_event("PM", "정리하면 이렇습니다."))
+        self.assertTrue(self.vr.wait_until_idle(5))
+        self.assertEqual(len(self.fake.typing_times("Engineer", False)), 1)
+        self.assertEqual([a for _, a, _ in self.fake.summaries], ["Designer"])
+        self.assertEqual(self.fake.spoken[-1], ("PM", "정리하면 이렇습니다."))
+
+    def test_without_routing_utterance_typing_starts_at_the_reply(self):
+        self.emit_subchats()
+        self.session.emit(text_event("PM", "정리하면 이렇습니다."))
+        self.assertTrue(self.vr.wait_until_idle(5))
+        self.assertEqual(self.fake.spoken, [("PM", "정리하면 이렇습니다.")])
+        self.assertEqual(len(self.fake.summaries), 2)
+
+    def test_cancel_stops_typing(self):
+        self.vr.TTS_CHARS_PER_SEC = {"Designer": 1.0, "Engineer": 1.0}  # 40초 — 취소 전에 안 끝난다
+        self.session.emit(text_event("PM", self.ROUTING, step="routing"))
+        self.emit_subchats()
+        self.session.emit(text_event("PM", "정리하면 이렇습니다."))
+        deadline = time.perf_counter() + 5
+        while len(self.fake.typing) < 2 and time.perf_counter() < deadline:
+            time.sleep(0.05)
+        self.session.cancel()
+        time.sleep(0.3)
+        self.assertEqual(self.fake.summaries, [], "취소했는데 요약 자막이 떴다")
+        self.assertEqual(self.fake.spoken, [("PM", self.ROUTING)], "취소했는데 PM 종합이 재생됐다")
+        self.assertEqual(sorted(a for _, a, on in self.fake.typing if not on), ["Designer", "Engineer"])
+        self.assertEqual(self.fake.conditions[-1], "decentralized")
+
+    def test_only_the_routing_utterance_gets_per_sentence_recipients(self):
+        self.session.emit(text_event("PM", self.ROUTING, step="routing"))
+        self.emit_subchats()
+        self.session.emit(text_event("PM", "정리하면 이렇습니다."))
+        self.assertTrue(self.vr.wait_until_idle(10))
+        self.assertEqual(self.fake.routing_flags, [True, False], "종합 발화까지 라우팅으로 보냈다")
+
+    def test_heartbeat_resends_current_typing(self):
+        """UE가 타이핑 도중 다시 켜져도 이어서 치도록, 주기 신호에 지금 타이핑 중인 사람을 넣는다."""
+        self.vr.CONDITION_INTERVAL = 0.1
+        self.vr.TTS_CHARS_PER_SEC = {"Designer": 100.0, "Engineer": 20.0}  # D 0.4초, E 2초
+        self.vr.set_condition("centralized", owner="P05-hb")
+        self.addCleanup(self.vr.end_condition, "P05-hb")
+        self.session.emit(text_event("PM", self.ROUTING, step="routing"))
+        self.emit_subchats()
+        time.sleep(1.2)  # D는 끝났고 E는 아직 친다
+        self.fake.resent_typing.clear()
+        time.sleep(0.35)
+        self.assertIn("Engineer", self.fake.resent_typing)
+        self.assertNotIn("Designer", self.fake.resent_typing, "끝난 사람을 다시 켰다")
+        self.assertTrue(self.vr.wait_until_idle(10))
+        time.sleep(0.15)
+        self.fake.resent_typing.clear()
+        time.sleep(0.3)
+        self.assertEqual(self.fake.resent_typing, [], "타이핑이 끝났는데 계속 보낸다")
+
+    def test_unmarked_replies_are_still_spoken(self):
+        # decentralized에서도 PM에게 말하는 발화가 있다 — 표시(step)가 없으면 지금처럼 말한다
+        self.session.emit(text_event("Designer", "PM, 제 생각은 이렇습니다."))
+        self.assertTrue(self.vr.wait_until_idle(5))
+        self.assertEqual(self.fake.spoken, [("Designer", "PM, 제 생각은 이렇습니다.")])
+        self.assertEqual(self.fake.typing, [])
+
+
+class TestConditionSignal(VROutputTestCase):
+    def test_condition_is_sent_when_enabled(self):
+        fake = FakeTTS()
+        vr = self.reload_vr(enabled=True, fake=fake)
+        vr.set_condition("centralized")
+        self.assertEqual(fake.conditions, ["centralized"])
+
+    def test_condition_is_resent_while_the_session_runs(self):
+        """UE가 세션 도중 다시 켜져도 몇 초 안에 조건을 알도록 주기적으로 다시 보낸다."""
+        fake = FakeTTS()
+        vr = self.reload_vr(enabled=True, fake=fake)
+        vr.CONDITION_INTERVAL = 0.1
+        vr.set_condition("centralized", owner="S1")
+        self.addCleanup(vr.end_condition, "S1")
+        time.sleep(0.45)
+        self.assertGreaterEqual(fake.resent.count("centralized"), 3)
+        vr.end_condition("S2")  # 다른 세션이 끝나도 멈추지 않는다
+        n = len(fake.resent)
+        time.sleep(0.25)
+        self.assertGreater(len(fake.resent), n)
+        vr.end_condition("S1")
+        time.sleep(0.15)
+        n = len(fake.resent)
+        time.sleep(0.3)
+        self.assertEqual(len(fake.resent), n, "세션이 끝났는데 계속 보낸다")
+
+    def test_cancel_stops_resending_and_falls_back_to_decentralized(self):
+        fake = FakeTTS()
+        vr = self.reload_vr(enabled=True, fake=fake)
+        vr.CONDITION_INTERVAL = 0.1
+        vr.set_condition("centralized", owner="S1")
+        vr.reset(owner="S1")
+        self.assertEqual(fake.conditions[-1], "decentralized")
+        time.sleep(0.15)
+        n = len(fake.resent)
+        time.sleep(0.3)
+        self.assertEqual(len(fake.resent), n)
+
+    def test_condition_is_a_noop_when_disabled(self):
+        vr = self.reload_vr(enabled=False)
+        vr.set_condition("centralized")
+        self.assertNotIn("tts_pipeline", sys.modules)
+
+
+class TestSpeakingRate(VROutputTestCase):
+    def test_rate_per_agent(self):
+        vr = self.reload_vr(enabled=False)
+        self.assertAlmostEqual(vr.speaking_seconds("Designer", "가" * 629), 100.0, places=3)
+        self.assertAlmostEqual(vr.speaking_seconds("Unknown", "가" * 739), 100.0, places=3)
 
 
 if __name__ == "__main__":

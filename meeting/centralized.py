@@ -45,9 +45,12 @@ def _is_current_session(token) -> bool:
         return True
 
 
-def _push_to_ui(sender: str, content: str, recipient: str = "PM", summary: str = "", token=None) -> None:
+def _push_to_ui(sender: str, content: str, recipient: str = "PM", summary: str = "", token=None,
+                step: str = "") -> None:
     """현재 IOStream(웹소켓)에 sender 이름으로 발화 push.
     summary가 있으면 접힘 미리보기용으로 함께 전송.
+    step은 VR용 표시 — "routing"(PM 라우팅) / "subchat"(디자이너·엔지니어가 PM에게만 한 답).
+    VR에서는 sub-chat 답을 말하지 않고 타이핑으로 보여준다 (vr_output). 웹 화면은 이 값을 안 쓴다.
     token이 지금 활성 세션 것과 다르면(이전 세션이 뒤늦게 쓰는 경우) 조용히 버린다."""
     if not content or not content.strip():
         return
@@ -59,12 +62,15 @@ def _push_to_ui(sender: str, content: str, recipient: str = "PM", summary: str =
         payload = {"sender": sender, "recipient": recipient, "content": content}
         if summary:
             payload["summary"] = summary
+        if step:
+            payload["step"] = step
         if hasattr(iostream, "send_text"):
             iostream.send_text(
                 sender,
                 content,
                 recipient=recipient,
                 summary=summary,
+                **({"step": step} if step else {}),
             )
             return
         ws = getattr(iostream, "_websocket", None)
@@ -253,7 +259,7 @@ async def _run_one_round(pm, designer, engineer, user, messages, phase, is_first
         # 이후 라운드는 라우팅 프롬프트 자체가 직전 D/E 답을 곱씹는 내용을 포함하므로,
         # 화면에서 숨기면 종합→다음 D/E 답 사이가 근거 없이 점프해 보임 — 항상 노출.
         if routing_text:
-            _push_to_ui("PM", routing_text, recipient="Participant", token=token)
+            _push_to_ui("PM", routing_text, recipient="Participant", token=token, step="routing")
             _log_msg("PM_routing", routing_text, token=token)
 
         # (2) D, E 병렬 sub-chat
@@ -293,11 +299,11 @@ async def _run_one_round(pm, designer, engineer, user, messages, phase, is_first
         d_sum, e_sum = await asyncio.gather(_summarize(pm, d_reply), _summarize(pm, e_reply))
 
         if d_reply:
-            _push_to_ui("Designer", d_reply, recipient="PM", summary=d_sum, token=token)
+            _push_to_ui("Designer", d_reply, recipient="PM", summary=d_sum, token=token, step="subchat")
             _log_msg("Designer", d_reply, token=token)
             messages.append({"role": "user", "content": d_reply, "name": "Designer"})
         if e_reply:
-            _push_to_ui("Engineer", e_reply, recipient="PM", summary=e_sum, token=token)
+            _push_to_ui("Engineer", e_reply, recipient="PM", summary=e_sum, token=token, step="subchat")
             _log_msg("Engineer", e_reply, token=token)
             messages.append({"role": "user", "content": e_reply, "name": "Engineer"})
 

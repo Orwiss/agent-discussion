@@ -203,7 +203,7 @@ class FakeIOStream:
         text = sep.join(str(o) for o in objects) + (end if end != "\n" else "")
         self._prefixed_print(text.rstrip("\n"))
 
-    def send_text(self, sender: str, content: str, recipient: str = "PM", summary: str = "") -> None:
+    def send_text(self, sender: str, content: str, recipient: str = "PM", summary: str = "", step: str = "") -> None:
         self._prefixed_print(f"[{sender} → {recipient}] {content}")
 
     def send(self, message: Any) -> None:

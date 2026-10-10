@@ -51,10 +51,23 @@ FINAL_WAIT_SEC = 2.0        # 마지막 구간 확정을 기다리는 최대 시
 PARTIAL_EVERY_SEC = 0.3     # 실험자 화면 갱신 간격
 
 _t0 = time.monotonic()
+# 창에 찍는 것과 같은 내용을 파일에도 남긴다 (창이 닫히거나 지나가 버려도 원인을 볼 수 있게)
+_LOG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "logs", "stt")
+_LOG_PATH = os.path.join(_LOG_DIR, f"stt_client_{time.strftime('%Y%m%d')}.log")
 
 
 def log(*parts) -> None:
-    print(f"[{time.monotonic() - _t0:7.1f}s]", *parts, flush=True)
+    line = f"[{time.monotonic() - _t0:7.1f}s] " + " ".join(str(p) for p in parts)
+    try:
+        print(line, flush=True)
+    except UnicodeEncodeError:  # 창 인코딩이 UTF-8이 아니어도 로그 때문에 죽지 않게
+        print(line.encode("ascii", "replace").decode("ascii"), flush=True)
+    try:
+        os.makedirs(_LOG_DIR, exist_ok=True)
+        with open(_LOG_PATH, "a", encoding="utf-8") as f:
+            f.write(f"{time.strftime('%H:%M:%S')} {line}\n")
+    except OSError:
+        pass
 
 
 # -- web.py와 주고받기 (HTTP) --
@@ -335,6 +348,15 @@ def start_trigger_listeners(keyboard: bool) -> None:
         threading.Thread(target=read_keys, daemon=True, name="stt-keys").start()
 
 
+def _log_task_error(task: asyncio.Task) -> None:
+    """차례 처리 중 잡히지 않은 오류(예: 마이크 열기 실패)가 조용히 사라지지 않게 남긴다."""
+    if task.cancelled():
+        return
+    exc = task.exception()
+    if exc is not None:
+        log("차례 처리 중 오류 — 이번 차례는 STT 없이 진행:", repr(exc))
+
+
 async def main(args) -> None:
     global CURRENT
     if not SECRET:
@@ -366,6 +388,7 @@ async def main(args) -> None:
         if is_open and not busy:
             CURRENT = Turn(turn_id, loop)
             task = asyncio.create_task(run_turn(CURRENT, make_source))
+            task.add_done_callback(_log_task_error)
         elif not is_open and busy and CURRENT is not None and not CURRENT.done.is_set():
             CURRENT.closed.set()
         if args.once and task is not None and not is_open:

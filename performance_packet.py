@@ -25,6 +25,9 @@ class PerformancePacket:
     blendshape_frames: List[List[float]] = field(default_factory=list)
     recipient:       str = ""      # 받는 사람 에이전트 이름 (없으면 참가자)
     is_last:         bool = True    # 이 발화의 마지막 문장인지 (시선: 끝에서 받는 사람을 봄)
+    utterance_id:    int = 0        # 발화 번호 (자막: 같은 발화의 문장끼리 묶는 데 쓴다)
+    sentence_index:  int = 0        # 발화 안에서 몇 번째 문장인지 (0부터)
+    full_text:       str = ""       # 발화 전문 (자막: 노트북 채팅창이 발화 시작 때 한 번에 띄운다)
 
 
 def build_packet(agent_name: str, text: str) -> PerformancePacket | None:

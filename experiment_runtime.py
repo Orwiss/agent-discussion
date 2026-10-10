@@ -389,10 +389,13 @@ class SessionIOStream(IOStream):
         *,
         recipient: str = "PM",
         summary: str = "",
+        step: str = "",
     ) -> None:
         body = {"sender": sender, "recipient": recipient, "content": content}
         if summary:
             body["summary"] = summary
+        if step:  # centralized의 VR용 표시 ("routing" / "subchat") — vr_output이 읽는다
+            body["step"] = step
         self.session.emit({"type": "text", "content": body})
 
     def input(self, prompt: str = "", *, password: bool = False) -> str:

@@ -71,8 +71,11 @@ def main() -> None:
     for k, turn in enumerate(turns):
         nxt = turns[k + 1] if k + 1 < len(turns) else None
         recipient = nxt[0]["agent_name"] if nxt else ""   # 빈 값이면 /mh/speaker에 Participant로 나간다
-        # 문장 수만큼 문장을 만든다 — trigger()가 마침표로 나눠 _process_one을 문장마다 부른다
-        T.trigger(turn[0]["agent_name"], " ".join("문장." for _ in turn), recipient)
+        # 녹음된 실제 문장을 그대로 보낸다 (자막·전문이 실제 대사로 나가게). 문장 나누기는
+        # 녹음 단위를 그대로 쓰도록 바꿔 둔다 — _process_one 호출 수가 녹음 수와 맞아야 한다
+        texts = [d.get("text") or "문장." for d in turn]
+        T._split_sentences = lambda _text, _t=texts: list(_t)
+        T.trigger(turn[0]["agent_name"], " ".join(texts), recipient)
     T.wait_until_idle()
     T.send_turn("participant")
     print(f"{time.time() - t0:6.1f}s 참가자 차례")

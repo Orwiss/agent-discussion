@@ -205,6 +205,141 @@ class TestOSCWire(unittest.TestCase):
         self.assertEqual(len(self.listener.by_address("/mh/audio_end")), 1,
                          "취소 뒤에 남은 문장이 재생됐다")
 
+    def _fake_sentences(self, *seconds):
+        from performance_packet import PerformancePacket
+
+        texts = iter(["첫 문장입니다.", "둘째 문장입니다.", "셋째 문장입니다."])
+        made = iter([
+            PerformancePacket(
+                agent_name="PM", character_id="MH_PM", text=next(texts),
+                audio_bytes=bytes(2) * int(16000 * s),
+                blendshape_fps=30, weight_count=3, blendshape_frames=[[0.1, 0.2, 0.3]],
+            )
+            for s in seconds
+        ])
+        original = self.tts._process_one
+        self.tts._process_one = lambda *a: next(made)
+        self.addCleanup(setattr, self.tts, "_process_one", original)
+
+    def test_subtitle_is_sent_when_each_sentence_starts_playing(self):
+        """자막: 문장마다 재생 시작(audio_end) 순간에, 한글은 UTF-8 blob으로, 같은 발화는 같은 번호."""
+        self._fake_sentences(0.3, 0.3)
+        self.tts.trigger("PM", "첫 문장입니다. 둘째 문장입니다.", "")
+        self.assertTrue(self.tts.wait_until_idle(10))
+        subs = self.listener.by_address("/mh/subtitle")
+        self.assertEqual(len(subs), 2)
+        (c1, u1, i1, last1, k1, t1, f1), (c2, u2, i2, last2, k2, t2, f2) = subs
+        self.assertEqual((c1, i1, last1, k1), ("MH_PM", 0, 0, "speech"))
+        self.assertEqual((c2, i2, last2, k2), ("MH_PM", 1, 1, "speech"))
+        self.assertEqual(u1, u2)
+        self.assertEqual(t1.decode("utf-8"), "첫 문장입니다.")
+        self.assertEqual(t2.decode("utf-8"), "둘째 문장입니다.")
+        # 7번째: 발화 전문 — 노트북 채팅창이 첫 문장 때 한 번에 띄운다. 모든 문장에 같은 값
+        self.assertEqual(f1.decode("utf-8"), "첫 문장입니다. 둘째 문장입니다.")
+        self.assertEqual(f2, f1)
+        for end_t, sub_t in zip(self.listener.times("/mh/audio_end", "MH_PM"),
+                                self.listener.times("/mh/subtitle", "MH_PM")):
+            self.assertAlmostEqual(end_t, sub_t, delta=0.05)
+
+    def test_hold_playback_delays_audio_end_until_release(self):
+        """centralized 타이핑 중: 데이터는 미리 가도 재생(audio_end)은 풀릴 때까지 안 간다."""
+        self._fake_sentences(0.3)
+        self.tts.hold_playback()
+        self.addCleanup(self.tts.release_playback)
+        self.tts.trigger("PM", "첫 문장입니다.", "")
+        self.assertTrue(self.listener.wait_for("/mh/audio_start"), "미리 보내기가 안 됐다")
+        time.sleep(0.5)
+        self.assertEqual(self.listener.by_address("/mh/audio_end"), [], "막아 뒀는데 재생됐다")
+        released = time.perf_counter()
+        self.tts.release_playback()
+        self.assertTrue(self.listener.wait_for("/mh/audio_end"))
+        self.assertLess(self.listener.times("/mh/audio_end", "MH_PM")[0] - released, 0.2)
+        self.assertTrue(self.tts.wait_until_idle(5))
+
+    def test_reset_while_held_drops_the_sentence(self):
+        self._fake_sentences(0.3)
+        self.tts.hold_playback()
+        self.addCleanup(self.tts.release_playback)
+        self.tts.trigger("PM", "첫 문장입니다.", "")
+        self.assertTrue(self.listener.wait_for("/mh/audio_start"))
+        self.tts.reset()
+        self.assertTrue(self.tts.wait_until_idle(5))
+        time.sleep(0.3)
+        self.assertEqual(self.listener.by_address("/mh/audio_end"), [])
+
+    def test_typing_condition_and_summary_messages(self):
+        self.tts.send_condition("centralized")
+        self.tts.send_typing("Designer", True)
+        self.tts.send_typing("Designer", False)
+        self.tts.send_summary_subtitle("Engineer", "센서 데이터로 충분히 가능")
+        self.assertTrue(self.listener.wait_for("/mh/subtitle"))
+        time.sleep(0.1)
+        L = self.listener
+        self.assertEqual(set(L.by_address("/mh/condition")), {("centralized",)})
+        self.assertEqual(set(L.by_address("/mh/typing")), {("MH_Designer", 1), ("MH_Designer", 0)})
+        (char, utt, idx, last, kind, text, full), = L.by_address("/mh/subtitle")
+        self.assertEqual((char, idx, last, kind), ("MH_Engineer", 0, 1, "summary"))
+        self.assertGreater(utt, 0)
+        self.assertEqual(text.decode("utf-8"), "센서 데이터로 충분히 가능")
+        self.assertEqual(full, text)
+
+    def test_condition_is_resent_before_typing_start_and_first_subtitle(self):
+        """UE가 도중에 다시 켜져도 알도록: 타이핑 시작 직전, 발화마다 첫 자막 직전에 조건을 한 번 더."""
+        self.tts.send_condition("centralized")
+        self.assertTrue(self.listener.wait_for("/mh/condition"))
+        time.sleep(0.1)
+        with self.listener._lock:
+            self.listener.received.clear()
+
+        self.tts.send_typing("Designer", True)
+        self.tts.send_typing("Designer", False)
+        self._fake_sentences(0.2, 0.2)
+        self.tts.trigger("PM", "첫 문장입니다. 둘째 문장입니다.", "")
+        self.assertTrue(self.tts.wait_until_idle(10))
+        time.sleep(0.1)
+
+        seq = [(addr, args) for addr, args in self.listener.received
+               if addr in ("/mh/condition", "/mh/typing", "/mh/subtitle")]
+        # 타이핑 시작 앞에 1번, 끝 앞에는 없음
+        self.assertEqual(seq[0], ("/mh/condition", ("centralized",)))
+        self.assertEqual(seq[1][0], "/mh/typing")
+        typing_off_at = max(i for i, (a, args) in enumerate(seq) if a == "/mh/typing" and args[1] == 0)
+        rest = seq[typing_off_at + 1:]
+        # 발화의 첫 문장 자막 앞에만 1번
+        self.assertEqual([a for a, _ in rest], ["/mh/condition", "/mh/subtitle", "/mh/subtitle"])
+
+    def test_routing_recipients_split(self):
+        r = self.tts._routing_recipients
+        self.assertEqual(r(["디자이너님, A는요?", "B도 궁금해요.", "엔지니어님, C는요?", "D도요."]),
+                         ["Designer", "Designer", "Engineer", "Engineer"])
+        # 둘 다 부르는 문장은 갈림점이 아니다
+        self.assertEqual(r(["디자이너와 엔지니어 두 분께 묻겠습니다.", "디자이너는 A를.", "Engineer, B?"]),
+                         ["Designer", "Designer", "Engineer"])
+        # 엔지니어를 안 부르면 절반에서
+        self.assertEqual(r(["가.", "나.", "다.", "라."]), ["Designer", "Designer", "Engineer", "Engineer"])
+        self.assertEqual(r(["가.", "나.", "다."]), ["Designer", "Designer", "Engineer"])
+        self.assertEqual(r(["가."]), ["Designer"])
+
+    def _speaker_args(self, text, recipient, **kw):
+        n = len(self.tts._split_sentences(text))
+        self._fake_sentences(*([0.15] * n))
+        self.tts.trigger("PM", text, recipient, **kw)
+        self.assertTrue(self.tts.wait_until_idle(10))
+        return self.listener.by_address("/mh/speaker")
+
+    def test_routing_utterance_speaker_looks_at_designer_then_engineer(self):
+        got = self._speaker_args("디자이너님, 무엇이 가능할까요? 엔지니어님은 어떻게 보세요?", "Participant", routing=True)
+        self.assertEqual(got, [("MH_PM", "MH_Designer", 0), ("MH_PM", "MH_Engineer", 1)])
+
+    def test_normal_utterance_speaker_is_unchanged(self):
+        """decentralized와 centralized 종합 발화의 /mh/speaker는 예전 그대로 (모든 문장이 같은 받는 사람)."""
+        got = self._speaker_args("디자이너님 의견 좋네요. 엔지니어님 생각은요?", "Designer")
+        self.assertEqual(got, [("MH_PM", "MH_Designer", 0), ("MH_PM", "MH_Designer", 1)])
+        with self.listener._lock:
+            self.listener.received.clear()
+        got = self._speaker_args("첫 문장입니다. 엔지니어도 들어 보세요.", "Participant")
+        self.assertEqual(got, [("MH_PM", "Participant", 0), ("MH_PM", "Participant", 1)])
+
     def test_no_blendshapes_sends_nothing(self):
         self.packet.blendshape_frames = []
         self.tts._send_blendshapes_via_osc(self.packet)

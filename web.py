@@ -282,6 +282,7 @@ def _session_worker(session: ExperimentSession) -> None:
         })
         iostream.print(f"{TOPIC_MARKER}{session.brief}")
         vr_output.show_hud("")  # 지난 세션의 종료 안내가 떠 있으면 지운다
+        vr_output.set_condition(session.condition, owner=session.id)
         try:
             _run_session(
                 iostream,
@@ -307,6 +308,7 @@ def _session_worker(session: ExperimentSession) -> None:
                 "traceback": traceback.format_exc(),
             })
         finally:
+            vr_output.end_condition(session.id)  # 조건 주기 신호를 멈춘다
             if final_status == "completed":
                 iostream.print("\n[시스템] 세션이 종료되었습니다.")
             log_event("session_end", {"status": final_status})

@@ -51,9 +51,19 @@ SUBCHAT_AGENTS = ("Designer", "Engineer")
 TTS_CHARS_PER_SEC = {"PM": 7.60, "Designer": 6.29, "Engineer": 8.36, "*": 7.39}
 
 
+# 실제로 보니 말하는 시간 그대로는 타이핑이 길게 느껴져서 조금 줄인다 (2026-10-10).
+TYPING_TIME_SCALE = 0.85
+
+# 요약 자막이 하나씩 보일 틈 (초). 디자이너·엔지니어 타이핑 끝이 이보다 붙으면 먼저 끝나는 쪽을
+# 당기고(못 당기면 뒤쪽을 미룬다), 마지막 요약 뒤에도 이만큼 기다렸다가 PM 종합을 재생한다.
+SUMMARY_GAP = 3.0
+# 당기더라도 타이핑은 최소 이만큼은 한다 (초) — 타이핑 시작·끝 동작만 해도 2~3초다.
+MIN_TYPING_SEC = 4.0
+
+
 def speaking_seconds(agent: str, text: str) -> float:
     rate = TTS_CHARS_PER_SEC.get(agent) or TTS_CHARS_PER_SEC["*"]
-    return len(text) / rate
+    return len(text) / rate * TYPING_TIME_SCALE
 
 
 # (epoch, 발신자, 텍스트, 받는 사람, step, 요약, 들어온 시각). epoch이 지금과 다르면 reset() 전에 들어온 것이라 버린다.
@@ -160,12 +170,38 @@ def _type_instead_of_speaking(tts, epoch: int, agent: str, text: str, summary: s
         if state is None or epoch != _epoch or state["timer"] is not None:
             return
         end_at = max(state["since"] + speaking_seconds(agent, text), arrived)
-        timer = threading.Timer(
-            max(0.0, end_at - time.monotonic()), _end_typing, args=(tts, epoch, agent, summary or text)
-        )
-        timer.daemon = True
-        state["timer"] = timer
-        timer.start()
+        # 다른 사람의 끝과 SUMMARY_GAP보다 가까우면 벌린다 — 먼저 끝나는 쪽을 당기는 게 우선
+        for other, ost in _typing.items():
+            if other == agent or ost.get("end_at") is None:
+                continue
+            o_end = ost["end_at"]
+            if abs(end_at - o_end) >= SUMMARY_GAP:
+                continue
+            if end_at >= o_end:
+                pulled = max(end_at - SUMMARY_GAP, ost["since"] + MIN_TYPING_SEC, ost["arrived"])
+                if pulled <= end_at - SUMMARY_GAP + 1e-6 and pulled > time.monotonic():
+                    _reschedule(tts, epoch, other, ost, pulled)
+                else:
+                    end_at = o_end + SUMMARY_GAP
+            else:
+                pulled = max(o_end - SUMMARY_GAP, state["since"] + MIN_TYPING_SEC, arrived)
+                end_at = pulled if pulled <= o_end - SUMMARY_GAP + 1e-6 else o_end + SUMMARY_GAP
+        state["arrived"] = arrived
+        state["subtitle"] = summary or text
+        _reschedule(tts, epoch, agent, state, end_at)
+
+
+def _reschedule(tts, epoch: int, agent: str, state: dict, end_at: float) -> None:
+    """(_typing_cv 안에서) 이 사람의 타이핑 끝 타이머를 end_at에 다시 건다."""
+    if state.get("timer") is not None:
+        state["timer"].cancel()
+    timer = threading.Timer(
+        max(0.0, end_at - time.monotonic()), _end_typing, args=(tts, epoch, agent, state.get("subtitle", ""))
+    )
+    timer.daemon = True
+    state["timer"] = timer
+    state["end_at"] = end_at
+    timer.start()
 
 
 def _end_typing(tts, epoch: int, agent: str, subtitle: str) -> None:
@@ -181,9 +217,15 @@ def _end_typing(tts, epoch: int, agent: str, subtitle: str) -> None:
         except Exception:
             logger.exception("[VR] %s 타이핑 끝내기 전달 실패", agent)
         finally:
-            # 보내다 실패해도 PM 재생과 참가자 차례는 풀어 준다 — 안 그러면 180초씩 멈춘다
+            # 보내다 실패해도 PM 재생과 참가자 차례는 풀어 준다 — 안 그러면 180초씩 멈춘다.
+            # 마지막 요약이 화면에서 보일 틈(SUMMARY_GAP)을 두고 푼다 (자막 없이 끝났으면 바로).
             if not _typing:
-                tts.release_playback()
+                if subtitle and SUMMARY_GAP > 0:
+                    t = threading.Timer(SUMMARY_GAP, tts.release_playback)
+                    t.daemon = True
+                    t.start()
+                else:
+                    tts.release_playback()
             _typing_cv.notify_all()
 
 

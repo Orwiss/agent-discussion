@@ -365,6 +365,10 @@ class TestCentralizedTyping(VROutputTestCase):
         self.fake = FakeTTS(speak_seconds=0.3)
         self.vr = self.reload_vr(enabled=True, fake=self.fake)
         self.vr.TTS_CHARS_PER_SEC = {"Designer": 100.0, "Engineer": 50.0}
+        # 시간 조정(축소·요약 간격)은 아래 test_summaries_get_a_gap 에서만 켠다
+        self.vr.TYPING_TIME_SCALE = 1.0
+        self.vr.SUMMARY_GAP = 0.0
+        self.vr.MIN_TYPING_SEC = 0.0
         self.temp_dir = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp_dir.cleanup)
         registry = ExperimentSessionRegistry(self.temp_dir.name, max_active_sessions=3)
@@ -410,6 +414,25 @@ class TestCentralizedTyping(VROutputTestCase):
 
         # PM 종합은 둘 다 끝난 뒤에야 재생
         self.assertGreaterEqual(f.started_at[1], e_off)
+
+    def test_summaries_get_a_gap(self):
+        """두 요약이 SUMMARY_GAP보다 붙으면 먼저 끝나는 쪽을 당기고, 마지막 요약 뒤 SUMMARY_GAP 뒤에 PM 종합."""
+        self.vr.SUMMARY_GAP = 0.5
+        self.vr.MIN_TYPING_SEC = 0.1
+        generation = threading.Thread(target=lambda: (
+            self.session.emit(text_event("PM", self.ROUTING, step="routing")),
+            self.emit_subchats(),
+            self.session.emit(text_event("PM", "정리하면 이렇습니다.")),
+        ), daemon=True)
+        generation.start()
+        generation.join(10)
+        self.assertTrue(self.vr.wait_until_idle(10))
+        f = self.fake
+        d_on = f.typing_times("Designer", True)[0]
+        d_off, e_off = f.typing_times("Designer", False)[0], f.typing_times("Engineer", False)[0]
+        self.assertGreaterEqual(e_off - d_off, 0.5 - 0.05, "요약 사이 간격")
+        self.assertAlmostEqual(d_off - d_on, 0.3, delta=0.15)   # 0.4초에서 당겨짐
+        self.assertGreaterEqual(f.started_at[1], e_off + 0.5 - 0.05, "마지막 요약 뒤 간격")
 
     def test_keeps_typing_until_the_reply_exists(self):
         self.session.emit(text_event("PM", self.ROUTING, step="routing"))
@@ -543,8 +566,8 @@ class TestConditionSignal(VROutputTestCase):
 class TestSpeakingRate(VROutputTestCase):
     def test_rate_per_agent(self):
         vr = self.reload_vr(enabled=False)
-        self.assertAlmostEqual(vr.speaking_seconds("Designer", "가" * 629), 100.0, places=3)
-        self.assertAlmostEqual(vr.speaking_seconds("Unknown", "가" * 739), 100.0, places=3)
+        self.assertAlmostEqual(vr.speaking_seconds("Designer", "가" * 629), 100.0 * vr.TYPING_TIME_SCALE, places=3)
+        self.assertAlmostEqual(vr.speaking_seconds("Unknown", "가" * 739), 100.0 * vr.TYPING_TIME_SCALE, places=3)
 
 
 if __name__ == "__main__":

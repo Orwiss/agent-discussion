@@ -229,11 +229,11 @@ def _make_synthesis_prompt(d_reply: str, e_reply: str, phase: str) -> str:
         )
         if phase == "divergence":
             reaction += " 완전히 새로운 의견을 제시해도 됩니다."
-        return head + f"반드시 지금 단계의 목적에 맞게 정리하세요. {reaction}"
+        return head + f"반드시 지금 단계의 목적에 맞게 정리하세요. {reaction} 전체 300자 이내로."
     return (
         head +
         "반드시 지금 단계의 목적에 맞게 정리하세요. 두 사람의 답변을 종합적으로 검토하면서도 각자의 기여가 드러나게 정리하고, "
-        "사용자·가치 관점에서 당신 생각도 한 마디 보태세요."
+        "사용자·가치 관점에서 당신 생각도 한 마디 보태세요. 전체 300자 이내로."
     )
 
 
